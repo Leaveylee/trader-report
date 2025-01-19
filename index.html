@@ -131,7 +131,7 @@
         <div class="bg-gray-50 p-4 rounded">
             <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
             <div class="grid grid-cols-2 gap-4">
-                <!-- 基本統計 -->
+                <!-- 左側欄位：總交易次數、勝率、風險報酬比 -->
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-600">總交易次數：</span>
@@ -145,16 +145,17 @@
                         <span class="text-gray-600">風險報酬比：</span>
                         <span id="riskRewardRatio" class="font-medium">0</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">平均獲利率：</span>
-                        <span id="avgWinRate" class="font-medium">+0%</span> <!-- 黑色文字 -->
-                    </div>
                 </div>
 
+                <!-- 右側欄位：平均獲利率、平均虧損率、最大獲利率、最大虧損率 -->
                 <div class="space-y-2">
                     <div class="flex justify-between">
+                        <span class="text-gray-600">平均獲利率：</span>
+                        <span id="avgWinRate" class="font-medium">+0%</span>
+                    </div>
+                    <div class="flex justify-between">
                         <span class="text-gray-600">平均虧損率：</span>
-                        <span id="avgLossRate" class="font-medium">-0%</span> <!-- 黑色文字 -->
+                        <span id="avgLossRate" class="font-medium">-0%</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大獲利率：</span>
@@ -195,11 +196,11 @@
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均獲利金額：</span>
-                                <span id="avgWinAmount" class="font-medium">+0</span> <!-- 黑色文字 -->
+                                <span id="avgWinAmount" class="font-medium">+0</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均虧損金額：</span>
-                                <span id="avgLossAmount" class="font-medium">-0</span> <!-- 黑色文字，顯示為負數 -->
+                                <span id="avgLossAmount" class="font-medium">-0</span>
                             </div>
                         </div>
                         <div class="space-y-2">
