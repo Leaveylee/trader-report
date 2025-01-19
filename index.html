@@ -130,25 +130,48 @@
         <!-- 分析結果 -->
         <div class="bg-gray-50 p-4 rounded">
             <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <!-- 左側欄位：總交易次數、勝率、風險報酬比 -->
-                <div class="space-y-2">
-                    <div class="flex justify-between">
+            
+            <!-- 報告書的結論 -->
+            <div class="space-y-4">
+                <!-- 第一行：總交易次數、勝率、風險報酬比 -->
+                <div class="flex justify-between font-bold text-xl">
+                    <div class="flex-1 text-center">
                         <span class="text-gray-600">總交易次數：</span>
                         <span id="totalTrades" class="font-medium">0</span>
                     </div>
-                    <div class="flex justify-between">
+                    <div class="flex-1 text-center">
                         <span class="text-gray-600">勝率：</span>
                         <span id="winRate" class="font-medium">0%</span>
                     </div>
-                    <div class="flex justify-between">
+                    <div class="flex-1 text-center">
                         <span class="text-gray-600">風險報酬比：</span>
                         <span id="riskRewardRatio" class="font-medium">0</span>
                     </div>
                 </div>
 
-                <!-- 右側欄位：平均獲利、平均虧損、最大獲利、最大虧損 -->
-                <div class="space-y-2">
+                <!-- 第二行：期望值、總報酬 -->
+                <div class="flex justify-between font-bold text-xl">
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-700">期望值：</span>
+                        <span id="expectedValue" class="font-bold text-lg">
+                            0%/每次出手一次
+                        </span>
+                    </div>
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-700">總報酬：</span>
+                        <span id="totalReturn" class="font-bold text-lg">
+                            0%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 損益統計 -->
+            <div class="mt-6">
+                <h3 class="text-md font-medium text-gray-700 mb-3">
+                    損益統計
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均獲利：</span>
                         <span id="avgWin" class="font-medium">+0(+0.00%)</span>
@@ -164,26 +187,6 @@
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大虧損：</span>
                         <span id="maxLoss" class="font-medium">-0(-0.00%)</span>
-                    </div>
-                </div>
-
-                <!-- 期望值 -->
-                <div class="col-span-2 mt-4 pt-4 border-t">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700 font-bold">期望值：</span>
-                        <span id="expectedValue" class="font-bold text-lg text-gray-800">
-                            0%/每出手一次
-                        </span>
-                    </div>
-                </div>
-
-                <!-- 總報酬 -->
-                <div class="col-span-2 mt-4 pt-4 border-t">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700 font-bold">總報酬：</span>
-                        <span id="totalReturn" class="font-bold text-lg text-gray-800">
-                            0%
-                        </span>
                     </div>
                 </div>
             </div>
@@ -318,7 +321,7 @@
                     document.getElementById('avgLoss').textContent = '-0(-0.00%)';
                     document.getElementById('maxWin').textContent = '+0(+0.00%)';
                     document.getElementById('maxLoss').textContent = '-0(-0.00%)';
-                    document.getElementById('expectedValue').textContent = '0%/每出手一次';
+                    document.getElementById('expectedValue').textContent = '0%/每次出手一次';
                     document.getElementById('totalReturn').textContent = '0%';
                     
                     // 移除顏色類別
@@ -353,16 +356,16 @@
                 document.getElementById('riskRewardRatio').textContent = riskRewardRatio.toFixed(2);
 
                 // 更新右側欄位
-                document.getElementById('avgWin').textContent = averagePosition > 0 
+                document.getElementById('avgWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
                     ? `${formatNumber((avgWinRate / 100) * averagePosition, true)}(${formatNumber(avgWinRate)}%)` 
                     : `(${formatNumber(avgWinRate)}%)`;
-                document.getElementById('avgLoss').textContent = averagePosition > 0 
+                document.getElementById('avgLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
                     ? `${formatNumber(-(avgLossRate / 100) * averagePosition, true)}(${formatNumber(avgLossRate)}%)` 
                     : `(${formatNumber(avgLossRate)}%)`;
-                document.getElementById('maxWin').textContent = averagePosition > 0 
+                document.getElementById('maxWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
                     ? `${formatNumber((maxWinRate / 100) * averagePosition, true)}(${formatNumber(maxWinRate)}%)` 
                     : `(${formatNumber(maxWinRate)}%)`;
-                document.getElementById('maxLoss').textContent = averagePosition > 0 
+                document.getElementById('maxLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
                     ? `${formatNumber(-(maxLossRate / 100) * averagePosition, true)}(${formatNumber(maxLossRate)}%)` 
                     : `(${formatNumber(maxLossRate)}%)`;
 
