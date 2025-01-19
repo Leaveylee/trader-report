@@ -238,7 +238,7 @@
                         </tr>
                     </thead>
                     <tbody id="tradesList">
-                        <!-- 交易記錄將在這裡動態添加 -->
+                        <!-- 交易紀錄將在這裡動態添加 -->
                     </tbody>
                 </table>
             </div>
@@ -322,7 +322,7 @@
                                     type="text"
                                     value="${trade.returnRate}"
                                     oninput="handleTradeChange(${actualIndex}, this.value)"
-                                    class="w-full p-2 border rounded"
+                                    class="w-full p-2 border rounded trade-input" <!-- 添加 'trade-input' 類別 -->
                                     placeholder="輸入報酬率"
                                     data-index="${actualIndex}"
                                 >
