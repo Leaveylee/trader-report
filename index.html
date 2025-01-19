@@ -298,21 +298,28 @@
                         if (event.key === 'Enter') {
                             event.preventDefault();
                             const currentIndex = parseInt(this.getAttribute('data-index'));
-                            const nextIndex = currentIndex + 1;
-                            if (nextIndex < trades.length) {
+                            const currentValue = this.value.trim();
+
+                            // 手動觸發 handleTradeChange 以保存當前輸入值
+                            handleTradeChange(currentIndex, currentValue);
+
+                            // 檢查是否為最後一個輸入框，且有有效輸入
+                            if (currentIndex === trades.length - 1 && currentValue !== '' && !isNaN(currentValue)) {
+                                addTrade(); // 添加新的交易欄位
+                                setTimeout(() => {
+                                    const newIndex = currentIndex + 1;
+                                    const newInput = document.querySelector(`.trade-input[data-index="${newIndex}"]`);
+                                    if (newInput) {
+                                        newInput.focus(); // 聚焦到新欄框
+                                    }
+                                }, 100);
+                            } else {
+                                // 聚焦到下一個輸入框（如果存在）
+                                const nextIndex = currentIndex + 1;
                                 const nextInput = document.querySelector(`.trade-input[data-index="${nextIndex}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
-                            } else {
-                                // 如果是最後一個輸入框，則自動添加新的交易欄位並聚焦
-                                addTrade();
-                                setTimeout(() => {
-                                    const newInput = document.querySelector(`.trade-input[data-index="${nextIndex}"]`);
-                                    if (newInput) {
-                                        newInput.focus();
-                                    }
-                                }, 100);
                             }
                         }
                     });
@@ -328,18 +335,11 @@
                     trades[index].returnRate = '';
                 } else {
                     trades[index].returnRate = cleanedValue;
-                    
-                    // 如果當前欄位有值且是最後一個欄位，自動添加新的空白欄位
-                    if (cleanedValue !== '' && index === trades.length - 1) {
-                        trades.push({ returnRate: '' });
-                    }
                 }
                 
-                // 在處理完數值後再渲染，確保數值已經被保存
+                // 計算統計數據和保存
                 calculateStats();
                 saveData(); // 保存數據
-
-                // 渲染交易列表，這裡我們不立即調用 renderTrades()，因為鍵盤事件處理器會處理渲染
             }
 
             // 添加交易記錄
