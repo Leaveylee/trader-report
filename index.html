@@ -149,14 +149,18 @@
                     </div>
                 </div>
 
-                <!-- 第二行：期望值、總報酬 -->
+                <!-- 第二行：期望值 -->
                 <div class="flex justify-between font-bold text-lg">
                     <div class="flex-1 text-center">
                         <span class="text-gray-700">期望值：</span>
                         <span id="expectedValue" class="font-bold text-lg">
-                            0%/每次出手一次
+                            0%
                         </span>
                     </div>
+                </div>
+
+                <!-- 第三行：總報酬 -->
+                <div class="flex justify-between font-bold text-lg">
                     <div class="flex-1 text-center">
                         <span class="text-gray-700">總報酬：</span>
                         <span id="totalReturn" class="font-bold text-lg">
@@ -202,17 +206,19 @@
             let trades = [{ returnRate: '' }];
             let tradesList = document.getElementById('tradesList');
 
-            // 工具函數：格式化數字
+            // 工具函數：格式化數字，每三位加上逗號
             function formatNumber(value, isMoneyAmount = false) {
                 const number = parseFloat(value);
+                if (isNaN(number)) return '0';
+
                 if (isMoneyAmount) {
                     return number >= 0 ? 
-                        `+${Math.round(number)}` : 
-                        `-${Math.abs(Math.round(number))}`;
+                        `+${number.toLocaleString()}` : 
+                        `-${Math.abs(number).toLocaleString()}`;
                 }
                 return number >= 0 ? 
-                    `+${number.toFixed(2)}` : 
-                    `-${Math.abs(number).toFixed(2)}`;
+                    `+${number.toFixed(2).toLocaleString()}` : 
+                    `-${Math.abs(number).toFixed(2).toLocaleString()}`;
             }
 
             // 保存數據到 localStorage
@@ -321,7 +327,7 @@
                     document.getElementById('avgLoss').textContent = '-0(-0.00%)';
                     document.getElementById('maxWin').textContent = '+0(+0.00%)';
                     document.getElementById('maxLoss').textContent = '-0(-0.00%)';
-                    document.getElementById('expectedValue').textContent = '0%/每次出手一次';
+                    document.getElementById('expectedValue').textContent = '0%';
                     document.getElementById('totalReturn').textContent = '0%';
                     
                     // 移除顏色類別
@@ -351,30 +357,30 @@
                 const totalReturnAmount = (totalReturnRate / 100) * averagePosition;
 
                 // 更新基本統計數據
-                document.getElementById('totalTrades').textContent = results.length;
-                document.getElementById('winRate').textContent = `${winRate.toFixed(2)}%`;
-                document.getElementById('riskRewardRatio').textContent = riskRewardRatio.toFixed(2);
+                document.getElementById('totalTrades').textContent = formatNumber(results.length);
+                document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}%`;
+                document.getElementById('riskRewardRatio').textContent = formatNumber(riskRewardRatio.toFixed(2));
 
-                // 更新右側欄位
+                // 更新次級報告欄位
                 document.getElementById('avgWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber((avgWinRate / 100) * averagePosition, true)}(${formatNumber(avgWinRate)}%)` 
+                    ? `${formatNumber((avgWinRate / 100) * averagePosition, true)} (${formatNumber(avgWinRate)}%)` 
                     : `(${formatNumber(avgWinRate)}%)`;
                 document.getElementById('avgLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber(-(avgLossRate / 100) * averagePosition, true)}(${formatNumber(avgLossRate)}%)` 
+                    ? `${formatNumber(-(avgLossRate / 100) * averagePosition, true)} (${formatNumber(avgLossRate)}%)` 
                     : `(${formatNumber(avgLossRate)}%)`;
                 document.getElementById('maxWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber((maxWinRate / 100) * averagePosition, true)}(${formatNumber(maxWinRate)}%)` 
+                    ? `${formatNumber((maxWinRate / 100) * averagePosition, true)} (${formatNumber(maxWinRate)}%)` 
                     : `(${formatNumber(maxWinRate)}%)`;
                 document.getElementById('maxLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber(-(maxLossRate / 100) * averagePosition, true)}(${formatNumber(maxLossRate)}%)` 
+                    ? `${formatNumber(-(maxLossRate / 100) * averagePosition, true)} (${formatNumber(maxLossRate)}%)` 
                     : `(${formatNumber(maxLossRate)}%)`;
 
                 // 更新 "期望值" 顯示及顏色
                 const expectedValueElem = document.getElementById('expectedValue');
                 if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
-                    expectedValueElem.textContent = `${formatNumber(expectedValueAmount, true)} (${formatNumber(expectedReturnRate)}%) / 每次出手`;
+                    expectedValueElem.textContent = `${formatNumber(expectedValueAmount, true)} (${formatNumber(expectedReturnRate)}%)`;
                 } else {
-                    expectedValueElem.textContent = `(${formatNumber(expectedReturnRate)}%) / 每次出手`;
+                    expectedValueElem.textContent = `(${formatNumber(expectedReturnRate)}%)`;
                 }
 
                 // 更新顏色
