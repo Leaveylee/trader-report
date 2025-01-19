@@ -147,14 +147,14 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均獲利率：</span>
-                        <span id="avgWinRate" class="font-medium text-red-500">+0%</span>
+                        <span id="avgWinRate" class="font-medium">+0%</span> <!-- 移除 text-red-500 -->
                     </div>
                 </div>
 
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均虧損率：</span>
-                        <span id="avgLossRate" class="font-medium text-green-500">-0%</span>
+                        <span id="avgLossRate" class="font-medium">-0%</span> <!-- 移除 text-green-500 -->
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大獲利率：</span>
@@ -195,11 +195,11 @@
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均獲利金額：</span>
-                                <span id="avgWinAmount" class="font-medium text-red-500">+0</span>
+                                <span id="avgWinAmount" class="font-medium">+0</span> <!-- 移除 text-red-500 -->
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均虧損金額：</span>
-                                <span id="avgLossAmount" class="font-medium text-green-500">-0</span>
+                                <span id="avgLossAmount" class="font-medium">-0</span> <!-- 移除 text-green-500 -->
                             </div>
                         </div>
                         <div class="space-y-2">
@@ -377,10 +377,58 @@
             document.getElementById('avgLossRate').textContent = `-${avgLossRate.toFixed(2)}%`;
             document.getElementById('maxWinRate').textContent = `+${maxWinRate.toFixed(2)}%`;
             document.getElementById('maxLossRate').textContent = `-${maxLossRate.toFixed(2)}%`;
-            document.getElementById('expectedReturnRate').textContent = 
-                `${formatNumber(expectedReturnRate)}%/每出手一次`;
-            document.getElementById('totalReturnRate').textContent = 
-                `${formatNumber(totalReturnRate)}%`;
+            
+            // 更新 "期望報酬率" 顯示及顏色
+            const expectedReturnElem = document.getElementById('expectedReturnRate');
+            expectedReturnElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
+            if (expectedReturnRate > 0) {
+                expectedReturnElem.classList.add('text-red-500');
+                expectedReturnElem.classList.remove('text-green-500');
+            } else if (expectedReturnRate < 0) {
+                expectedReturnElem.classList.add('text-green-500');
+                expectedReturnElem.classList.remove('text-red-500');
+            } else {
+                expectedReturnElem.classList.remove('text-red-500', 'text-green-500');
+            }
+
+            // 更新 "總報酬率" 顯示及顏色
+            const totalReturnRateElem = document.getElementById('totalReturnRate');
+            totalReturnRateElem.textContent = `${formatNumber(totalReturnRate)}%`;
+            if (totalReturnRate > 0) {
+                totalReturnRateElem.classList.add('text-red-500');
+                totalReturnRateElem.classList.remove('text-green-500');
+            } else if (totalReturnRate < 0) {
+                totalReturnRateElem.classList.add('text-green-500');
+                totalReturnRateElem.classList.remove('text-red-500');
+            } else {
+                totalReturnRateElem.classList.remove('text-red-500', 'text-green-500');
+            }
+
+            // 更新 "期望值" 顯示及顏色
+            const expectedValueElem = document.getElementById('expectedValue');
+            expectedValueElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
+            if (expectedReturnRate > 0) {
+                expectedValueElem.classList.add('text-red-500');
+                expectedValueElem.classList.remove('text-green-500');
+            } else if (expectedReturnRate < 0) {
+                expectedValueElem.classList.add('text-green-500');
+                expectedValueElem.classList.remove('text-red-500');
+            } else {
+                expectedValueElem.classList.remove('text-red-500', 'text-green-500');
+            }
+
+            // 更新 "總報酬金額" 顯示及顏色
+            const totalReturnAmountElem = document.getElementById('totalReturnAmount');
+            totalReturnAmountElem.textContent = formatNumber(totalReturnAmount, true);
+            if (totalReturnAmount > 0) {
+                totalReturnAmountElem.classList.add('text-red-500');
+                totalReturnAmountElem.classList.remove('text-green-500');
+            } else if (totalReturnAmount < 0) {
+                totalReturnAmountElem.classList.add('text-green-500');
+                totalReturnAmountElem.classList.remove('text-red-500');
+            } else {
+                totalReturnAmountElem.classList.remove('text-red-500', 'text-green-500');
+            }
 
             // 計算金額（如果有輸入平均部位）
             const averagePosition = parseFloat(document.getElementById('averagePosition').value);
@@ -397,6 +445,29 @@
                     `${formatNumber(expectedValue, true)}/每出手一次`;
                 document.getElementById('totalReturnAmount').textContent = 
                     formatNumber(totalReturnAmount, true);
+
+                // 根據金額的正負顯示顏色
+                const expectedValueElemAmount = document.getElementById('expectedValue');
+                if (expectedValue > 0) {
+                    expectedValueElemAmount.classList.add('text-red-500');
+                    expectedValueElemAmount.classList.remove('text-green-500');
+                } else if (expectedValue < 0) {
+                    expectedValueElemAmount.classList.add('text-green-500');
+                    expectedValueElemAmount.classList.remove('text-red-500');
+                } else {
+                    expectedValueElemAmount.classList.remove('text-red-500', 'text-green-500');
+                }
+
+                const totalReturnAmountElemAmount = document.getElementById('totalReturnAmount');
+                if (totalReturnAmount > 0) {
+                    totalReturnAmountElemAmount.classList.add('text-red-500');
+                    totalReturnAmountElemAmount.classList.remove('text-green-500');
+                } else if (totalReturnAmount < 0) {
+                    totalReturnAmountElemAmount.classList.add('text-green-500');
+                    totalReturnAmountElemAmount.classList.remove('text-red-500');
+                } else {
+                    totalReturnAmountElemAmount.classList.remove('text-red-500', 'text-green-500');
+                }
 
                 amountResults.classList.remove('hidden');
             } else {
