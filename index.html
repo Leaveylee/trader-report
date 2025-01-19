@@ -102,7 +102,7 @@
 
         <!-- 分析結果區塊 -->
         <div class="bg-gray-50 p-4 rounded mb-6">
-            <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
+            <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果: 全部交易策略</h2>
             
             <!-- 報告書的結論 -->
             <div class="space-y-4">
@@ -218,7 +218,7 @@
             let trades = [{ returnRate: '' }];
             let tradesList = document.getElementById('tradesList');
 
-            // 工具函數：格式化數字，每三位加上逗號
+            // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
                 const number = parseFloat(value);
                 if (isNaN(number)) return '0';
@@ -231,6 +231,13 @@
                 return number >= 0 ? 
                     `+${number.toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}` : 
                     `-${Math.abs(number).toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}`;
+            }
+
+            // 新增工具函數：格式化數字，不帶 "+" 符號，無小數點
+            function formatNumberNoSign(value, decimalPlaces = 2) {
+                const number = parseFloat(value);
+                if (isNaN(number)) return '0';
+                return number.toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces});
             }
 
             // 新增工具函數：格式化交易數，不帶 "+" 符號，無小數點
@@ -266,27 +273,33 @@
 
             // 渲染交易記錄
             function renderTrades() {
-                tradesList.innerHTML = trades.map((trade, index) => `
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-600">交易 ${index + 1}</span>
-                        <div class="relative flex-1">
-                            <input
-                                type="text"
-                                value="${trade.returnRate}"
-                                oninput="handleTradeChange(${index}, this.value)"
-                                class="w-full p-2 border rounded pr-8 trade-input"
-                                placeholder="輸入報酬率"
-                                data-index="${index}"
-                            >
-                            <span class="absolute right-3 top-2 text-gray-500">%</span>
+                // 反轉交易列表以顯示最新交易在最上方
+                const reversedTrades = trades.slice().reverse();
+
+                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
+                    const actualIndex = trades.length - 1 - reversedIndex;
+                    return `
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">交易 ${actualIndex + 1}</span>
+                            <div class="relative flex-1">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${actualIndex}, this.value)"
+                                    class="w-full p-2 border rounded pr-8 trade-input"
+                                    placeholder="輸入報酬率"
+                                    data-index="${actualIndex}"
+                                >
+                                <span class="absolute right-3 top-2 text-gray-500">%</span>
+                            </div>
+                            ${trades.length > 1 ? `
+                                <button onclick="removeTrade(${actualIndex})" class="delete-button">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            ` : ''}
                         </div>
-                        ${trades.length > 1 ? `
-                            <button onclick="removeTrade(${index})" class="delete-button">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
                 
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
@@ -408,7 +421,8 @@
                 // 更新基本統計數據
                 document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
                 document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}%`;
-                document.getElementById('riskRewardRatio').textContent = formatNumber(riskRewardRatio.toFixed(2));
+                // 使用 formatNumberNoSign 以移除 "+" 符號
+                document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
 
                 // 更新次級報告欄位
                 document.getElementById('avgWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
