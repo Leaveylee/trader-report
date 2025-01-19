@@ -38,7 +38,7 @@
             border-radius: 24px;
             padding: 2rem;
             width: 90%;
-            max-width: 800px; /* 調整寬度以適應表格 */
+            max-width: 800px; /* 調整寬度以容納表格 */
             margin: 0 auto;
             box-shadow: 0 8px 32px rgba(184, 134, 113, 0.1);
         }
@@ -93,7 +93,7 @@
             margin: 0.5rem 0;
         }
 
-        /* 表格樣式 */
+        /* 表格樣式調整 */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -102,12 +102,19 @@
         th, td {
             padding: 0.75rem;
             text-align: center;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e5e7eb; /* Tailwind 的 gray-200 */
         }
 
         th {
-            background-color: #f9fafb;
+            background-color: #f3f4f6; /* Tailwind 的 gray-100 */
             font-weight: 600;
+        }
+
+        /* 調整表格在手機上的顯示 */
+        @media (max-width: 640px) {
+            table, th, td {
+                font-size: 0.875rem;
+            }
         }
     </style>
 </head>
@@ -209,7 +216,7 @@
             </div>
         </div>
 
-        <!-- 交易記錄區域 -->
+        <!-- 交易紀錄區域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -220,17 +227,18 @@
             <div class="text-sm text-gray-600 mb-2">
                 請輸入交易報酬率（例如：+6.66、-2.92）
             </div>
-            <div id="tradesList" class="overflow-x-auto">
-                <table class="min-w-full">
+            <!-- 交易紀錄表格 -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg">
                     <thead>
-                        <tr id="tradeHeaders">
-                            <!-- 交易標題將在這裡動態添加 -->
+                        <tr>
+                            <th class="px-4 py-2">交易</th>
+                            <th class="px-4 py-2">報酬率 (%)</th>
+                            <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr id="tradeInputsRow">
-                            <!-- 交易報酬率輸入框將在這裡動態添加 -->
-                        </tr>
+                    <tbody id="tradesList">
+                        <!-- 交易記錄將在這裡動態添加 -->
                     </tbody>
                 </table>
             </div>
@@ -245,8 +253,6 @@
             // 交易記錄列表
             let trades = [{ returnRate: '' }];
             let tradesList = document.getElementById('tradesList');
-            let tradeHeaders = document.getElementById('tradeHeaders');
-            let tradeInputsRow = document.getElementById('tradeInputsRow');
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -303,43 +309,40 @@
 
             // 渲染交易記錄
             function renderTrades() {
-                // 清空現有的表頭和輸入欄位
-                tradeHeaders.innerHTML = '';
-                tradeInputsRow.innerHTML = '';
-
                 // 反轉交易列表以顯示最新交易在最上方
                 const reversedTrades = trades.slice().reverse();
 
-                reversedTrades.forEach((trade, reversedIndex) => {
+                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
                     const actualIndex = trades.length - 1 - reversedIndex;
-
-                    // 創建表頭
-                    const th = document.createElement('th');
-                    th.className = 'px-4 py-2';
-                    th.textContent = `交易 ${actualIndex + 1}`;
-                    tradeHeaders.appendChild(th);
-
-                    // 創建輸入欄位
-                    const td = document.createElement('td');
-                    td.className = 'px-4 py-2';
-                    
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.value = trade.returnRate;
-                    input.placeholder = '輸入報酬率';
-                    input.className = 'w-full p-2 border rounded';
-                    input.setAttribute('data-index', actualIndex);
-                    input.addEventListener('input', (e) => handleTradeChange(actualIndex, e.target.value));
-
-                    td.appendChild(input);
-                    tradeInputsRow.appendChild(td);
-                });
-
-                // 重新初始化 Lucide 圖標（如果有使用）
+                    return `
+                        <tr>
+                            <td class="px-4 py-2 border">${"交易 " + (actualIndex + 1)}</td>
+                            <td class="px-4 py-2 border">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${actualIndex}, this.value)"
+                                    class="w-full p-2 border rounded"
+                                    placeholder="輸入報酬率"
+                                    data-index="${actualIndex}"
+                                >
+                            </td>
+                            <td class="px-4 py-2 border">
+                                ${trades.length > 1 ? `
+                                    <button onclick="removeTrade(${actualIndex})" class="delete-button">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // 重新初始化 Lucide 圖標
                 lucide.createIcons();
 
                 // 添加按鍵事件監聽器
-                const tradeInputs = document.querySelectorAll('.trade-input, #tradeInputsRow input');
+                const tradeInputs = document.querySelectorAll('.trade-input');
                 tradeInputs.forEach(input => {
                     input.addEventListener('keydown', function(event) {
                         if (event.key === 'Enter') {
@@ -355,7 +358,7 @@
                                 addTrade(); // 添加新的交易欄位
                                 setTimeout(() => {
                                     const newIndex = currentIndex + 1;
-                                    const newInput = document.querySelector(`input[data-index="${newIndex}"]`);
+                                    const newInput = document.querySelector(`.trade-input[data-index="${newIndex}"]`);
                                     if (newInput) {
                                         newInput.focus(); // 聚焦到新欄框
                                     }
@@ -363,7 +366,7 @@
                             } else {
                                 // 聚焦到下一個輸入框（如果存在）
                                 const nextIndex = currentIndex + 1;
-                                const nextInput = document.querySelector(`input[data-index="${nextIndex}"]`);
+                                const nextInput = document.querySelector(`.trade-input[data-index="${nextIndex}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
