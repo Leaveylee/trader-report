@@ -221,6 +221,13 @@
                     `-${Math.abs(number).toFixed(2).toLocaleString()}`;
             }
 
+            // 新增工具函數：格式化交易數，不帶 "+" 符號，無小數點
+            function formatTradeCount(value) {
+                const number = parseInt(value, 10);
+                if (isNaN(number)) return '0';
+                return number.toLocaleString();
+            }
+
             // 保存數據到 localStorage
             function saveData() {
                 localStorage.setItem('trades', JSON.stringify(trades));
@@ -357,7 +364,7 @@
                 const totalReturnAmount = (totalReturnRate / 100) * averagePosition;
 
                 // 更新基本統計數據
-                document.getElementById('totalTrades').textContent = formatNumber(results.length);
+                document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
                 document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}%`;
                 document.getElementById('riskRewardRatio').textContent = formatNumber(riskRewardRatio.toFixed(2));
 
