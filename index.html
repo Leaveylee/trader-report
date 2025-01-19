@@ -144,7 +144,7 @@
 
         <!-- 分析結果區塊 -->
         <div class="bg-gray-50 p-4 rounded mb-6">
-            <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果: 全部交易策略</h2>
+            <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
             
             <!-- 報告書的結論 -->
             <div class="space-y-4">
@@ -274,6 +274,23 @@
                     <button class="button mr-2" onclick="closeEditStrategyModal()">取消</button>
                     <button class="button" onclick="updateStrategy()">更新</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- 平均部位輸入 -->
+        <div class="mb-6">
+            <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
+                平均部位金額（選填）
+            </label>
+            <input
+                type="number"
+                id="averagePosition"
+                placeholder="輸入平均部位金額"
+                class="w-full p-2 border rounded"
+                onchange="calculateStats()"
+            >
+            <div class="text-sm text-gray-500 mt-1">
+                若填寫此欄位，將會計算實際金額的獲利/虧損和期望值
             </div>
         </div>
 
@@ -582,7 +599,7 @@
                 saveData(); // 保存數據
             }
 
-            // 渲染策略管理列表
+            // 渲染策略列表
             function renderStrategies() {
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
@@ -722,17 +739,6 @@
                 saveStrategies();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
-            }
-
-            // 渲染策略篩選下拉選單
-            function renderStrategyFilter() {
-                const strategyFilter = document.getElementById('strategyFilter');
-                strategyFilter.innerHTML = `
-                    <option value="">全部策略</option>
-                    ${strategies.map(strategy => `
-                        <option value="${strategy.id}">${strategy.name}</option>
-                    `).join('')}
-                `;
             }
 
             // 策略篩選功能
@@ -1018,112 +1024,6 @@
                 renderTrades();
             }
 
-            // 渲染交易紀錄
-            function renderTrades() {
-                // 反轉交易列表以顯示最新交易在最上方
-                const reversedTrades = trades.slice().reverse();
-
-                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
-                    const actualIndex = trades.length - 1 - reversedIndex;
-                    return `
-                        <tr>
-                            <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
-                            <td class="border px-4 py-2">
-                                <input
-                                    type="text"
-                                    value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="+6.66 或 -2.92"
-                                    data-row-index="${actualIndex}"
-                                    data-field="returnRate"
-                                >
-                            </td>
-                            <td class="border px-4 py-2">
-                                <input
-                                    type="text"
-                                    value="${trade.assetName}"
-                                    oninput="handleTradeChange(${actualIndex}, 'assetName', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入標的名稱"
-                                    data-row-index="${actualIndex}"
-                                    data-field="assetName"
-                                >
-                            </td>
-                            <td class="border px-4 py-2">
-                                <select
-                                    onchange="handleTradeChange(${actualIndex}, 'strategyId', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${actualIndex}"
-                                    data-field="strategyId"
-                                >
-                                    <option value="">選擇策略</option>
-                                    ${strategies.map(strategy => `
-                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
-                                            ${strategy.name}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                            </td>
-                            <td class="border px-4 py-2 text-center">
-                                ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${actualIndex})" class="delete-button">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-                
-                // 重新初始化 Lucide 圖標
-                lucide.createIcons();
-
-                // 添加按鍵事件監聽器
-                const tradeInputs = document.querySelectorAll('.trade-input');
-                tradeInputs.forEach(input => {
-                    input.addEventListener('keydown', function(event) {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            const currentRow = parseInt(this.getAttribute('data-row-index'));
-                            const currentField = this.getAttribute('data-field');
-
-                            if (currentField === 'returnRate') {
-                                // 移動到標的名稱欄位
-                                const nextField = 'assetName';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'assetName') {
-                                // 移動到策略名稱欄位
-                                const nextField = 'strategyId';
-                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'strategyId') {
-                                // 檢查是否為最後一筆交易，且有有效輸入
-                                const trade = trades[currentRow];
-                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
-                                    addTrade(); // 添加新的交易欄位
-                                    setTimeout(() => {
-                                        const newIndex = trades.length - 1;
-                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
-                                        if (newInput) {
-                                            newInput.focus(); // 聚焦到新交易的報酬率欄位
-                                        }
-                                    }, 100);
-                                } else {
-                                    // 如果當前交易有未填寫的欄位，保持在當前欄位
-                                    alert('請確保報酬率和策略已正確填寫。');
-                                }
-                            }
-                        }
-                    });
-                });
-            }
-
             // 計算統計數據
             function calculateStats() {
                 let validTrades = trades.filter(trade => 
@@ -1166,11 +1066,12 @@
                 const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
 
                 // 獲取平均部位金額
-                const averagePosition = parseFloat(document.getElementById('averagePosition').value);
+                const averagePositionInput = document.getElementById('averagePosition').value;
+                const averagePosition = parseFloat(averagePositionInput);
 
                 // 計算金額
-                const expectedValueAmount = (expectedReturnRate / 100) * averagePosition;
-                const totalReturnAmount = (totalReturnRate / 100) * averagePosition;
+                const expectedValueAmount = (expectedReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
+                const totalReturnAmount = (totalReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
 
                 // 更新基本統計數據
                 document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
@@ -1179,16 +1080,16 @@
                 document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
 
                 // 更新次級報告欄位
-                document.getElementById('avgWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
+                document.getElementById('avgWin').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
                     ? `${formatNumber((avgWinRate / 100) * averagePosition, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)` 
                     : `(${formatNumber(avgWinRate, false, 2)}%)`;
-                document.getElementById('avgLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
+                document.getElementById('avgLoss').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
                     ? `${formatNumber((avgLossRate / 100) * averagePosition, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)` 
                     : `(${formatNumber(avgLossRate, false, 2)}%)`;
-                document.getElementById('maxWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
+                document.getElementById('maxWin').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
                     ? `${formatNumber((maxWinRate / 100) * averagePosition, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)` 
                     : `(${formatNumber(maxWinRate, false, 2)}%)`;
-                document.getElementById('maxLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
+                document.getElementById('maxLoss').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
                     ? `${formatNumber((maxLossRate / 100) * averagePosition, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)` 
                     : `(${formatNumber(maxLossRate, false, 2)}%)`;
 
