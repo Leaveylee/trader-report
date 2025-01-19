@@ -185,22 +185,22 @@
                     <!-- 第一行：平均獲利、平均虧損 -->
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均獲利：</span>
-                        <span id="avgWin" class="font-medium">+0(+0.00%)</span>
+                        <span id="avgWin" class="font-medium">+0 (+0.00%)</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均虧損：</span>
-                        <span id="avgLoss" class="font-medium">-0(-0.00%)</span>
+                        <span id="avgLoss" class="font-medium">-0 (-0.00%)</span>
                     </div>
                     <!-- 分隔線 -->
                     <div class="col-span-2 divider"></div>
                     <!-- 第二行：最大獲利、最大虧損 -->
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大獲利：</span>
-                        <span id="maxWin" class="font-medium">+0(+0.00%)</span>
+                        <span id="maxWin" class="font-medium">+0 (+0.00%)</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大虧損：</span>
-                        <span id="maxLoss" class="font-medium">-0(-0.00%)</span>
+                        <span id="maxLoss" class="font-medium">-0 (-0.00%)</span>
                     </div>
                     <!-- 分隔線 -->
                     <div class="col-span-2 divider"></div>
@@ -342,10 +342,10 @@
                     document.getElementById('totalTrades').textContent = '0';
                     document.getElementById('winRate').textContent = '0%';
                     document.getElementById('riskRewardRatio').textContent = '0';
-                    document.getElementById('avgWin').textContent = '+0(+0.00%)';
-                    document.getElementById('avgLoss').textContent = '-0(-0.00%)';
-                    document.getElementById('maxWin').textContent = '+0(+0.00%)';
-                    document.getElementById('maxLoss').textContent = '-0(-0.00%)';
+                    document.getElementById('avgWin').textContent = '+0 (+0.00%)';
+                    document.getElementById('avgLoss').textContent = '-0 (-0.00%)';
+                    document.getElementById('maxWin').textContent = '+0 (+0.00%)';
+                    document.getElementById('maxLoss').textContent = '-0 (-0.00%)';
                     document.getElementById('expectedValue').textContent = '0.0%';
                     document.getElementById('totalReturn').textContent = '0%';
                     
@@ -382,24 +382,24 @@
 
                 // 更新次級報告欄位
                 document.getElementById('avgWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber((avgWinRate / 100) * averagePosition, true)} (${formatNumber(avgWinRate)}%)` 
-                    : `(${formatNumber(avgWinRate)}%)`;
+                    ? `${formatNumber((avgWinRate / 100) * averagePosition, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)` 
+                    : `(${formatNumber(avgWinRate, false, 2)}%)`;
                 document.getElementById('avgLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber(-(avgLossRate / 100) * averagePosition, true)} (${formatNumber(avgLossRate)}%)` 
-                    : `(${formatNumber(avgLossRate)}%)`;
+                    ? `${formatNumber(-(avgLossRate / 100) * averagePosition, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)` 
+                    : `(${formatNumber(avgLossRate, false, 2)}%)`;
                 document.getElementById('maxWin').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber((maxWinRate / 100) * averagePosition, true)} (${formatNumber(maxWinRate)}%)` 
-                    : `(${formatNumber(maxWinRate)}%)`;
+                    ? `${formatNumber((maxWinRate / 100) * averagePosition, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)` 
+                    : `(${formatNumber(maxWinRate, false, 2)}%)`;
                 document.getElementById('maxLoss').textContent = averagePosition && !isNaN(averagePosition) && averagePosition > 0 
-                    ? `${formatNumber(-(maxLossRate / 100) * averagePosition, true)} (${formatNumber(maxLossRate)}%)` 
-                    : `(${formatNumber(maxLossRate)}%)`;
+                    ? `${formatNumber(-(maxLossRate / 100) * averagePosition, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)` 
+                    : `(${formatNumber(maxLossRate, false, 2)}%)`;
 
                 // 更新 "期望值" 顯示及顏色，僅顯示到小數點第一位
                 const expectedValueElem = document.getElementById('expectedValue');
                 if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
-                    expectedValueElem.textContent = `${formatNumber(expectedValueAmount.toFixed(1), true, 1)} (${formatNumber(expectedReturnRate.toFixed(1))}%)`;
+                    expectedValueElem.textContent = `${formatNumber(expectedValueAmount.toFixed(1), true, 1)} (${formatNumber(expectedReturnRate.toFixed(1), false, 2)}%)`;
                 } else {
-                    expectedValueElem.textContent = `(${formatNumber(expectedReturnRate.toFixed(1))}%)`;
+                    expectedValueElem.textContent = `(${formatNumber(expectedReturnRate.toFixed(1), false, 2)}%)`;
                 }
 
                 // 更新顏色
