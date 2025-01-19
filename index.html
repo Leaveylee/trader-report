@@ -38,7 +38,7 @@
             border-radius: 24px;
             padding: 2rem;
             width: 90%;
-            max-width: 800px; /* 調整寬度以容納表格 */
+            max-width: 800px; /* 調整寬度以適應表格 */
             margin: 0 auto;
             box-shadow: 0 8px 32px rgba(184, 134, 113, 0.1);
         }
@@ -101,20 +101,13 @@
 
         th, td {
             padding: 0.75rem;
-            text-align: center;
-            border: 1px solid #e5e7eb; /* Tailwind 的 gray-200 */
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         th {
-            background-color: #f3f4f6; /* Tailwind 的 gray-100 */
+            background-color: #f9fafb; /* Tailwind 的 gray-50 */
             font-weight: 600;
-        }
-
-        /* 調整表格在手機上的顯示 */
-        @media (max-width: 640px) {
-            table, th, td {
-                font-size: 0.875rem;
-            }
         }
     </style>
 </head>
@@ -225,20 +218,21 @@
                 </button>
             </div>
             <div class="text-sm text-gray-600 mb-2">
-                請輸入交易報酬率（例如：+6.66、-2.92）
+                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱
             </div>
-            <!-- 交易紀錄表格 -->
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg">
+                <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
                             <th class="px-4 py-2">交易</th>
                             <th class="px-4 py-2">報酬率 (%)</th>
+                            <th class="px-4 py-2">標的名稱</th>
+                            <th class="px-4 py-2">策略名稱</th>
                             <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
                     <tbody id="tradesList">
-                        <!-- 交易紀錄將在這裡動態添加 -->
+                        <!-- 交易記錄將在這裡動態添加為表格行 -->
                     </tbody>
                 </table>
             </div>
@@ -251,7 +245,7 @@
 
         <script>
             // 交易記錄列表
-            let trades = [{ returnRate: '' }];
+            let trades = [{ returnRate: '', assetName: '', strategyName: '' }];
             let tradesList = document.getElementById('tradesList');
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
@@ -316,18 +310,35 @@
                     const actualIndex = trades.length - 1 - reversedIndex;
                     return `
                         <tr>
-                            <td class="px-4 py-2 border">${"交易 " + (actualIndex + 1)}</td>
-                            <td class="px-4 py-2 border">
+                            <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
+                            <td class="border px-4 py-2">
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${actualIndex}, this.value)"
-                                    class="w-full p-2 border rounded trade-input" <!-- 添加 'trade-input' 類別 -->
-                                    placeholder="輸入報酬率"
-                                    data-index="${actualIndex}"
+                                    oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
+                                    class="w-full p-1 border rounded"
+                                    placeholder="+6.66 或 -2.92"
                                 >
                             </td>
-                            <td class="px-4 py-2 border">
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.assetName}"
+                                    oninput="handleTradeChange(${actualIndex}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded"
+                                    placeholder="輸入標的名稱"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.strategyName}"
+                                    oninput="handleTradeChange(${actualIndex}, 'strategyName', this.value)"
+                                    class="w-full p-1 border rounded"
+                                    placeholder="輸入策略名稱"
+                                >
+                            </td>
+                            <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
                                     <button onclick="removeTrade(${actualIndex})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
@@ -343,48 +354,24 @@
 
                 // 添加按鍵事件監聽器
                 const tradeInputs = document.querySelectorAll('.trade-input');
-                tradeInputs.forEach(input => {
-                    input.addEventListener('keydown', function(event) {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            const currentIndex = parseInt(this.getAttribute('data-index'));
-                            const currentValue = this.value.trim();
-
-                            // 手動觸發 handleTradeChange 以保存當前輸入值
-                            handleTradeChange(currentIndex, currentValue);
-
-                            // 檢查是否為最後一個輸入框，且有有效輸入
-                            if (currentIndex === trades.length - 1 && currentValue !== '' && !isNaN(currentValue)) {
-                                addTrade(); // 添加新的交易欄位
-                                setTimeout(() => {
-                                    const newIndex = currentIndex + 1;
-                                    const newInput = document.querySelector(`.trade-input[data-index="${newIndex}"]`);
-                                    if (newInput) {
-                                        newInput.focus(); // 聚焦到新欄框
-                                    }
-                                }, 100);
-                            } else {
-                                // 聚焦到下一個輸入框（如果存在）
-                                const nextIndex = currentIndex + 1;
-                                const nextInput = document.querySelector(`.trade-input[data-index="${nextIndex}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            }
-                        }
-                    });
-                });
+                // 在表格形式下，按鍵事件已由各個輸入框分別處理，因此不需要額外處理
             }
 
             // 處理交易數據變更
-            function handleTradeChange(index, value) {
+            function handleTradeChange(index, field, value) {
                 const cleanedValue = value.replace('%', '').trim();
                 
-                if (cleanedValue === '' || isNaN(cleanedValue)) {
-                    // 處理無效輸入（例如：清空該交易的回報率）
-                    trades[index].returnRate = '';
-                } else {
-                    trades[index].returnRate = cleanedValue;
+                if (field === 'returnRate') {
+                    if (cleanedValue === '' || isNaN(cleanedValue)) {
+                        // 處理無效輸入（例如：清空該交易的回報率）
+                        trades[index].returnRate = '';
+                    } else {
+                        trades[index].returnRate = cleanedValue;
+                    }
+                } else if (field === 'assetName') {
+                    trades[index].assetName = value.trim();
+                } else if (field === 'strategyName') {
+                    trades[index].strategyName = value.trim();
                 }
                 
                 // 計算統計數據和保存
@@ -394,17 +381,26 @@
 
             // 添加交易記錄
             function addTrade() {
-                trades.push({ returnRate: '' });
+                trades.push({ returnRate: '', assetName: '', strategyName: '' });
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
+
+                // 聚焦到新欄框
+                setTimeout(() => {
+                    const newIndex = trades.length - 1;
+                    const newInput = document.querySelector(`tr:last-child input[type="text"]`);
+                    if (newInput) {
+                        newInput.focus(); // 聚焦到第一個輸入框（報酬率）在新交易
+                    }
+                }, 100);
             }
 
             // 刪除交易記錄
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '' });
+                    trades.push({ returnRate: '', assetName: '', strategyName: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -539,7 +535,7 @@
                 if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
                     localStorage.removeItem('trades');
                     localStorage.removeItem('averagePosition');
-                    trades = [{ returnRate: '' }];
+                    trades = [{ returnRate: '', assetName: '', strategyName: '' }];
                     document.getElementById('averagePosition').value = '';
                     renderTrades();
                     calculateStats();
