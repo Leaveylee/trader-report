@@ -17,7 +17,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-<style>
+    
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
         * {
             margin: 0;
@@ -95,7 +96,7 @@
 
         <!-- 平均部位輸入 -->
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
                 平均部位金額（選填）
             </label>
             <input
@@ -125,7 +126,8 @@
                 <!-- 交易記錄將在這裡動態添加 -->
             </div>
         </div>
-<!-- 分析結果 -->
+
+        <!-- 分析結果 -->
         <div class="bg-gray-50 p-4 rounded">
             <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
             <div class="grid grid-cols-2 gap-4">
@@ -183,7 +185,8 @@
                         </span>
                     </div>
                 </div>
-<!-- 金額計算結果（條件顯示） -->
+
+                <!-- 金額計算結果（條件顯示） -->
                 <div id="amountResults" class="col-span-2 mt-4 pt-4 border-t hidden">
                     <h3 class="text-md font-medium text-gray-700 mb-3">
                         基於平均部位的計算結果
@@ -239,6 +242,30 @@
                 `-${Math.abs(number).toFixed(2)}`;
         }
 
+        // 保存數據到 localStorage
+        function saveData() {
+            localStorage.setItem('trades', JSON.stringify(trades));
+            const averagePosition = document.getElementById('averagePosition').value;
+            localStorage.setItem('averagePosition', averagePosition);
+        }
+
+        // 從 localStorage 加載數據
+        function loadData() {
+            const savedTrades = JSON.parse(localStorage.getItem('trades'));
+            const savedAveragePosition = localStorage.getItem('averagePosition');
+            
+            if (savedTrades && Array.isArray(savedTrades)) {
+                trades = savedTrades;
+            }
+            
+            if (savedAveragePosition !== null) {
+                document.getElementById('averagePosition').value = savedAveragePosition;
+            }
+            
+            renderTrades();
+            calculateStats();
+        }
+
         // 渲染交易記錄
         function renderTrades() {
             tradesList.innerHTML = trades.map((trade, index) => `
@@ -265,31 +292,45 @@
             // 重新初始化 Lucide 圖標
             lucide.createIcons();
         }
-// 處理交易數據變更
+
+        // 處理交易數據變更
         function handleTradeChange(index, value) {
-            const cleanedValue = value.replace('%', '');
-            trades[index].returnRate = cleanedValue;
+            const cleanedValue = value.replace('%', '').trim();
             
-            // 如果當前欄位有值且是最後一個欄位，自動添加新的空白欄位
-            if (cleanedValue !== '' && index === trades.length - 1) {
-                trades.push({ returnRate: '' });
+            if (cleanedValue === '' || isNaN(cleanedValue)) {
+                // 處理無效輸入（例如：清空該交易的回報率）
+                trades[index].returnRate = '';
+            } else {
+                trades[index].returnRate = cleanedValue;
+                
+                // 如果當前欄位有值且是最後一個欄位，自動添加新的空白欄位
+                if (cleanedValue !== '' && index === trades.length - 1) {
+                    trades.push({ returnRate: '' });
+                }
             }
             
             renderTrades();
             calculateStats();
+            saveData(); // 保存數據
         }
 
         // 添加交易記錄
         function addTrade() {
             trades.push({ returnRate: '' });
             renderTrades();
+            calculateStats();
+            saveData(); // 保存數據
         }
 
         // 刪除交易記錄
         function removeTrade(index) {
             trades = trades.filter((_, i) => i !== index);
+            if (trades.length === 0) {
+                trades.push({ returnRate: '' });
+            }
             renderTrades();
             calculateStats();
+            saveData(); // 保存數據
         }
 
         // 計算統計數據
@@ -299,6 +340,19 @@
             );
             
             if (validTrades.length === 0) {
+                // 重置統計數據
+                document.getElementById('totalTrades').textContent = '0';
+                document.getElementById('winRate').textContent = '0%';
+                document.getElementById('riskRewardRatio').textContent = '0';
+                document.getElementById('avgWinRate').textContent = '+0%';
+                document.getElementById('avgLossRate').textContent = '-0%';
+                document.getElementById('maxWinRate').textContent = '+0%';
+                document.getElementById('maxLossRate').textContent = '-0%';
+                document.getElementById('expectedReturnRate').textContent = '0%/每出手一次';
+                document.getElementById('totalReturnRate').textContent = '0%';
+                
+                // 隱藏金額計算結果
+                document.getElementById('amountResults').classList.add('hidden');
                 return;
             }
 
@@ -311,7 +365,7 @@
             const avgLossRate = losses.length > 0 ? Math.abs(losses.reduce((a, b) => a + b) / losses.length) : 0;
             const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
             const maxLossRate = losses.length > 0 ? Math.abs(Math.min(...losses)) : 0;
-            const riskRewardRatio = avgLossRate > 0 ? avgWinRate / avgLossRate : 0;
+            const riskRewardRatio = avgLossRate > 0 ? (avgWinRate / avgLossRate) : 0;
             const expectedReturnRate = (winRate / 100 * avgWinRate) - ((100 - winRate) / 100 * avgLossRate);
             const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
 
@@ -352,6 +406,28 @@
 
         // 初始化
         renderTrades();
+        loadData(); // 載入數據
+
+        // 監聽平均部位金額的變化以保存數據
+        document.getElementById('averagePosition').addEventListener('change', function() {
+            calculateStats();
+            saveData(); // 保存數據
+        });
+
+        // 可選：添加清除數據的功能
+        // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
+        /*
+        function clearData() {
+            if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
+                localStorage.removeItem('trades');
+                localStorage.removeItem('averagePosition');
+                trades = [{ returnRate: '' }];
+                document.getElementById('averagePosition').value = '';
+                renderTrades();
+                calculateStats();
+            }
+        }
+        */
     </script>
 </body>
 </html>
