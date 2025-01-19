@@ -273,7 +273,7 @@
                             <input
                                 type="text"
                                 value="${trade.returnRate}"
-                                onchange="handleTradeChange(${index}, this.value)"
+                                oninput="handleTradeChange(${index}, this.value)"
                                 class="w-full p-2 border rounded pr-8 trade-input"
                                 placeholder="輸入報酬率"
                                 data-index="${index}"
@@ -335,9 +335,11 @@
                     }
                 }
                 
-                renderTrades();
+                // 在處理完數值後再渲染，確保數值已經被保存
                 calculateStats();
                 saveData(); // 保存數據
+
+                // 渲染交易列表，這裡我們不立即調用 renderTrades()，因為鍵盤事件處理器會處理渲染
             }
 
             // 添加交易記錄
