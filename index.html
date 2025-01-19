@@ -147,14 +147,14 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均獲利率：</span>
-                        <span id="avgWinRate" class="font-medium">+0%</span> <!-- 移除 text-red-500 -->
+                        <span id="avgWinRate" class="font-medium">+0%</span> <!-- 黑色文字 -->
                     </div>
                 </div>
 
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-600">平均虧損率：</span>
-                        <span id="avgLossRate" class="font-medium">-0%</span> <!-- 移除 text-green-500 -->
+                        <span id="avgLossRate" class="font-medium">-0%</span> <!-- 黑色文字 -->
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">最大獲利率：</span>
@@ -195,11 +195,11 @@
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均獲利金額：</span>
-                                <span id="avgWinAmount" class="font-medium">+0</span> <!-- 移除 text-red-500 -->
+                                <span id="avgWinAmount" class="font-medium">+0</span> <!-- 黑色文字 -->
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">平均虧損金額：</span>
-                                <span id="avgLossAmount" class="font-medium">-0</span> <!-- 移除 text-green-500 -->
+                                <span id="avgLossAmount" class="font-medium">-0</span> <!-- 黑色文字，顯示為負數 -->
                             </div>
                         </div>
                         <div class="space-y-2">
@@ -222,283 +222,287 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // 交易記錄列表
-        let trades = [{ returnRate: '' }];
-        let tradesList = document.getElementById('tradesList');
+        <!-- 可選：清除數據按鈕 -->
+        <!-- <button class="button mt-4 bg-red-500" onclick="clearData()">
+            清除所有數據
+        </button> -->
 
-        // 工具函數：格式化數字
-        function formatNumber(value, isMoneyAmount = false) {
-            const number = parseFloat(value);
-            if (isMoneyAmount) {
+        <script>
+            // 交易記錄列表
+            let trades = [{ returnRate: '' }];
+            let tradesList = document.getElementById('tradesList');
+
+            // 工具函數：格式化數字
+            function formatNumber(value, isMoneyAmount = false) {
+                const number = parseFloat(value);
+                if (isMoneyAmount) {
+                    return number >= 0 ? 
+                        `+${Math.round(number)}` : 
+                        `-${Math.abs(Math.round(number))}`;
+                }
                 return number >= 0 ? 
-                    `+${Math.round(number)}` : 
-                    `-${Math.abs(Math.round(number))}`;
+                    `+${number.toFixed(2)}` : 
+                    `-${Math.abs(number).toFixed(2)}`;
             }
-            return number >= 0 ? 
-                `+${number.toFixed(2)}` : 
-                `-${Math.abs(number).toFixed(2)}`;
-        }
 
-        // 保存數據到 localStorage
-        function saveData() {
-            localStorage.setItem('trades', JSON.stringify(trades));
-            const averagePosition = document.getElementById('averagePosition').value;
-            localStorage.setItem('averagePosition', averagePosition);
-        }
-
-        // 從 localStorage 加載數據
-        function loadData() {
-            const savedTrades = JSON.parse(localStorage.getItem('trades'));
-            const savedAveragePosition = localStorage.getItem('averagePosition');
-            
-            if (savedTrades && Array.isArray(savedTrades)) {
-                trades = savedTrades;
+            // 保存數據到 localStorage
+            function saveData() {
+                localStorage.setItem('trades', JSON.stringify(trades));
+                const averagePosition = document.getElementById('averagePosition').value;
+                localStorage.setItem('averagePosition', averagePosition);
             }
-            
-            if (savedAveragePosition !== null) {
-                document.getElementById('averagePosition').value = savedAveragePosition;
-            }
-            
-            renderTrades();
-            calculateStats();
-        }
 
-        // 渲染交易記錄
-        function renderTrades() {
-            tradesList.innerHTML = trades.map((trade, index) => `
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-600">交易 ${index + 1}</span>
-                    <div class="relative flex-1">
-                        <input
-                            type="text"
-                            value="${trade.returnRate}"
-                            onchange="handleTradeChange(${index}, this.value)"
-                            class="w-full p-2 border rounded pr-8"
-                            placeholder="輸入報酬率"
-                        >
-                        <span class="absolute right-3 top-2 text-gray-500">%</span>
-                    </div>
-                    ${trades.length > 1 ? `
-                        <button onclick="removeTrade(${index})" class="delete-button">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    ` : ''}
-                </div>
-            `).join('');
-            
-            // 重新初始化 Lucide 圖標
-            lucide.createIcons();
-        }
-
-        // 處理交易數據變更
-        function handleTradeChange(index, value) {
-            const cleanedValue = value.replace('%', '').trim();
-            
-            if (cleanedValue === '' || isNaN(cleanedValue)) {
-                // 處理無效輸入（例如：清空該交易的回報率）
-                trades[index].returnRate = '';
-            } else {
-                trades[index].returnRate = cleanedValue;
+            // 從 localStorage 加載數據
+            function loadData() {
+                const savedTrades = JSON.parse(localStorage.getItem('trades'));
+                const savedAveragePosition = localStorage.getItem('averagePosition');
                 
-                // 如果當前欄位有值且是最後一個欄位，自動添加新的空白欄位
-                if (cleanedValue !== '' && index === trades.length - 1) {
-                    trades.push({ returnRate: '' });
+                if (savedTrades && Array.isArray(savedTrades)) {
+                    trades = savedTrades;
                 }
-            }
-            
-            renderTrades();
-            calculateStats();
-            saveData(); // 保存數據
-        }
-
-        // 添加交易記錄
-        function addTrade() {
-            trades.push({ returnRate: '' });
-            renderTrades();
-            calculateStats();
-            saveData(); // 保存數據
-        }
-
-        // 刪除交易記錄
-        function removeTrade(index) {
-            trades = trades.filter((_, i) => i !== index);
-            if (trades.length === 0) {
-                trades.push({ returnRate: '' });
-            }
-            renderTrades();
-            calculateStats();
-            saveData(); // 保存數據
-        }
-
-        // 計算統計數據
-        function calculateStats() {
-            const validTrades = trades.filter(trade => 
-                trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
-            );
-            
-            if (validTrades.length === 0) {
-                // 重置統計數據
-                document.getElementById('totalTrades').textContent = '0';
-                document.getElementById('winRate').textContent = '0%';
-                document.getElementById('riskRewardRatio').textContent = '0';
-                document.getElementById('avgWinRate').textContent = '+0%';
-                document.getElementById('avgLossRate').textContent = '-0%';
-                document.getElementById('maxWinRate').textContent = '+0%';
-                document.getElementById('maxLossRate').textContent = '-0%';
-                document.getElementById('expectedReturnRate').textContent = '0%/每出手一次';
-                document.getElementById('totalReturnRate').textContent = '0%';
                 
-                // 隱藏金額計算結果
-                document.getElementById('amountResults').classList.add('hidden');
-                return;
-            }
-
-            const results = validTrades.map(trade => parseFloat(trade.returnRate));
-            const wins = results.filter(result => result > 0);
-            const losses = results.filter(result => result < 0);
-
-            const winRate = (wins.length / results.length) * 100;
-            const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-            const avgLossRate = losses.length > 0 ? Math.abs(losses.reduce((a, b) => a + b) / losses.length) : 0;
-            const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-            const maxLossRate = losses.length > 0 ? Math.abs(Math.min(...losses)) : 0;
-            const riskRewardRatio = avgLossRate > 0 ? (avgWinRate / avgLossRate) : 0;
-            const expectedReturnRate = (winRate / 100 * avgWinRate) - ((100 - winRate) / 100 * avgLossRate);
-            const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
-
-            // 更新基本統計數據
-            document.getElementById('totalTrades').textContent = results.length;
-            document.getElementById('winRate').textContent = `${winRate.toFixed(2)}%`;
-            document.getElementById('riskRewardRatio').textContent = riskRewardRatio.toFixed(2);
-            document.getElementById('avgWinRate').textContent = `+${avgWinRate.toFixed(2)}%`;
-            document.getElementById('avgLossRate').textContent = `-${avgLossRate.toFixed(2)}%`;
-            document.getElementById('maxWinRate').textContent = `+${maxWinRate.toFixed(2)}%`;
-            document.getElementById('maxLossRate').textContent = `-${maxLossRate.toFixed(2)}%`;
-            
-            // 更新 "期望報酬率" 顯示及顏色
-            const expectedReturnElem = document.getElementById('expectedReturnRate');
-            expectedReturnElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
-            if (expectedReturnRate > 0) {
-                expectedReturnElem.classList.add('text-red-500');
-                expectedReturnElem.classList.remove('text-green-500');
-            } else if (expectedReturnRate < 0) {
-                expectedReturnElem.classList.add('text-green-500');
-                expectedReturnElem.classList.remove('text-red-500');
-            } else {
-                expectedReturnElem.classList.remove('text-red-500', 'text-green-500');
-            }
-
-            // 更新 "總報酬率" 顯示及顏色
-            const totalReturnRateElem = document.getElementById('totalReturnRate');
-            totalReturnRateElem.textContent = `${formatNumber(totalReturnRate)}%`;
-            if (totalReturnRate > 0) {
-                totalReturnRateElem.classList.add('text-red-500');
-                totalReturnRateElem.classList.remove('text-green-500');
-            } else if (totalReturnRate < 0) {
-                totalReturnRateElem.classList.add('text-green-500');
-                totalReturnRateElem.classList.remove('text-red-500');
-            } else {
-                totalReturnRateElem.classList.remove('text-red-500', 'text-green-500');
-            }
-
-            // 更新 "期望值" 顯示及顏色
-            const expectedValueElem = document.getElementById('expectedValue');
-            expectedValueElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
-            if (expectedReturnRate > 0) {
-                expectedValueElem.classList.add('text-red-500');
-                expectedValueElem.classList.remove('text-green-500');
-            } else if (expectedReturnRate < 0) {
-                expectedValueElem.classList.add('text-green-500');
-                expectedValueElem.classList.remove('text-red-500');
-            } else {
-                expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-            }
-
-            // 更新 "總報酬金額" 顯示及顏色
-            const totalReturnAmountElem = document.getElementById('totalReturnAmount');
-            totalReturnAmountElem.textContent = formatNumber(totalReturnAmount, true);
-            if (totalReturnAmount > 0) {
-                totalReturnAmountElem.classList.add('text-red-500');
-                totalReturnAmountElem.classList.remove('text-green-500');
-            } else if (totalReturnAmount < 0) {
-                totalReturnAmountElem.classList.add('text-green-500');
-                totalReturnAmountElem.classList.remove('text-red-500');
-            } else {
-                totalReturnAmountElem.classList.remove('text-red-500', 'text-green-500');
-            }
-
-            // 計算金額（如果有輸入平均部位）
-            const averagePosition = parseFloat(document.getElementById('averagePosition').value);
-            const amountResults = document.getElementById('amountResults');
-            if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
-                const avgWinAmount = (avgWinRate / 100) * averagePosition;
-                const avgLossAmount = (avgLossRate / 100) * averagePosition;
-                const expectedValue = (expectedReturnRate / 100) * averagePosition;
-                const totalReturnAmount = (totalReturnRate / 100) * averagePosition;
-
-                document.getElementById('avgWinAmount').textContent = formatNumber(avgWinAmount, true);
-                document.getElementById('avgLossAmount').textContent = formatNumber(avgLossAmount, true);
-                document.getElementById('expectedValue').textContent = 
-                    `${formatNumber(expectedValue, true)}/每出手一次`;
-                document.getElementById('totalReturnAmount').textContent = 
-                    formatNumber(totalReturnAmount, true);
-
-                // 根據金額的正負顯示顏色
-                const expectedValueElemAmount = document.getElementById('expectedValue');
-                if (expectedValue > 0) {
-                    expectedValueElemAmount.classList.add('text-red-500');
-                    expectedValueElemAmount.classList.remove('text-green-500');
-                } else if (expectedValue < 0) {
-                    expectedValueElemAmount.classList.add('text-green-500');
-                    expectedValueElemAmount.classList.remove('text-red-500');
-                } else {
-                    expectedValueElemAmount.classList.remove('text-red-500', 'text-green-500');
+                if (savedAveragePosition !== null) {
+                    document.getElementById('averagePosition').value = savedAveragePosition;
                 }
-
-                const totalReturnAmountElemAmount = document.getElementById('totalReturnAmount');
-                if (totalReturnAmount > 0) {
-                    totalReturnAmountElemAmount.classList.add('text-red-500');
-                    totalReturnAmountElemAmount.classList.remove('text-green-500');
-                } else if (totalReturnAmount < 0) {
-                    totalReturnAmountElemAmount.classList.add('text-green-500');
-                    totalReturnAmountElemAmount.classList.remove('text-red-500');
-                } else {
-                    totalReturnAmountElemAmount.classList.remove('text-red-500', 'text-green-500');
-                }
-
-                amountResults.classList.remove('hidden');
-            } else {
-                amountResults.classList.add('hidden');
-            }
-        }
-
-        // 初始化
-        renderTrades();
-        loadData(); // 載入數據
-
-        // 監聽平均部位金額的變化以保存數據
-        document.getElementById('averagePosition').addEventListener('change', function() {
-            calculateStats();
-            saveData(); // 保存數據
-        });
-
-        // 可選：添加清除數據的功能
-        // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
-        /*
-        function clearData() {
-            if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
-                localStorage.removeItem('trades');
-                localStorage.removeItem('averagePosition');
-                trades = [{ returnRate: '' }];
-                document.getElementById('averagePosition').value = '';
+                
                 renderTrades();
                 calculateStats();
             }
-        }
-        */
-    </script>
-</body>
+
+            // 渲染交易記錄
+            function renderTrades() {
+                tradesList.innerHTML = trades.map((trade, index) => `
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600">交易 ${index + 1}</span>
+                        <div class="relative flex-1">
+                            <input
+                                type="text"
+                                value="${trade.returnRate}"
+                                onchange="handleTradeChange(${index}, this.value)"
+                                class="w-full p-2 border rounded pr-8"
+                                placeholder="輸入報酬率"
+                            >
+                            <span class="absolute right-3 top-2 text-gray-500">%</span>
+                        </div>
+                        ${trades.length > 1 ? `
+                            <button onclick="removeTrade(${index})" class="delete-button">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                // 重新初始化 Lucide 圖標
+                lucide.createIcons();
+            }
+
+            // 處理交易數據變更
+            function handleTradeChange(index, value) {
+                const cleanedValue = value.replace('%', '').trim();
+                
+                if (cleanedValue === '' || isNaN(cleanedValue)) {
+                    // 處理無效輸入（例如：清空該交易的回報率）
+                    trades[index].returnRate = '';
+                } else {
+                    trades[index].returnRate = cleanedValue;
+                    
+                    // 如果當前欄位有值且是最後一個欄位，自動添加新的空白欄位
+                    if (cleanedValue !== '' && index === trades.length - 1) {
+                        trades.push({ returnRate: '' });
+                    }
+                }
+                
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 添加交易記錄
+            function addTrade() {
+                trades.push({ returnRate: '' });
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 刪除交易記錄
+            function removeTrade(index) {
+                trades = trades.filter((_, i) => i !== index);
+                if (trades.length === 0) {
+                    trades.push({ returnRate: '' });
+                }
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 計算統計數據
+            function calculateStats() {
+                const validTrades = trades.filter(trade => 
+                    trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
+                );
+                
+                if (validTrades.length === 0) {
+                    // 重置統計數據
+                    document.getElementById('totalTrades').textContent = '0';
+                    document.getElementById('winRate').textContent = '0%';
+                    document.getElementById('riskRewardRatio').textContent = '0';
+                    document.getElementById('avgWinRate').textContent = '+0%';
+                    document.getElementById('avgLossRate').textContent = '-0%';
+                    document.getElementById('maxWinRate').textContent = '+0%';
+                    document.getElementById('maxLossRate').textContent = '-0%';
+                    document.getElementById('expectedReturnRate').textContent = '0%/每出手一次';
+                    document.getElementById('totalReturnRate').textContent = '0%';
+                    
+                    // 隱藏金額計算結果
+                    document.getElementById('amountResults').classList.add('hidden');
+                    return;
+                }
+
+                const results = validTrades.map(trade => parseFloat(trade.returnRate));
+                const wins = results.filter(result => result > 0);
+                const losses = results.filter(result => result < 0);
+
+                const winRate = (wins.length / results.length) * 100;
+                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
+                const avgLossRate = losses.length > 0 ? Math.abs(losses.reduce((a, b) => a + b) / losses.length) : 0;
+                const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
+                const maxLossRate = losses.length > 0 ? Math.abs(Math.min(...losses)) : 0;
+                const riskRewardRatio = avgLossRate > 0 ? (avgWinRate / avgLossRate) : 0;
+                const expectedReturnRate = (winRate / 100 * avgWinRate) - ((100 - winRate) / 100 * avgLossRate);
+                const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
+
+                // 更新基本統計數據
+                document.getElementById('totalTrades').textContent = results.length;
+                document.getElementById('winRate').textContent = `${winRate.toFixed(2)}%`;
+                document.getElementById('riskRewardRatio').textContent = riskRewardRatio.toFixed(2);
+                document.getElementById('avgWinRate').textContent = `+${avgWinRate.toFixed(2)}%`;
+                document.getElementById('avgLossRate').textContent = `-${avgLossRate.toFixed(2)}%`;
+                document.getElementById('maxWinRate').textContent = `+${maxWinRate.toFixed(2)}%`;
+                document.getElementById('maxLossRate').textContent = `-${maxLossRate.toFixed(2)}%`;
+                
+                // 更新 "期望報酬率" 顯示及顏色
+                const expectedReturnElem = document.getElementById('expectedReturnRate');
+                expectedReturnElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
+                if (expectedReturnRate > 0) {
+                    expectedReturnElem.classList.add('text-red-500');
+                    expectedReturnElem.classList.remove('text-green-500');
+                } else if (expectedReturnRate < 0) {
+                    expectedReturnElem.classList.add('text-green-500');
+                    expectedReturnElem.classList.remove('text-red-500');
+                } else {
+                    expectedReturnElem.classList.remove('text-red-500', 'text-green-500');
+                }
+
+                // 更新 "總報酬率" 顯示及顏色
+                const totalReturnRateElem = document.getElementById('totalReturnRate');
+                totalReturnRateElem.textContent = `${formatNumber(totalReturnRate)}%`;
+                if (totalReturnRate > 0) {
+                    totalReturnRateElem.classList.add('text-red-500');
+                    totalReturnRateElem.classList.remove('text-green-500');
+                } else if (totalReturnRate < 0) {
+                    totalReturnRateElem.classList.add('text-green-500');
+                    totalReturnRateElem.classList.remove('text-red-500');
+                } else {
+                    totalReturnRateElem.classList.remove('text-red-500', 'text-green-500');
+                }
+
+                // 更新 "期望值" 顯示及顏色
+                const expectedValueElem = document.getElementById('expectedValue');
+                expectedValueElem.textContent = `${formatNumber(expectedReturnRate)}%/每出手一次`;
+                if (expectedReturnRate > 0) {
+                    expectedValueElem.classList.add('text-red-500');
+                    expectedValueElem.classList.remove('text-green-500');
+                } else if (expectedReturnRate < 0) {
+                    expectedValueElem.classList.add('text-green-500');
+                    expectedValueElem.classList.remove('text-red-500');
+                } else {
+                    expectedValueElem.classList.remove('text-red-500', 'text-green-500');
+                }
+
+                // 更新 "總報酬金額" 顯示及顏色
+                const totalReturnAmountElem = document.getElementById('totalReturnAmount');
+                totalReturnAmountElem.textContent = formatNumber(totalReturnAmount, true);
+                if (totalReturnAmount > 0) {
+                    totalReturnAmountElem.classList.add('text-red-500');
+                    totalReturnAmountElem.classList.remove('text-green-500');
+                } else if (totalReturnAmount < 0) {
+                    totalReturnAmountElem.classList.add('text-green-500');
+                    totalReturnAmountElem.classList.remove('text-red-500');
+                } else {
+                    totalReturnAmountElem.classList.remove('text-red-500', 'text-green-500');
+                }
+
+                // 計算金額（如果有輸入平均部位）
+                const averagePosition = parseFloat(document.getElementById('averagePosition').value);
+                const amountResults = document.getElementById('amountResults');
+                if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
+                    const avgWinAmount = (avgWinRate / 100) * averagePosition;
+                    const avgLossAmount = - (avgLossRate / 100) * averagePosition; // 顯示為負數
+                    const expectedValue = (expectedReturnRate / 100) * averagePosition;
+                    const totalReturnAmount = (totalReturnRate / 100) * averagePosition;
+
+                    document.getElementById('avgWinAmount').textContent = formatNumber(avgWinAmount, true);
+                    document.getElementById('avgLossAmount').textContent = formatNumber(avgLossAmount, true);
+                    document.getElementById('expectedValue').textContent = 
+                        `${formatNumber(expectedValue, true)}/每出手一次`;
+                    document.getElementById('totalReturnAmount').textContent = 
+                        formatNumber(totalReturnAmount, true);
+
+                    // 根據金額的正負顯示顏色
+                    const expectedValueElemAmount = document.getElementById('expectedValue');
+                    if (expectedValue > 0) {
+                        expectedValueElemAmount.classList.add('text-red-500');
+                        expectedValueElemAmount.classList.remove('text-green-500');
+                    } else if (expectedValue < 0) {
+                        expectedValueElemAmount.classList.add('text-green-500');
+                        expectedValueElemAmount.classList.remove('text-red-500');
+                    } else {
+                        expectedValueElemAmount.classList.remove('text-red-500', 'text-green-500');
+                    }
+
+                    const totalReturnAmountElemAmount = document.getElementById('totalReturnAmount');
+                    if (totalReturnAmount > 0) {
+                        totalReturnAmountElemAmount.classList.add('text-red-500');
+                        totalReturnAmountElemAmount.classList.remove('text-green-500');
+                    } else if (totalReturnAmount < 0) {
+                        totalReturnAmountElemAmount.classList.add('text-green-500');
+                        totalReturnAmountElemAmount.classList.remove('text-red-500');
+                    } else {
+                        totalReturnAmountElemAmount.classList.remove('text-red-500', 'text-green-500');
+                    }
+
+                    amountResults.classList.remove('hidden');
+                } else {
+                    amountResults.classList.add('hidden');
+                }
+            }
+
+            // 初始化
+            renderTrades();
+            loadData(); // 載入數據
+
+            // 監聽平均部位金額的變化以保存數據
+            document.getElementById('averagePosition').addEventListener('change', function() {
+                calculateStats();
+                saveData(); // 保存數據
+            });
+
+            // 可選：添加清除數據的功能
+            // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
+            /*
+            function clearData() {
+                if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
+                    localStorage.removeItem('trades');
+                    localStorage.removeItem('averagePosition');
+                    trades = [{ returnRate: '' }];
+                    document.getElementById('averagePosition').value = '';
+                    renderTrades();
+                    calculateStats();
+                }
+            }
+            */
+        </script>
+    </body>
 </html>
