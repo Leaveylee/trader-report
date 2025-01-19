@@ -38,12 +38,12 @@
             border-radius: 24px;
             padding: 2rem;
             width: 90%;
-            max-width: 800px; /* 調整寬度以適應表格 */
+            max-width: 1000px; /* 調整寬度以適應新增區塊 */
             margin: 0 auto;
             box-shadow: 0 8px 32px rgba(184, 134, 113, 0.1);
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid rgba(184, 110, 82, 0.2);
@@ -53,7 +53,7 @@
             transition: all 0.3s ease;
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #B86E52;
             box-shadow: 0 0 0 2px rgba(184, 110, 82, 0.1);
@@ -109,6 +109,20 @@
             background-color: #f9fafb; /* Tailwind 的 gray-50 */
             font-weight: 600;
         }
+
+        /* 模態框樣式 */
+        .modal {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +130,17 @@
         <h1 class="text-2xl font-bold text-center mb-8 text-[#B86E52]">
             交易員報告書
         </h1>
+
+        <!-- 策略篩選下拉選單 -->
+        <div class="mb-6">
+            <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-2">
+                篩選策略
+            </label>
+            <select id="strategyFilter" class="w-full p-2 border rounded" onchange="applyStrategyFilter(this.value)">
+                <option value="">全部策略</option>
+                <!-- 策略選項將在 JavaScript 中動態添加 -->
+            </select>
+        </div>
 
         <!-- 分析結果區塊 -->
         <div class="bg-gray-50 p-4 rounded mb-6">
@@ -192,24 +217,67 @@
             </div>
         </div>
 
-        <!-- 平均部位輸入 -->
+        <!-- 策略管理區塊 -->
         <div class="mb-6">
-            <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
-                平均部位金額（選填）
-            </label>
-            <input
-                type="number"
-                id="averagePosition"
-                placeholder="輸入平均部位金額"
-                class="w-full p-2 border rounded"
-                onchange="calculateStats()"
-            >
-            <div class="text-sm text-gray-500 mt-1">
-                若填寫此欄位，將會計算實際金額的獲利/虧損和期望值
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-700">策略管理</h2>
+                <button class="button" onclick="openAddStrategyModal()">
+                    新增策略
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2">策略名稱</th>
+                            <th class="px-4 py-2">描述</th>
+                            <th class="px-4 py-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="strategiesList">
+                        <!-- 策略記錄將在這裡動態添加為表格行 -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- 交易紀錄區域 -->
+        <!-- 新增策略模態框 -->
+        <div id="addStrategyModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">新增策略</h3>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyName">策略名稱</label>
+                <input type="text" id="newStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyDescription">描述</label>
+                <textarea id="newStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeAddStrategyModal()">取消</button>
+                    <button class="button" onclick="addStrategy()">新增</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 編輯策略模態框 -->
+        <div id="editStrategyModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">編輯策略</h3>
+                <input type="hidden" id="editStrategyId">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyName">策略名稱</label>
+                <input type="text" id="editStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyDescription">描述</label>
+                <textarea id="editStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeEditStrategyModal()">取消</button>
+                    <button class="button" onclick="updateStrategy()">更新</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 交易記錄區域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -244,9 +312,12 @@
         </button> -->
 
         <script>
+            // 策略列表
+            let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
             // 交易記錄列表
-            let trades = [{ returnRate: '', assetName: '', strategyName: '' }];
-            let tradesList = document.getElementById('tradesList');
+            let trades = [{ returnRate: '', assetName: '', strategyId: null }];
+            // 當前策略篩選
+            let selectedStrategyFilter = null;
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -282,9 +353,27 @@
                 localStorage.setItem('trades', JSON.stringify(trades));
                 const averagePosition = document.getElementById('averagePosition').value;
                 localStorage.setItem('averagePosition', averagePosition);
+                saveStrategies(); // 保存策略數據
             }
 
-            // 從 localStorage 加載數據
+            // 保存策略數據到 localStorage
+            function saveStrategies() {
+                localStorage.setItem('strategies', JSON.stringify(strategies));
+            }
+
+            // 從 localStorage 加載策略數據
+            function loadStrategies() {
+                const savedStrategies = JSON.parse(localStorage.getItem('strategies'));
+                if (savedStrategies && Array.isArray(savedStrategies)) {
+                    strategies = savedStrategies;
+                } else {
+                    // 如果沒有保存的策略，初始化一個默認策略
+                    strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+                    saveStrategies();
+                }
+            }
+
+            // 從 localStorage 加載交易數據
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
                 const savedAveragePosition = localStorage.getItem('averagePosition');
@@ -292,13 +381,46 @@
                 if (savedTrades && Array.isArray(savedTrades)) {
                     trades = savedTrades;
                 }
-                
+
                 if (savedAveragePosition !== null) {
                     document.getElementById('averagePosition').value = savedAveragePosition;
                 }
                 
+                renderStrategies(); // 渲染策略列表
                 renderTrades();
                 calculateStats();
+            }
+
+            // 渲染策略列表
+            function renderStrategies() {
+                const strategiesList = document.getElementById('strategiesList');
+                strategiesList.innerHTML = strategies.map(strategy => `
+                    <tr>
+                        <td class="border px-4 py-2">${strategy.name}</td>
+                        <td class="border px-4 py-2">${strategy.description}</td>
+                        <td class="border px-4 py-2 text-center">
+                            <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
+                                <i data-lucide="edit"></i>
+                            </button>
+                            <button onclick="deleteStrategy(${strategy.id})" class="delete-button">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                renderStrategyFilter(); // 更新篩選下拉選單
+            }
+
+            // 渲染策略篩選下拉選單
+            function renderStrategyFilter() {
+                const strategyFilter = document.getElementById('strategyFilter');
+                strategyFilter.innerHTML = `
+                    <option value="">全部策略</option>
+                    ${strategies.map(strategy => `
+                        <option value="${strategy.id}">${strategy.name}</option>
+                    `).join('')}
+                `;
             }
 
             // 渲染交易記錄
@@ -334,15 +456,19 @@
                                 >
                             </td>
                             <td class="border px-4 py-2">
-                                <input
-                                    type="text"
-                                    value="${trade.strategyName}"
-                                    oninput="handleTradeChange(${actualIndex}, 'strategyName', this.value)"
+                                <select
+                                    onchange="handleTradeChange(${actualIndex}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入策略名稱"
                                     data-row-index="${actualIndex}"
-                                    data-field="strategyName"
+                                    data-field="strategyId"
                                 >
+                                    <option value="">選擇策略</option>
+                                    ${strategies.map(strategy => `
+                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
+                                            ${strategy.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
@@ -376,15 +502,15 @@
                                 }
                             } else if (currentField === 'assetName') {
                                 // 移動到策略名稱欄位
-                                const nextField = 'strategyName';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                const nextField = 'strategyId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
-                            } else if (currentField === 'strategyName') {
+                            } else if (currentField === 'strategyId') {
                                 // 檢查是否為最後一筆交易，且有有效輸入
                                 const trade = trades[currentRow];
-                                if (trade.strategyName.trim() !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
                                         const newIndex = trades.length - 1;
@@ -395,7 +521,7 @@
                                     }, 100);
                                 } else {
                                     // 如果當前交易有未填寫的欄位，保持在當前欄位
-                                    alert('請確保報酬率和策略名稱已正確填寫。');
+                                    alert('請確保報酬率和策略已正確填寫。');
                                 }
                             }
                         }
@@ -405,19 +531,17 @@
 
             // 處理交易數據變更
             function handleTradeChange(index, field, value) {
-                const cleanedValue = value.replace('%', '').trim();
-                
                 if (field === 'returnRate') {
+                    const cleanedValue = value.replace('%', '').trim();
                     if (cleanedValue === '' || isNaN(cleanedValue)) {
-                        // 處理無效輸入（例如：清空該交易的回報率）
                         trades[index].returnRate = '';
                     } else {
                         trades[index].returnRate = cleanedValue;
                     }
                 } else if (field === 'assetName') {
                     trades[index].assetName = value.trim();
-                } else if (field === 'strategyName') {
-                    trades[index].strategyName = value.trim();
+                } else if (field === 'strategyId') {
+                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
                 }
                 
                 // 計算統計數據和保存
@@ -427,7 +551,12 @@
 
             // 添加交易記錄
             function addTrade() {
-                trades.push({ returnRate: '', assetName: '', strategyName: '' });
+                if (strategies.length === 0) {
+                    alert('請先新增至少一個交易策略。');
+                    return;
+                }
+
+                trades.push({ returnRate: '', assetName: '', strategyId: null });
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
@@ -446,19 +575,565 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '', assetName: '', strategyName: '' });
+                    trades.push({ returnRate: '', assetName: '', strategyId: null });
                 }
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
             }
 
+            // 渲染策略管理列表
+            function renderStrategies() {
+                const strategiesList = document.getElementById('strategiesList');
+                strategiesList.innerHTML = strategies.map(strategy => `
+                    <tr>
+                        <td class="border px-4 py-2">${strategy.name}</td>
+                        <td class="border px-4 py-2">${strategy.description}</td>
+                        <td class="border px-4 py-2 text-center">
+                            <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
+                                <i data-lucide="edit"></i>
+                            </button>
+                            <button onclick="deleteStrategy(${strategy.id})" class="delete-button">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                renderStrategyFilter(); // 更新篩選下拉選單
+            }
+
+            // 渲染策略篩選下拉選單
+            function renderStrategyFilter() {
+                const strategyFilter = document.getElementById('strategyFilter');
+                strategyFilter.innerHTML = `
+                    <option value="">全部策略</option>
+                    ${strategies.map(strategy => `
+                        <option value="${strategy.id}">${strategy.name}</option>
+                    `).join('')}
+                `;
+            }
+
+            // 開啟新增策略模態框
+            function openAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉新增策略模態框
+            function closeAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.add('hidden');
+                document.getElementById('newStrategyName').value = '';
+                document.getElementById('newStrategyDescription').value = '';
+            }
+
+            // 新增策略
+            function addStrategy() {
+                const nameInput = document.getElementById('newStrategyName');
+                const descriptionInput = document.getElementById('newStrategyDescription');
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在
+                const existingStrategy = strategies.find(strategy => strategy.name === name);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                // 生成新的策略 ID
+                const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
+
+                // 新增策略
+                strategies.push({ id: newId, name, description });
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                closeAddStrategyModal();
+            }
+
+            // 開啟編輯策略模態框
+            function openEditStrategyModal(strategyId) {
+                const strategy = strategies.find(s => s.id === strategyId);
+                if (!strategy) return;
+
+                document.getElementById('editStrategyId').value = strategy.id;
+                document.getElementById('editStrategyName').value = strategy.name;
+                document.getElementById('editStrategyDescription').value = strategy.description;
+                document.getElementById('editStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉編輯策略模態框
+            function closeEditStrategyModal() {
+                document.getElementById('editStrategyModal').classList.add('hidden');
+                document.getElementById('editStrategyId').value = '';
+                document.getElementById('editStrategyName').value = '';
+                document.getElementById('editStrategyDescription').value = '';
+            }
+
+            // 更新策略
+            function updateStrategy() {
+                const id = parseInt(document.getElementById('editStrategyId').value, 10);
+                const name = document.getElementById('editStrategyName').value.trim();
+                const description = document.getElementById('editStrategyDescription').value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在（排除當前策略）
+                const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                const strategyIndex = strategies.findIndex(s => s.id === id);
+                if (strategyIndex === -1) return;
+
+                // 更新策略
+                strategies[strategyIndex].name = name;
+                strategies[strategyIndex].description = description;
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                closeEditStrategyModal();
+            }
+
+            // 刪除策略
+            function deleteStrategy(strategyId) {
+                // 檢查是否有交易使用該策略
+                const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
+                if (tradesUsingStrategy.length > 0) {
+                    alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
+                    return;
+                }
+
+                if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
+                    return;
+                }
+
+                strategies = strategies.filter(strategy => strategy.id !== strategyId);
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+            }
+
+            // 渲染策略篩選下拉選單
+            function renderStrategyFilter() {
+                const strategyFilter = document.getElementById('strategyFilter');
+                strategyFilter.innerHTML = `
+                    <option value="">全部策略</option>
+                    ${strategies.map(strategy => `
+                        <option value="${strategy.id}">${strategy.name}</option>
+                    `).join('')}
+                `;
+            }
+
+            // 策略篩選功能
+            function applyStrategyFilter(strategyId) {
+                selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
+                calculateStats();
+                renderTrades();
+            }
+
+            // 渲染交易記錄
+            function renderTrades() {
+                // 反轉交易列表以顯示最新交易在最上方
+                const reversedTrades = trades.slice().reverse();
+
+                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
+                    const actualIndex = trades.length - 1 - reversedIndex;
+                    return `
+                        <tr>
+                            <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="+6.66 或 -2.92"
+                                    data-row-index="${actualIndex}"
+                                    data-field="returnRate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.assetName}"
+                                    oninput="handleTradeChange(${actualIndex}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入標的名稱"
+                                    data-row-index="${actualIndex}"
+                                    data-field="assetName"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <select
+                                    onchange="handleTradeChange(${actualIndex}, 'strategyId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${actualIndex}"
+                                    data-field="strategyId"
+                                >
+                                    <option value="">選擇策略</option>
+                                    ${strategies.map(strategy => `
+                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
+                                            ${strategy.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </td>
+                            <td class="border px-4 py-2 text-center">
+                                ${trades.length > 1 ? `
+                                    <button onclick="removeTrade(${actualIndex})" class="delete-button">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // 重新初始化 Lucide 圖標
+                lucide.createIcons();
+
+                // 添加按鍵事件監聽器
+                const tradeInputs = document.querySelectorAll('.trade-input');
+                tradeInputs.forEach(input => {
+                    input.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            const currentRow = parseInt(this.getAttribute('data-row-index'));
+                            const currentField = this.getAttribute('data-field');
+
+                            if (currentField === 'returnRate') {
+                                // 移動到標的名稱欄位
+                                const nextField = 'assetName';
+                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'assetName') {
+                                // 移動到策略名稱欄位
+                                const nextField = 'strategyId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'strategyId') {
+                                // 檢查是否為最後一筆交易，且有有效輸入
+                                const trade = trades[currentRow];
+                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                    addTrade(); // 添加新的交易欄位
+                                    setTimeout(() => {
+                                        const newIndex = trades.length - 1;
+                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                                        if (newInput) {
+                                            newInput.focus(); // 聚焦到新交易的報酬率欄位
+                                        }
+                                    }, 100);
+                                } else {
+                                    // 如果當前交易有未填寫的欄位，保持在當前欄位
+                                    alert('請確保報酬率和策略已正確填寫。');
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // 處理交易數據變更
+            function handleTradeChange(index, field, value) {
+                if (field === 'returnRate') {
+                    const cleanedValue = value.replace('%', '').trim();
+                    if (cleanedValue === '' || isNaN(cleanedValue)) {
+                        trades[index].returnRate = '';
+                    } else {
+                        trades[index].returnRate = cleanedValue;
+                    }
+                } else if (field === 'assetName') {
+                    trades[index].assetName = value.trim();
+                } else if (field === 'strategyId') {
+                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                }
+                
+                // 計算統計數據和保存
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 添加交易記錄
+            function addTrade() {
+                if (strategies.length === 0) {
+                    alert('請先新增至少一個交易策略。');
+                    return;
+                }
+
+                trades.push({ returnRate: '', assetName: '', strategyId: null });
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+
+                // 聚焦到新欄框的報酬率輸入框
+                setTimeout(() => {
+                    const newIndex = trades.length - 1;
+                    const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                    if (newInput) {
+                        newInput.focus(); // 聚焦到新交易的報酬率欄位
+                    }
+                }, 100);
+            }
+
+            // 刪除交易記錄
+            function removeTrade(index) {
+                trades = trades.filter((_, i) => i !== index);
+                if (trades.length === 0) {
+                    trades.push({ returnRate: '', assetName: '', strategyId: null });
+                }
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 開啟新增策略模態框
+            function openAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉新增策略模態框
+            function closeAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.add('hidden');
+                document.getElementById('newStrategyName').value = '';
+                document.getElementById('newStrategyDescription').value = '';
+            }
+
+            // 新增策略
+            function addStrategy() {
+                const nameInput = document.getElementById('newStrategyName');
+                const descriptionInput = document.getElementById('newStrategyDescription');
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在
+                const existingStrategy = strategies.find(strategy => strategy.name === name);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                // 生成新的策略 ID
+                const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
+
+                // 新增策略
+                strategies.push({ id: newId, name, description });
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                closeAddStrategyModal();
+            }
+
+            // 開啟編輯策略模態框
+            function openEditStrategyModal(strategyId) {
+                const strategy = strategies.find(s => s.id === strategyId);
+                if (!strategy) return;
+
+                document.getElementById('editStrategyId').value = strategy.id;
+                document.getElementById('editStrategyName').value = strategy.name;
+                document.getElementById('editStrategyDescription').value = strategy.description;
+                document.getElementById('editStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉編輯策略模態框
+            function closeEditStrategyModal() {
+                document.getElementById('editStrategyModal').classList.add('hidden');
+                document.getElementById('editStrategyId').value = '';
+                document.getElementById('editStrategyName').value = '';
+                document.getElementById('editStrategyDescription').value = '';
+            }
+
+            // 更新策略
+            function updateStrategy() {
+                const id = parseInt(document.getElementById('editStrategyId').value, 10);
+                const name = document.getElementById('editStrategyName').value.trim();
+                const description = document.getElementById('editStrategyDescription').value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在（排除當前策略）
+                const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                const strategyIndex = strategies.findIndex(s => s.id === id);
+                if (strategyIndex === -1) return;
+
+                // 更新策略
+                strategies[strategyIndex].name = name;
+                strategies[strategyIndex].description = description;
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                closeEditStrategyModal();
+            }
+
+            // 刪除策略
+            function deleteStrategy(strategyId) {
+                // 檢查是否有交易使用該策略
+                const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
+                if (tradesUsingStrategy.length > 0) {
+                    alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
+                    return;
+                }
+
+                if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
+                    return;
+                }
+
+                strategies = strategies.filter(strategy => strategy.id !== strategyId);
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+            }
+
+            // 策略篩選功能
+            function applyStrategyFilter(strategyId) {
+                selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
+                calculateStats();
+                renderTrades();
+            }
+
+            // 渲染交易紀錄
+            function renderTrades() {
+                // 反轉交易列表以顯示最新交易在最上方
+                const reversedTrades = trades.slice().reverse();
+
+                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
+                    const actualIndex = trades.length - 1 - reversedIndex;
+                    return `
+                        <tr>
+                            <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="+6.66 或 -2.92"
+                                    data-row-index="${actualIndex}"
+                                    data-field="returnRate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.assetName}"
+                                    oninput="handleTradeChange(${actualIndex}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入標的名稱"
+                                    data-row-index="${actualIndex}"
+                                    data-field="assetName"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <select
+                                    onchange="handleTradeChange(${actualIndex}, 'strategyId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${actualIndex}"
+                                    data-field="strategyId"
+                                >
+                                    <option value="">選擇策略</option>
+                                    ${strategies.map(strategy => `
+                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
+                                            ${strategy.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </td>
+                            <td class="border px-4 py-2 text-center">
+                                ${trades.length > 1 ? `
+                                    <button onclick="removeTrade(${actualIndex})" class="delete-button">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // 重新初始化 Lucide 圖標
+                lucide.createIcons();
+
+                // 添加按鍵事件監聽器
+                const tradeInputs = document.querySelectorAll('.trade-input');
+                tradeInputs.forEach(input => {
+                    input.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            const currentRow = parseInt(this.getAttribute('data-row-index'));
+                            const currentField = this.getAttribute('data-field');
+
+                            if (currentField === 'returnRate') {
+                                // 移動到標的名稱欄位
+                                const nextField = 'assetName';
+                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'assetName') {
+                                // 移動到策略名稱欄位
+                                const nextField = 'strategyId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'strategyId') {
+                                // 檢查是否為最後一筆交易，且有有效輸入
+                                const trade = trades[currentRow];
+                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                    addTrade(); // 添加新的交易欄位
+                                    setTimeout(() => {
+                                        const newIndex = trades.length - 1;
+                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                                        if (newInput) {
+                                            newInput.focus(); // 聚焦到新交易的報酬率欄位
+                                        }
+                                    }, 100);
+                                } else {
+                                    // 如果當前交易有未填寫的欄位，保持在當前欄位
+                                    alert('請確保報酬率和策略已正確填寫。');
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
             // 計算統計數據
             function calculateStats() {
-                const validTrades = trades.filter(trade => 
+                let validTrades = trades.filter(trade => 
                     trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
                 );
-                
+
+                if (selectedStrategyFilter !== null) {
+                    validTrades = validTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                }
+
                 if (validTrades.length === 0) {
                     // 重置統計數據
                     document.getElementById('totalTrades').textContent = '0';
@@ -565,6 +1240,7 @@
             }
 
             // 初始化
+            loadStrategies();
             renderTrades();
             loadData(); // 載入數據
 
@@ -581,8 +1257,11 @@
                 if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
                     localStorage.removeItem('trades');
                     localStorage.removeItem('averagePosition');
-                    trades = [{ returnRate: '', assetName: '', strategyName: '' }];
+                    localStorage.removeItem('strategies');
+                    trades = [{ returnRate: '', assetName: '', strategyId: null }];
+                    strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     document.getElementById('averagePosition').value = '';
+                    renderStrategies();
                     renderTrades();
                     calculateStats();
                 }
