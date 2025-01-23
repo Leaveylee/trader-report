@@ -390,6 +390,7 @@
                             <th class="px-4 py-2">交易</th>
                             <th class="px-4 py-2">開倉日</th>
                             <th class="px-4 py-2">平倉日</th>
+                            <th class="px-4 py-2">持倉天數</th> <!-- 新增欄位 -->
                             <th class="px-4 py-2">報酬率 (%)</th>
                             <th class="px-4 py-2">標的名稱</th>
                             <th class="px-4 py-2">策略名稱</th>
@@ -627,6 +628,15 @@
                 // 渲染排序後的交易紀錄
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
+                    let holdingDays = '';
+                    if (trade.openDate !== '' && trade.closeDate !== '') {
+                        const openDate = new Date(trade.openDate);
+                        const closeDate = new Date(trade.closeDate);
+                        const timeDiff = closeDate - openDate;
+                        holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                        holdingDays = holdingDays >= 0 ? holdingDays : ''; // 確保持倉天數為正數
+                    }
+
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center">${transactionNumber}</td>
@@ -649,6 +659,9 @@
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
                                 >
+                            </td>
+                            <td class="border px-4 py-2 text-center">
+                                ${holdingDays !== '' ? holdingDays : ''}
                             </td>
                             <td class="border px-4 py-2">
                                 <input
@@ -1127,6 +1140,15 @@
                 // 渲染排序後的交易紀錄
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
+                    let holdingDays = '';
+                    if (trade.openDate !== '' && trade.closeDate !== '') {
+                        const openDate = new Date(trade.openDate);
+                        const closeDate = new Date(trade.closeDate);
+                        const timeDiff = closeDate - openDate;
+                        holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                        holdingDays = holdingDays >= 0 ? holdingDays : ''; // 確保持倉天數為正數
+                    }
+
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center">${transactionNumber}</td>
@@ -1149,6 +1171,9 @@
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
                                 >
+                            </td>
+                            <td class="border px-4 py-2 text-center">
+                                ${holdingDays !== '' ? holdingDays : ''}
                             </td>
                             <td class="border px-4 py-2">
                                 <input
