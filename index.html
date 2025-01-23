@@ -588,12 +588,12 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 對過濾後的交易紀錄進行排序，基於開倉日（升序）
+                // 對過濾後的交易紀錄進行排序，基於開倉日（降序）
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return 1;
-                    if (b.openDate === '') return -1;
-                    return new Date(a.openDate) - new Date(b.openDate);
+                    if (a.openDate === '') return 1; // 空日期放在後面
+                    if (b.openDate === '') return -1; // 空日期放在後面
+                    return new Date(b.openDate) - new Date(a.openDate); // 降序排列
                 });
 
                 // 渲染排序後的交易紀錄
@@ -756,8 +756,22 @@
                     trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'openDate') {
                     trades[index].openDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const closeDate = trades[index].closeDate;
+                    if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
                 } else if (field === 'closeDate') {
                     trades[index].closeDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const openDate = trades[index].openDate;
+                    if (openDate !== '' && new Date(value) < new Date(openDate)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
                 }
                 
                 // 計算統計數據和保存
