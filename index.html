@@ -514,6 +514,10 @@
                     });
                 }
 
+                if (trades.length === 0) {
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                }
+
                 if (savedAveragePosition !== null) {
                     document.getElementById('averagePosition').value = savedAveragePosition;
                 }
@@ -646,7 +650,7 @@
                                     placeholder="+6.66 或 -2.92"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="returnRate"
-                                    data-trade-id="${trade.id}" <!-- 添加 data-trade-id 屬性 -->
+                                    data-trade-id="${trade.id}"
                                 >
                             </td>
                             <td class="border px-4 py-2">
@@ -1221,7 +1225,7 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
-                    trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
+                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
