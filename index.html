@@ -442,8 +442,14 @@
 
             // 渲染交易記錄
             function renderTrades() {
+                // 根據篩選條件過濾交易紀錄
+                let filteredTrades = trades;
+                if (selectedStrategyFilter !== null) {
+                    filteredTrades = trades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                }
+
                 // 反轉交易列表以顯示最新交易在最上方
-                const reversedTrades = trades.slice().reverse();
+                const reversedTrades = filteredTrades.slice().reverse();
 
                 tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
                     const actualIndex = trades.length - 1 - reversedIndex;
@@ -638,6 +644,7 @@
                 saveStrategies();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
                 closeAddStrategyModal();
             }
 
@@ -687,6 +694,7 @@
                 saveStrategies();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
                 closeEditStrategyModal();
             }
 
@@ -707,6 +715,7 @@
                 saveStrategies();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
             }
 
             // 策略篩選功能
