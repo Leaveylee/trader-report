@@ -38,7 +38,7 @@
             border-radius: 24px;
             padding: 2rem;
             width: 90%;
-            max-width: 1000px; /* 調整寬度以適應新增區塊 */
+            max-width: 1200px; /* 調整寬度以適應新增區塊 */
             margin: 0 auto;
             box-shadow: 0 8px 32px rgba(184, 134, 113, 0.1);
         }
@@ -131,15 +131,33 @@
             交易員報告書
         </h1>
 
-        <!-- 策略篩選下拉選單 -->
+        <!-- 策略和外部條件篩選下拉選單 -->
         <div class="mb-6">
-            <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-2">
-                篩選策略
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                篩選條件
             </label>
-            <select id="strategyFilter" class="w-full p-2 border rounded" onchange="applyStrategyFilter(this.value)">
-                <option value="">全部策略</option>
-                <!-- 策略選項將在 JavaScript 中動態添加 -->
-            </select>
+            <div class="flex space-x-4">
+                <!-- 策略篩選 -->
+                <div class="flex-1">
+                    <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選策略
+                    </label>
+                    <select id="strategyFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+                        <option value="">全部策略</option>
+                        <!-- 策略選項將在 JavaScript 中動態添加 -->
+                    </select>
+                </div>
+                <!-- 外部條件篩選 -->
+                <div class="flex-1">
+                    <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選外部條件
+                    </label>
+                    <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+                        <option value="">全部外部條件</option>
+                        <!-- 外部條件選項將在 JavaScript 中動態添加 -->
+                    </select>
+                </div>
+            </div>
         </div>
 
         <!-- 分析結果區塊 -->
@@ -241,6 +259,30 @@
             </div>
         </div>
 
+        <!-- 外部條件管理區塊 -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-700">外部條件管理</h2>
+                <button class="button" onclick="openAddExternalConditionModal()">
+                    新增外部條件
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2">外部條件名稱</th>
+                            <th class="px-4 py-2">描述</th>
+                            <th class="px-4 py-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="externalConditionsList">
+                        <!-- 外部條件記錄將在這裡動態添加為表格行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- 新增策略模態框 -->
         <div id="addStrategyModal" class="modal hidden">
             <div class="bg-white p-6 rounded-lg w-96">
@@ -277,6 +319,42 @@
             </div>
         </div>
 
+        <!-- 新增外部條件模態框 -->
+        <div id="addExternalConditionModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">新增外部條件</h3>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">外部條件名稱</label>
+                <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionDescription">描述</label>
+                <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeAddExternalConditionModal()">取消</button>
+                    <button class="button" onclick="addExternalCondition()">新增</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 編輯外部條件模態框 -->
+        <div id="editExternalConditionModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">編輯外部條件</h3>
+                <input type="hidden" id="editExternalConditionId">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">外部條件名稱</label>
+                <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionDescription">描述</label>
+                <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeEditExternalConditionModal()">取消</button>
+                    <button class="button" onclick="updateExternalCondition()">更新</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 平均部位輸入 -->
         <div class="mb-6">
             <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
@@ -303,7 +381,7 @@
                 </button>
             </div>
             <div class="text-sm text-gray-600 mb-2">
-                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱
+                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white rounded">
@@ -313,6 +391,7 @@
                             <th class="px-4 py-2">報酬率 (%)</th>
                             <th class="px-4 py-2">標的名稱</th>
                             <th class="px-4 py-2">策略名稱</th>
+                            <th class="px-4 py-2">外部條件</th>
                             <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
@@ -331,10 +410,13 @@
         <script>
             // 策略列表
             let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+            // 外部條件列表
+            let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
             // 交易記錄列表
-            let trades = [{ returnRate: '', assetName: '', strategyId: null }];
-            // 當前策略篩選
+            let trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null }];
+            // 當前篩選條件
             let selectedStrategyFilter = null;
+            let selectedExternalConditionFilter = null;
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -371,11 +453,17 @@
                 const averagePosition = document.getElementById('averagePosition').value;
                 localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
+                saveExternalConditions(); // 保存外部條件數據
             }
 
             // 保存策略數據到 localStorage
             function saveStrategies() {
                 localStorage.setItem('strategies', JSON.stringify(strategies));
+            }
+
+            // 保存外部條件數據到 localStorage
+            function saveExternalConditions() {
+                localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
             }
 
             // 從 localStorage 加載策略數據
@@ -387,6 +475,18 @@
                     // 如果沒有保存的策略，初始化一個默認策略
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     saveStrategies();
+                }
+            }
+
+            // 從 localStorage 加載外部條件數據
+            function loadExternalConditions() {
+                const savedExternalConditions = JSON.parse(localStorage.getItem('externalConditions'));
+                if (savedExternalConditions && Array.isArray(savedExternalConditions)) {
+                    externalConditions = savedExternalConditions;
+                } else {
+                    // 如果沒有保存的外部條件，初始化一個默認外部條件
+                    externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
+                    saveExternalConditions();
                 }
             }
 
@@ -404,6 +504,7 @@
                 }
                 
                 renderStrategies(); // 渲染策略列表
+                renderExternalConditions(); // 渲染外部條件列表
                 renderTrades();
                 calculateStats();
             }
@@ -426,7 +527,7 @@
                     </tr>
                 `).join('');
 
-                renderStrategyFilter(); // 更新篩選下拉選單
+                renderStrategyFilter(); // 更新策略篩選下拉選單
             }
 
             // 渲染策略篩選下拉選單
@@ -440,12 +541,49 @@
                 `;
             }
 
+            // 渲染外部條件列表
+            function renderExternalConditions() {
+                const externalConditionsList = document.getElementById('externalConditionsList');
+                externalConditionsList.innerHTML = externalConditions.map(condition => `
+                    <tr>
+                        <td class="border px-4 py-2">${condition.name}</td>
+                        <td class="border px-4 py-2">${condition.description}</td>
+                        <td class="border px-4 py-2 text-center">
+                            <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
+                                <i data-lucide="edit"></i>
+                            </button>
+                            <button onclick="deleteExternalCondition(${condition.id})" class="delete-button">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                renderExternalConditionFilter(); // 更新外部條件篩選下拉選單
+            }
+
+            // 渲染外部條件篩選下拉選單
+            function renderExternalConditionFilter() {
+                const externalConditionFilter = document.getElementById('externalConditionFilter');
+                externalConditionFilter.innerHTML = `
+                    <option value="">全部外部條件</option>
+                    ${externalConditions.map(condition => `
+                        <option value="${condition.id}">${condition.name}</option>
+                    `).join('')}
+                `;
+            }
+
             // 渲染交易記錄
             function renderTrades() {
+                tradesList.innerHTML = '';
+
                 // 根據篩選條件過濾交易紀錄
                 let filteredTrades = trades;
                 if (selectedStrategyFilter !== null) {
-                    filteredTrades = trades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                    filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                }
+                if (selectedExternalConditionFilter !== null) {
+                    filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
                 // 反轉交易列表以顯示最新交易在最上方
@@ -493,6 +631,21 @@
                                     `).join('')}
                                 </select>
                             </td>
+                            <td class="border px-4 py-2">
+                                <select
+                                    onchange="handleTradeChange(${actualIndex}, 'externalConditionId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${actualIndex}"
+                                    data-field="externalConditionId"
+                                >
+                                    <option value="">選擇外部條件</option>
+                                    ${externalConditions.map(condition => `
+                                        <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>
+                                            ${condition.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
                                     <button onclick="removeTrade(${actualIndex})" class="delete-button">
@@ -531,9 +684,16 @@
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'strategyId') {
+                                // 移動到外部條件欄位
+                                const nextField = 'externalConditionId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'externalConditionId') {
                                 // 檢查是否為最後一筆交易，且有有效輸入
                                 const trade = trades[currentRow];
-                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
                                         const newIndex = trades.length - 1;
@@ -544,7 +704,7 @@
                                     }, 100);
                                 } else {
                                     // 如果當前交易有未填寫的欄位，保持在當前欄位
-                                    alert('請確保報酬率和策略已正確填寫。');
+                                    alert('請確保報酬率、策略和外部條件已正確填寫。');
                                 }
                             }
                         }
@@ -565,6 +725,8 @@
                     trades[index].assetName = value.trim();
                 } else if (field === 'strategyId') {
                     trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'externalConditionId') {
+                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
                 }
                 
                 // 計算統計數據和保存
@@ -578,8 +740,12 @@
                     alert('請先新增至少一個交易策略。');
                     return;
                 }
+                if (externalConditions.length === 0) {
+                    alert('請先新增至少一個外部條件。');
+                    return;
+                }
 
-                trades.push({ returnRate: '', assetName: '', strategyId: null });
+                trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null });
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
@@ -598,7 +764,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '', assetName: '', strategyId: null });
+                    trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null });
                 }
                 renderTrades();
                 calculateStats();
@@ -718,9 +884,127 @@
                 calculateStats(); // 更新統計數據
             }
 
-            // 策略篩選功能
-            function applyStrategyFilter(strategyId) {
+            // 開啟新增外部條件模態框
+            function openAddExternalConditionModal() {
+                document.getElementById('addExternalConditionModal').classList.remove('hidden');
+            }
+
+            // 關閉新增外部條件模態框
+            function closeAddExternalConditionModal() {
+                document.getElementById('addExternalConditionModal').classList.add('hidden');
+                document.getElementById('newExternalConditionName').value = '';
+                document.getElementById('newExternalConditionDescription').value = '';
+            }
+
+            // 新增外部條件
+            function addExternalCondition() {
+                const nameInput = document.getElementById('newExternalConditionName');
+                const descriptionInput = document.getElementById('newExternalConditionDescription');
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+
+                if (name === '') {
+                    alert('外部條件名稱不能為空。');
+                    return;
+                }
+
+                // 檢查外部條件名稱是否已存在
+                const existingCondition = externalConditions.find(condition => condition.name === name);
+                if (existingCondition) {
+                    alert('外部條件名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                // 生成新的外部條件 ID
+                const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
+
+                // 新增外部條件
+                externalConditions.push({ id: newId, name, description });
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+                closeAddExternalConditionModal();
+            }
+
+            // 開啟編輯外部條件模態框
+            function openEditExternalConditionModal(conditionId) {
+                const condition = externalConditions.find(c => c.id === conditionId);
+                if (!condition) return;
+
+                document.getElementById('editExternalConditionId').value = condition.id;
+                document.getElementById('editExternalConditionName').value = condition.name;
+                document.getElementById('editExternalConditionDescription').value = condition.description;
+                document.getElementById('editExternalConditionModal').classList.remove('hidden');
+            }
+
+            // 關閉編輯外部條件模態框
+            function closeEditExternalConditionModal() {
+                document.getElementById('editExternalConditionModal').classList.add('hidden');
+                document.getElementById('editExternalConditionId').value = '';
+                document.getElementById('editExternalConditionName').value = '';
+                document.getElementById('editExternalConditionDescription').value = '';
+            }
+
+            // 更新外部條件
+            function updateExternalCondition() {
+                const id = parseInt(document.getElementById('editExternalConditionId').value, 10);
+                const name = document.getElementById('editExternalConditionName').value.trim();
+                const description = document.getElementById('editExternalConditionDescription').value.trim();
+
+                if (name === '') {
+                    alert('外部條件名稱不能為空。');
+                    return;
+                }
+
+                // 檢查外部條件名稱是否已存在（排除當前外部條件）
+                const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
+                if (existingCondition) {
+                    alert('外部條件名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                const conditionIndex = externalConditions.findIndex(c => c.id === id);
+                if (conditionIndex === -1) return;
+
+                // 更新外部條件
+                externalConditions[conditionIndex].name = name;
+                externalConditions[conditionIndex].description = description;
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+                closeEditExternalConditionModal();
+            }
+
+            // 刪除外部條件
+            function deleteExternalCondition(conditionId) {
+                // 檢查是否有交易使用該外部條件
+                const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
+                if (tradesUsingCondition.length > 0) {
+                    alert('有交易紀錄正在使用此外部條件，請先移除或更改相關交易紀錄。');
+                    return;
+                }
+
+                if (!confirm('您確定要刪除此外部條件嗎？此操作無法撤銷。')) {
+                    return;
+                }
+
+                externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+            }
+
+            // 策略和外部條件篩選功能
+            function applyFilters() {
+                const strategyId = document.getElementById('strategyFilter').value;
+                const externalConditionId = document.getElementById('externalConditionFilter').value;
+
                 selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
+                selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
+
                 calculateStats();
                 renderTrades();
             }
@@ -733,6 +1017,10 @@
 
                 if (selectedStrategyFilter !== null) {
                     validTrades = validTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                }
+
+                if (selectedExternalConditionFilter !== null) {
+                    validTrades = validTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
                 if (validTrades.length === 0) {
@@ -843,7 +1131,9 @@
 
             // 初始化
             loadStrategies();
+            loadExternalConditions();
             renderTrades();
+            calculateStats();
             loadData(); // 載入數據
 
             // 監聽平均部位金額的變化以保存數據
@@ -860,10 +1150,13 @@
                     localStorage.removeItem('trades');
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
-                    trades = [{ returnRate: '', assetName: '', strategyId: null }];
+                    localStorage.removeItem('externalConditions');
+                    trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+                    externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
                     renderStrategies();
+                    renderExternalConditions();
                     renderTrades();
                     calculateStats();
                 }
