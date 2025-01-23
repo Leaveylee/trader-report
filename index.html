@@ -415,10 +415,13 @@
             // 外部條件列表
             let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
             // 交易記錄列表
-            let trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
+            let trades = [];
             // 當前篩選條件
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
+
+            // 新增一個全局變數來追踪下一個交易的 ID
+            let nextTradeId = 1;
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -498,7 +501,17 @@
                 const savedAveragePosition = localStorage.getItem('averagePosition');
                 
                 if (savedTrades && Array.isArray(savedTrades)) {
-                    trades = savedTrades;
+                    // 確保每個交易都有唯一的 ID
+                    trades = savedTrades.map(trade => {
+                        if (!trade.id) {
+                            trade.id = nextTradeId++;
+                        } else {
+                            if (trade.id >= nextTradeId) {
+                                nextTradeId = trade.id + 1;
+                            }
+                        }
+                        return trade;
+                    });
                 }
 
                 if (savedAveragePosition !== null) {
@@ -608,9 +621,9 @@
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${index}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="openDate"
                                 >
                             </td>
@@ -618,9 +631,9 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${index}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
                                 >
                             </td>
@@ -628,29 +641,30 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${index}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="returnRate"
+                                    data-trade-id="${trade.id}" <!-- 添加 data-trade-id 屬性 -->
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${index}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="assetName"
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="strategyId"
                                 >
                                     <option value="">選擇策略</option>
@@ -663,9 +677,9 @@
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${trades.indexOf(trade)}"
                                     data-field="externalConditionId"
                                 >
                                     <option value="">選擇外部條件</option>
@@ -678,7 +692,7 @@
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${index})" class="delete-button">
+                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 ` : ''}
@@ -726,7 +740,7 @@
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                                        const newInput = document.querySelector(`input[data-trade-id="${nextTradeId - 1}"][data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -792,17 +806,26 @@
                     return;
                 }
 
-                // 添加新交易到 trades 陣列
-                trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                // 創建新交易並分配唯一的 ID
+                const newTrade = { 
+                    id: nextTradeId++, 
+                    returnRate: '', 
+                    assetName: '', 
+                    strategyId: null, 
+                    externalConditionId: null, 
+                    openDate: '', 
+                    closeDate: '' 
+                };
+                trades.push(newTrade);
                 
-                // 重新渲染交易紀錄、計算統計數據並保存
+                // 渲染交易記錄、計算統計數據並保存
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最後一筆，索引為 trades.length - 1）
+                // 聚焦到新添加的交易的報酬率輸入框
                 setTimeout(() => {
-                    const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                    const newInput = document.querySelector(`input[data-trade-id="${newTrade.id}"][data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
@@ -813,7 +836,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
                 }
                 renderTrades();
                 calculateStats();
