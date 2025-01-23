@@ -530,6 +530,7 @@
                 `).join('');
 
                 renderStrategyFilter(); // 更新策略篩選下拉選單
+                lucide.createIcons();
             }
 
             // 渲染策略篩選下拉選單
@@ -562,6 +563,7 @@
                 `).join('');
 
                 renderExternalConditionFilter(); // 更新外部條件篩選下拉選單
+                lucide.createIcons();
             }
 
             // 渲染外部條件篩選下拉選單
@@ -577,6 +579,7 @@
 
             // 渲染交易記錄
             function renderTrades() {
+                const tradesList = document.getElementById('tradesList');
                 tradesList.innerHTML = '';
 
                 // 根據篩選條件過濾交易紀錄
@@ -588,19 +591,19 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 對過濾後的交易紀錄進行排序，基於開倉日（降序），空日期優先
+                // 對過濾後的交易紀錄進行排序，基於開倉日（升序），空日期優先
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
                     if (a.openDate === '') return -1; // 空日期放在頂端
                     if (b.openDate === '') return 1;  // 空日期放在頂端
-                    return new Date(b.openDate) - new Date(a.openDate); // 降序排列
+                    return new Date(a.openDate) - new Date(b.openDate); // 升序排列
                 });
 
                 // 渲染排序後的交易紀錄
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     return `
                         <tr>
-                            <td class="border px-4 py-2">交易 ${index + 1}</td>
+                            <td class="border px-4 py-2">${index + 1}</td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="date"
@@ -723,7 +726,7 @@
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newInput = document.querySelector(`input[data-row-index="0"][data-field="returnRate"]`);
+                                        const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -797,9 +800,9 @@
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最頂端，索引為 0）
+                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最後一筆，索引為 trades.length - 1）
                 setTimeout(() => {
-                    const newInput = document.querySelector(`input[data-row-index="0"][data-field="returnRate"]`);
+                    const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
@@ -1178,8 +1181,6 @@
             // 初始化
             loadStrategies();
             loadExternalConditions();
-            renderTrades();
-            calculateStats();
             loadData(); // 載入數據
 
             // 監聽平均部位金額的變化以保存數據
@@ -1208,6 +1209,22 @@
                 }
             }
             */
+
+            // 獲取所有交易記錄的最大編號，以便後續新增交易時編號遞增
+            function getMaxTradeNumber() {
+                if (trades.length === 0) return 0;
+                // 根據開倉日排序，找到最新的交易
+                const sortedTrades = [...trades].sort((a, b) => {
+                    if (a.openDate === '' && b.openDate === '') return 0;
+                    if (a.openDate === '') return -1;
+                    if (b.openDate === '') return 1;
+                    return new Date(a.openDate) - new Date(b.openDate);
+                });
+                return sortedTrades.length;
+            }
+
+            // 渲染交易編號，已在 renderTrades() 中修改
+
         </script>
     </div>
 </body>
