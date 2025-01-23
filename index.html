@@ -516,8 +516,8 @@
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
                     <tr>
-                        <td class="border px-4 py-2">${strategy.name}</td>
-                        <td class="border px-4 py-2">${strategy.description}</td>
+                        <td class="border px-4 py-2">${escapeHTML(strategy.name)}</td>
+                        <td class="border px-4 py-2">${escapeHTML(strategy.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -539,7 +539,7 @@
                 strategyFilter.innerHTML = `
                     <option value="">全部策略</option>
                     ${strategies.map(strategy => `
-                        <option value="${strategy.id}">${strategy.name}</option>
+                        <option value="${strategy.id}">${escapeHTML(strategy.name)}</option>
                     `).join('')}
                 `;
             }
@@ -549,8 +549,8 @@
                 const externalConditionsList = document.getElementById('externalConditionsList');
                 externalConditionsList.innerHTML = externalConditions.map(condition => `
                     <tr>
-                        <td class="border px-4 py-2">${condition.name}</td>
-                        <td class="border px-4 py-2">${condition.description}</td>
+                        <td class="border px-4 py-2">${escapeHTML(condition.name)}</td>
+                        <td class="border px-4 py-2">${escapeHTML(condition.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -572,9 +572,19 @@
                 externalConditionFilter.innerHTML = `
                     <option value="">全部外部條件</option>
                     ${externalConditions.map(condition => `
-                        <option value="${condition.id}">${condition.name}</option>
+                        <option value="${condition.id}">${escapeHTML(condition.name)}</option>
                     `).join('')}
                 `;
+            }
+
+            // 轉義 HTML 字符以防止 XSS
+            function escapeHTML(str) {
+                if (typeof str !== 'string') return str;
+                return str.replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(/"/g, "&quot;")
+                          .replace(/'/g, "&#039;");
             }
 
             // 渲染交易記錄
@@ -583,7 +593,8 @@
                 tradesList.innerHTML = '';
 
                 // 根據篩選條件過濾交易紀錄
-                let filteredTrades = trades;
+                let filteredTrades = trades.filter(trade => trade.openDate !== '' && trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
+
                 if (selectedStrategyFilter !== null) {
                     filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
                 }
@@ -591,19 +602,20 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 對過濾後的交易紀錄進行排序，基於開倉日（升序），空日期優先
+                // 對過濾後的交易紀錄進行排序，基於開倉日（降序），空日期放在底部
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1; // 空日期放在頂端
-                    if (b.openDate === '') return 1;  // 空日期放在頂端
-                    return new Date(a.openDate) - new Date(b.openDate); // 升序排列
+                    if (a.openDate === '') return 1; // 空日期放在底部
+                    if (b.openDate === '') return -1; // 空日期放在底部
+                    return new Date(b.openDate) - new Date(a.openDate); // 降序排列
                 });
 
                 // 渲染排序後的交易紀錄
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                    const tradeNumber = filteredTrades.length - index;
                     return `
                         <tr>
-                            <td class="border px-4 py-2">${index + 1}</td>
+                            <td class="border px-4 py-2">${tradeNumber}</td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="date"
@@ -638,7 +650,7 @@
                             <td class="border px-4 py-2">
                                 <input
                                     type="text"
-                                    value="${trade.assetName}"
+                                    value="${escapeHTML(trade.assetName)}"
                                     oninput="handleTradeChange(${index}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
@@ -656,7 +668,7 @@
                                     <option value="">選擇策略</option>
                                     ${strategies.map(strategy => `
                                         <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
-                                            ${strategy.name}
+                                            ${escapeHTML(strategy.name)}
                                         </option>
                                     `).join('')}
                                 </select>
@@ -671,7 +683,7 @@
                                     <option value="">選擇外部條件</option>
                                     ${externalConditions.map(condition => `
                                         <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>
-                                            ${condition.name}
+                                            ${escapeHTML(condition.name)}
                                         </option>
                                     `).join('')}
                                 </select>
@@ -726,7 +738,8 @@
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                                        const newIndex = trades.length - 1; // 最新交易的索引
+                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -800,9 +813,10 @@
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最後一筆，索引為 trades.length - 1）
+                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最頂端，索引為 0）
                 setTimeout(() => {
-                    const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                    const newIndex = trades.length - 1; // 最新交易的索引
+                    const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
@@ -823,6 +837,7 @@
             // 開啟新增策略模態框
             function openAddStrategyModal() {
                 document.getElementById('addStrategyModal').classList.remove('hidden');
+                document.getElementById('newStrategyName').focus();
             }
 
             // 關閉新增策略模態框
@@ -872,6 +887,7 @@
                 document.getElementById('editStrategyName').value = strategy.name;
                 document.getElementById('editStrategyDescription').value = strategy.description;
                 document.getElementById('editStrategyModal').classList.remove('hidden');
+                document.getElementById('editStrategyName').focus();
             }
 
             // 關閉編輯策略模態框
@@ -936,6 +952,7 @@
             // 開啟新增外部條件模態框
             function openAddExternalConditionModal() {
                 document.getElementById('addExternalConditionModal').classList.remove('hidden');
+                document.getElementById('newExternalConditionName').focus();
             }
 
             // 關閉新增外部條件模態框
@@ -985,6 +1002,7 @@
                 document.getElementById('editExternalConditionName').value = condition.name;
                 document.getElementById('editExternalConditionDescription').value = condition.description;
                 document.getElementById('editExternalConditionModal').classList.remove('hidden');
+                document.getElementById('editExternalConditionName').focus();
             }
 
             // 關閉編輯外部條件模態框
@@ -1209,21 +1227,6 @@
                 }
             }
             */
-
-            // 獲取所有交易記錄的最大編號，以便後續新增交易時編號遞增
-            function getMaxTradeNumber() {
-                if (trades.length === 0) return 0;
-                // 根據開倉日排序，找到最新的交易
-                const sortedTrades = [...trades].sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1;
-                    if (b.openDate === '') return 1;
-                    return new Date(a.openDate) - new Date(b.openDate);
-                });
-                return sortedTrades.length;
-            }
-
-            // 渲染交易編號，已在 renderTrades() 中修改
 
         </script>
     </div>
