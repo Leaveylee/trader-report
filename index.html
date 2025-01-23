@@ -629,12 +629,20 @@
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     let holdingDays = '';
+                    let holdingDaysClass = '';
                     if (trade.openDate !== '' && trade.closeDate !== '') {
                         const openDate = new Date(trade.openDate);
                         const closeDate = new Date(trade.closeDate);
                         const timeDiff = closeDate - openDate;
                         holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-                        holdingDays = holdingDays >= 0 ? holdingDays : ''; // 確保持倉天數為正數
+                        if (holdingDays >= 0) {
+                            holdingDays = holdingDays;
+                        } else {
+                            holdingDays = ''; // 錯誤的日期，不顯示
+                        }
+                    } else {
+                        holdingDays = '未平倉';
+                        holdingDaysClass = 'text-red-500'; // 使用紅色字體
                     }
 
                     return `
@@ -660,8 +668,8 @@
                                     data-field="closeDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2 text-center">
-                                ${holdingDays !== '' ? holdingDays : ''}
+                            <td class="border px-4 py-2 text-center ${holdingDaysClass}">
+                                ${holdingDays}
                             </td>
                             <td class="border px-4 py-2">
                                 <input
@@ -679,7 +687,7 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value}"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -1141,12 +1149,20 @@
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     let holdingDays = '';
+                    let holdingDaysClass = '';
                     if (trade.openDate !== '' && trade.closeDate !== '') {
                         const openDate = new Date(trade.openDate);
                         const closeDate = new Date(trade.closeDate);
                         const timeDiff = closeDate - openDate;
                         holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-                        holdingDays = holdingDays >= 0 ? holdingDays : ''; // 確保持倉天數為正數
+                        if (holdingDays >= 0) {
+                            holdingDays = holdingDays;
+                        } else {
+                            holdingDays = ''; // 錯誤的日期，不顯示
+                        }
+                    } else {
+                        holdingDays = '未平倉';
+                        holdingDaysClass = 'text-red-500'; // 使用紅色字體
                     }
 
                     return `
@@ -1166,14 +1182,14 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value}"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2 text-center">
-                                ${holdingDays !== '' ? holdingDays : ''}
+                            <td class="border px-4 py-2 text-center ${holdingDaysClass}">
+                                ${holdingDays}
                             </td>
                             <td class="border px-4 py-2">
                                 <input
@@ -1191,7 +1207,7 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value}"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
