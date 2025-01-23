@@ -723,8 +723,7 @@
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newIndex = trades.length - 1;
-                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                                        const newInput = document.querySelector(`input[data-row-index="0"][data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -790,15 +789,17 @@
                     return;
                 }
 
+                // 添加新交易到 trades 陣列
                 trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                
+                // 重新渲染交易紀錄、計算統計數據並保存
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新欄框的報酬率輸入框
+                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最頂端，索引為 0）
                 setTimeout(() => {
-                    const newIndex = trades.length - 1;
-                    const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                    const newInput = document.querySelector(`input[data-row-index="0"][data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
