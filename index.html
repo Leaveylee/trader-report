@@ -608,20 +608,29 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為降序
+                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為升序
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
                     if (a.openDate === '') return -1; // 無開倉日的交易排在最上方
                     if (b.openDate === '') return 1;  // 無開倉日的交易排在最上方
                     if (a.openDate !== b.openDate) {
-                        return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
+                        return new Date(a.openDate) - new Date(b.openDate); // 有開倉日的交易按升序排列
                     }
                     return a.id - b.id; // 同一開倉日按 id 升序排列
                 });
 
+                // 分配交易編號：有開倉日的交易按排序順序編號，無開倉日的交易編號留空
+                let tradeNumber = 1;
+                const tradeNumbersMap = new Map();
+                filteredTrades.forEach(trade => {
+                    if (trade.openDate !== '') {
+                        tradeNumbersMap.set(trade.id, tradeNumber++);
+                    }
+                });
+
                 // 渲染排序後的交易紀錄，並分配交易編號
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
-                    const transactionNumber = trade.openDate !== '' ? index + 1 : '';
+                tradesList.innerHTML = filteredTrades.map(trade => {
+                    const transactionNumber = trade.openDate !== '' ? tradeNumbersMap.get(trade.id) : '';
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center">${transactionNumber}</td>
@@ -1103,20 +1112,29 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為降序
+                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為升序
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
                     if (a.openDate === '') return -1; // 無開倉日的交易排在最上方
                     if (b.openDate === '') return 1;  // 無開倉日的交易排在最上方
                     if (a.openDate !== b.openDate) {
-                        return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
+                        return new Date(a.openDate) - new Date(b.openDate); // 有開倉日的交易按升序排列
                     }
                     return a.id - b.id; // 同一開倉日按 id 升序排列
                 });
 
+                // 分配交易編號：有開倉日的交易按排序順序編號，無開倉日的交易編號留空
+                let tradeNumber = 1;
+                const tradeNumbersMap = new Map();
+                filteredTrades.forEach(trade => {
+                    if (trade.openDate !== '') {
+                        tradeNumbersMap.set(trade.id, tradeNumber++);
+                    }
+                });
+
                 // 渲染排序後的交易紀錄，並分配交易編號
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
-                    const transactionNumber = trade.openDate !== '' ? index + 1 : '';
+                tradesList.innerHTML = filteredTrades.map(trade => {
+                    const transactionNumber = trade.openDate !== '' ? tradeNumbersMap.get(trade.id) : '';
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center">${transactionNumber}</td>
@@ -1134,7 +1152,7 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
@@ -1156,7 +1174,7 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
