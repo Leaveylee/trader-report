@@ -381,13 +381,15 @@
                 </button>
             </div>
             <div class="text-sm text-gray-600 mb-2">
-                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件
+                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、開倉日和平倉日
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
                             <th class="px-4 py-2">交易</th>
+                            <th class="px-4 py-2">開倉日</th>
+                            <th class="px-4 py-2">平倉日</th>
                             <th class="px-4 py-2">報酬率 (%)</th>
                             <th class="px-4 py-2">標的名稱</th>
                             <th class="px-4 py-2">策略名稱</th>
@@ -413,7 +415,7 @@
             // 外部條件列表
             let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
             // 交易記錄列表
-            let trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null }];
+            let trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
             // 當前篩選條件
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
@@ -596,6 +598,26 @@
                             <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
                             <td class="border px-4 py-2">
                                 <input
+                                    type="date"
+                                    value="${trade.openDate}"
+                                    oninput="handleTradeChange(${actualIndex}, 'openDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${actualIndex}"
+                                    data-field="openDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="date"
+                                    value="${trade.closeDate}"
+                                    oninput="handleTradeChange(${actualIndex}, 'closeDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${actualIndex}"
+                                    data-field="closeDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
                                     type="text"
                                     value="${trade.returnRate}"
                                     oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
@@ -727,6 +749,10 @@
                     trades[index].strategyId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'externalConditionId') {
                     trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'openDate') {
+                    trades[index].openDate = value;
+                } else if (field === 'closeDate') {
+                    trades[index].closeDate = value;
                 }
                 
                 // 計算統計數據和保存
@@ -745,7 +771,7 @@
                     return;
                 }
 
-                trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null });
+                trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
@@ -764,7 +790,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null });
+                    trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1151,7 +1177,7 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
-                    trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null }];
+                    trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
