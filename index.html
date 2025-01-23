@@ -687,7 +687,7 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -1115,6 +1115,46 @@
                 renderTrades();
             }
 
+            // 處理交易數據變更
+            function handleTradeChange(index, field, value) {
+                if (field === 'returnRate') {
+                    const cleanedValue = value.replace('%', '').trim();
+                    if (cleanedValue === '' || isNaN(cleanedValue)) {
+                        trades[index].returnRate = '';
+                    } else {
+                        trades[index].returnRate = cleanedValue;
+                    }
+                } else if (field === 'assetName') {
+                    trades[index].assetName = value.trim();
+                } else if (field === 'strategyId') {
+                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'externalConditionId') {
+                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'openDate') {
+                    trades[index].openDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const closeDate = trades[index].closeDate;
+                    if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
+                } else if (field === 'closeDate') {
+                    trades[index].closeDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const openDate = trades[index].openDate;
+                    if (openDate !== '' && new Date(value) < new Date(openDate)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
+                }
+                
+                // 計算統計數據和保存
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
             // 渲染交易記錄
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
@@ -1182,7 +1222,7 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
@@ -1207,7 +1247,7 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -1307,46 +1347,6 @@
                         }
                     });
                 });
-            }
-
-            // 處理交易數據變更
-            function handleTradeChange(index, field, value) {
-                if (field === 'returnRate') {
-                    const cleanedValue = value.replace('%', '').trim();
-                    if (cleanedValue === '' || isNaN(cleanedValue)) {
-                        trades[index].returnRate = '';
-                    } else {
-                        trades[index].returnRate = cleanedValue;
-                    }
-                } else if (field === 'assetName') {
-                    trades[index].assetName = value.trim();
-                } else if (field === 'strategyId') {
-                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
-                } else if (field === 'externalConditionId') {
-                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
-                } else if (field === 'openDate') {
-                    trades[index].openDate = value;
-                    // 驗證平倉日是否早於開倉日
-                    const closeDate = trades[index].closeDate;
-                    if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
-                        alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
-                    }
-                } else if (field === 'closeDate') {
-                    trades[index].closeDate = value;
-                    // 驗證平倉日是否早於開倉日
-                    const openDate = trades[index].openDate;
-                    if (openDate !== '' && new Date(value) < new Date(openDate)) {
-                        alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
-                    }
-                }
-                
-                // 計算統計數據和保存
-                calculateStats();
-                saveData(); // 保存數據
             }
 
             // 計算統計數據
