@@ -608,24 +608,40 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 分配交易編號：僅對有開倉日的交易編號，根據開倉日升序
+                // 分離有開倉日和無開倉日的交易
                 const tradesWithOpenDate = filteredTrades.filter(trade => trade.openDate !== '');
-                const sortedAscending = [...tradesWithOpenDate].sort((a, b) => new Date(a.openDate) - new Date(b.openDate));
+                const tradesWithoutOpenDate = filteredTrades.filter(trade => trade.openDate === '');
+
+                // 分配交易編號：有開倉日的交易按開倉日升序、平倉日升序排列
+                const sortedForNumbering = [...tradesWithOpenDate].sort((a, b) => {
+                    if (a.openDate < b.openDate) return -1;
+                    if (a.openDate > b.openDate) return 1;
+                    // 開倉日相同，按平倉日升序
+                    if (a.closeDate < b.closeDate) return -1;
+                    if (a.closeDate > b.closeDate) return 1;
+                    return 0;
+                });
+
                 const transactionNumbers = new Map();
-                sortedAscending.forEach((trade, index) => {
+                sortedForNumbering.forEach((trade, index) => {
                     transactionNumbers.set(trade.id, index + 1);
                 });
 
-                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為降序
-                filteredTrades.sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1; // 無開倉日的交易排在最上方
-                    if (b.openDate === '') return 1;  // 無開倉日的交易排在最上方
-                    return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
+                // 將有開倉日的交易按開倉日降序、平倉日升序排列
+                const sortedWithOpenDateForDisplay = [...tradesWithOpenDate].sort((a, b) => {
+                    if (a.openDate > b.openDate) return -1;
+                    if (a.openDate < b.openDate) return 1;
+                    // 開倉日相同，按平倉日升序
+                    if (a.closeDate < b.closeDate) return -1;
+                    if (a.closeDate > b.closeDate) return 1;
+                    return 0;
                 });
 
+                // 合併無開倉日的交易和有開倉日的交易
+                const sortedForDisplay = [...tradesWithoutOpenDate, ...sortedWithOpenDateForDisplay];
+
                 // 渲染排序後的交易紀錄
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                tradesList.innerHTML = sortedForDisplay.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     return `
                         <tr>
@@ -1108,24 +1124,40 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 分配交易編號：僅對有開倉日的交易編號，根據開倉日升序
+                // 分離有開倉日和無開倉日的交易
                 const tradesWithOpenDate = filteredTrades.filter(trade => trade.openDate !== '');
-                const sortedAscending = [...tradesWithOpenDate].sort((a, b) => new Date(a.openDate) - new Date(b.openDate));
+                const tradesWithoutOpenDate = filteredTrades.filter(trade => trade.openDate === '');
+
+                // 分配交易編號：有開倉日的交易按開倉日升序、平倉日升序排列
+                const sortedForNumbering = [...tradesWithOpenDate].sort((a, b) => {
+                    if (a.openDate < b.openDate) return -1;
+                    if (a.openDate > b.openDate) return 1;
+                    // 開倉日相同，按平倉日升序
+                    if (a.closeDate < b.closeDate) return -1;
+                    if (a.closeDate > b.closeDate) return 1;
+                    return 0;
+                });
+
                 const transactionNumbers = new Map();
-                sortedAscending.forEach((trade, index) => {
+                sortedForNumbering.forEach((trade, index) => {
                     transactionNumbers.set(trade.id, index + 1);
                 });
 
-                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為降序
-                filteredTrades.sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1; // 無開倉日的交易排在最上方
-                    if (b.openDate === '') return 1;  // 無開倉日的交易排在最上方
-                    return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
+                // 將有開倉日的交易按開倉日降序、平倉日升序排列
+                const sortedWithOpenDateForDisplay = [...tradesWithOpenDate].sort((a, b) => {
+                    if (a.openDate > b.openDate) return -1;
+                    if (a.openDate < b.openDate) return 1;
+                    // 開倉日相同，按平倉日升序
+                    if (a.closeDate < b.closeDate) return -1;
+                    if (a.closeDate > b.closeDate) return 1;
+                    return 0;
                 });
 
+                // 合併無開倉日的交易和有開倉日的交易
+                const sortedForDisplay = [...tradesWithoutOpenDate, ...sortedWithOpenDateForDisplay];
+
                 // 渲染排序後的交易紀錄
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                tradesList.innerHTML = sortedForDisplay.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     return `
                         <tr>
@@ -1144,7 +1176,7 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value}"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
