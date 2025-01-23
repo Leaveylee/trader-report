@@ -588,21 +588,26 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 反轉交易列表以顯示最新交易在最上方
-                const reversedTrades = filteredTrades.slice().reverse();
+                // 對過濾後的交易紀錄進行排序，基於開倉日（升序）
+                filteredTrades.sort((a, b) => {
+                    if (a.openDate === '' && b.openDate === '') return 0;
+                    if (a.openDate === '') return 1;
+                    if (b.openDate === '') return -1;
+                    return new Date(a.openDate) - new Date(b.openDate);
+                });
 
-                tradesList.innerHTML = reversedTrades.map((trade, reversedIndex) => {
-                    const actualIndex = trades.length - 1 - reversedIndex;
+                // 渲染排序後的交易紀錄
+                tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     return `
                         <tr>
-                            <td class="border px-4 py-2">交易 ${actualIndex + 1}</td>
+                            <td class="border px-4 py-2">交易 ${index + 1}</td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${actualIndex}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(${index}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="openDate"
                                 >
                             </td>
@@ -610,9 +615,9 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${actualIndex}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${index}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="closeDate"
                                 >
                             </td>
@@ -620,10 +625,10 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${actualIndex}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(${index}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="returnRate"
                                 >
                             </td>
@@ -631,18 +636,18 @@
                                 <input
                                     type="text"
                                     value="${trade.assetName}"
-                                    oninput="handleTradeChange(${actualIndex}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${index}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="assetName"
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${actualIndex}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(${index}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="strategyId"
                                 >
                                     <option value="">選擇策略</option>
@@ -655,9 +660,9 @@
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${actualIndex}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(${index}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${actualIndex}"
+                                    data-row-index="${index}"
                                     data-field="externalConditionId"
                                 >
                                     <option value="">選擇外部條件</option>
@@ -670,7 +675,7 @@
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${actualIndex})" class="delete-button">
+                                    <button onclick="removeTrade(${index})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 ` : ''}
