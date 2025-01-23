@@ -588,11 +588,11 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
-                // 對過濾後的交易紀錄進行排序，基於開倉日（降序）
+                // 對過濾後的交易紀錄進行排序，基於開倉日（降序），空日期優先
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return 1; // 空日期放在後面
-                    if (b.openDate === '') return -1; // 空日期放在後面
+                    if (a.openDate === '') return -1; // 空日期放在頂端
+                    if (b.openDate === '') return 1;  // 空日期放在頂端
                     return new Date(b.openDate) - new Date(a.openDate); // 降序排列
                 });
 
