@@ -415,7 +415,10 @@
             // 外部條件列表
             let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
             // 交易記錄列表
-            let trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
+            let trades = [
+                // 初始化時可以有一筆交易，但不需要 id
+                // { id: 1, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }
+            ];
             // 當前篩選條件
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
@@ -511,6 +514,16 @@
                 calculateStats();
             }
 
+            // 轉義 HTML 字符以防止 XSS
+            function escapeHTML(str) {
+                if (typeof str !== 'string') return str;
+                return str.replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(/"/g, "&quot;")
+                          .replace(/'/g, "&#039;");
+            }
+
             // 渲染策略列表
             function renderStrategies() {
                 const strategiesList = document.getElementById('strategiesList');
@@ -577,16 +590,6 @@
                 `;
             }
 
-            // 轉義 HTML 字符以防止 XSS
-            function escapeHTML(str) {
-                if (typeof str !== 'string') return str;
-                return str.replace(/&/g, "&amp;")
-                          .replace(/</g, "&lt;")
-                          .replace(/>/g, "&gt;")
-                          .replace(/"/g, "&quot;")
-                          .replace(/'/g, "&#039;");
-            }
-
             // 渲染交易記錄
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
@@ -620,9 +623,9 @@
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${index}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="openDate"
                                 >
                             </td>
@@ -630,9 +633,9 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${index}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="closeDate"
                                 >
                             </td>
@@ -640,10 +643,10 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${index}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="returnRate"
                                 >
                             </td>
@@ -651,18 +654,18 @@
                                 <input
                                     type="text"
                                     value="${escapeHTML(trade.assetName)}"
-                                    oninput="handleTradeChange(${index}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="assetName"
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(${trade.id}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="strategyId"
                                 >
                                     <option value="">選擇策略</option>
@@ -675,9 +678,9 @@
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(${trade.id}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-id="${trade.id}"
                                     data-field="externalConditionId"
                                 >
                                     <option value="">選擇外部條件</option>
@@ -690,7 +693,7 @@
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${index})" class="delete-button">
+                                    <button onclick="removeTrade(${trade.id})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 ` : ''}
@@ -708,38 +711,41 @@
                     input.addEventListener('keydown', function(event) {
                         if (event.key === 'Enter') {
                             event.preventDefault();
-                            const currentRow = parseInt(this.getAttribute('data-row-index'));
+                            const tradeId = parseInt(this.getAttribute('data-id'), 10);
                             const currentField = this.getAttribute('data-field');
+
+                            const trade = trades.find(t => t.id === tradeId);
+                            if (!trade) return;
 
                             if (currentField === 'returnRate') {
                                 // 移動到標的名稱欄位
                                 const nextField = 'assetName';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                const nextInput = document.querySelector(`input[data-id="${tradeId}"][data-field="${nextField}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'assetName') {
                                 // 移動到策略名稱欄位
                                 const nextField = 'strategyId';
-                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                const nextInput = document.querySelector(`select[data-id="${tradeId}"][data-field="${nextField}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'strategyId') {
                                 // 移動到外部條件欄位
                                 const nextField = 'externalConditionId';
-                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                const nextInput = document.querySelector(`select[data-id="${tradeId}"][data-field="${nextField}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'externalConditionId') {
                                 // 檢查是否為最後一筆交易，且有有效輸入
-                                const trade = trades[currentRow];
-                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                const isLastTrade = trades.findIndex(t => t.id === tradeId) === trades.length - 1;
+                                if (isLastTrade && trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newIndex = trades.length - 1; // 最新交易的索引
-                                        const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                                        const newTrade = trades[trades.length - 1];
+                                        const newInput = document.querySelector(`input[data-id="${newTrade.id}"][data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -755,37 +761,40 @@
             }
 
             // 處理交易數據變更
-            function handleTradeChange(index, field, value) {
+            function handleTradeChange(id, field, value) {
+                const trade = trades.find(t => t.id === id);
+                if (!trade) return;
+
                 if (field === 'returnRate') {
                     const cleanedValue = value.replace('%', '').trim();
                     if (cleanedValue === '' || isNaN(cleanedValue)) {
-                        trades[index].returnRate = '';
+                        trade.returnRate = '';
                     } else {
-                        trades[index].returnRate = cleanedValue;
+                        trade.returnRate = cleanedValue;
                     }
                 } else if (field === 'assetName') {
-                    trades[index].assetName = value.trim();
+                    trade.assetName = value.trim();
                 } else if (field === 'strategyId') {
-                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                    trade.strategyId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'externalConditionId') {
-                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
+                    trade.externalConditionId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'openDate') {
-                    trades[index].openDate = value;
+                    trade.openDate = value;
                     // 驗證平倉日是否早於開倉日
-                    const closeDate = trades[index].closeDate;
+                    const closeDate = trade.closeDate;
                     if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
                         alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                        trade.closeDate = '';
+                        document.querySelector(`input[data-id="${id}"][data-field="closeDate"]`).value = '';
                     }
                 } else if (field === 'closeDate') {
-                    trades[index].closeDate = value;
+                    trade.closeDate = value;
                     // 驗證平倉日是否早於開倉日
-                    const openDate = trades[index].openDate;
+                    const openDate = trade.openDate;
                     if (openDate !== '' && new Date(value) < new Date(openDate)) {
                         alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                        trade.closeDate = '';
+                        document.querySelector(`input[data-id="${id}"][data-field="closeDate"]`).value = '';
                     }
                 }
                 
@@ -805,18 +814,20 @@
                     return;
                 }
 
+                // 生成新的交易 ID，使用 Date.now() 保證唯一性
+                const newId = Date.now();
+
                 // 添加新交易到 trades 陣列
-                trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                trades.push({ id: newId, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
                 
                 // 重新渲染交易紀錄、計算統計數據並保存
                 renderTrades();
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最頂端，索引為 0）
+                // 聚焦到新添加的交易的報酬率輸入框
                 setTimeout(() => {
-                    const newIndex = trades.length - 1; // 最新交易的索引
-                    const newInput = document.querySelector(`input[data-row-index="${newIndex}"][data-field="returnRate"]`);
+                    const newInput = document.querySelector(`input[data-id="${newId}"][data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
@@ -824,10 +835,11 @@
             }
 
             // 刪除交易記錄
-            function removeTrade(index) {
-                trades = trades.filter((_, i) => i !== index);
+            function removeTrade(id) {
+                trades = trades.filter(trade => trade.id !== id);
                 if (trades.length === 0) {
-                    trades.push({ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                    // 確保至少有一筆空白交易
+                    trades.push({ id: Date.now(), returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1216,7 +1228,7 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
-                    trades = [{ returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
+                    trades = [{ id: 1, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
@@ -1227,7 +1239,6 @@
                 }
             }
             */
-
         </script>
     </div>
 </body>
