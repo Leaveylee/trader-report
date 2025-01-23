@@ -118,10 +118,25 @@
             background-color: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
+            transition: opacity 0.3s ease;
         }
 
         .hidden {
             display: none;
+        }
+
+        .visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -285,7 +300,7 @@
 
         <!-- 新增策略模態框 -->
         <div id="addStrategyModal" class="modal hidden">
-            <div class="bg-white p-6 rounded-lg w-96">
+            <div class="modal-content">
                 <h3 class="text-lg font-medium mb-4">新增策略</h3>
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyName">策略名稱</label>
                 <input type="text" id="newStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
@@ -302,7 +317,7 @@
 
         <!-- 編輯策略模態框 -->
         <div id="editStrategyModal" class="modal hidden">
-            <div class="bg-white p-6 rounded-lg w-96">
+            <div class="modal-content">
                 <h3 class="text-lg font-medium mb-4">編輯策略</h3>
                 <input type="hidden" id="editStrategyId">
                 
@@ -321,7 +336,7 @@
 
         <!-- 新增外部條件模態框 -->
         <div id="addExternalConditionModal" class="modal hidden">
-            <div class="bg-white p-6 rounded-lg w-96">
+            <div class="modal-content">
                 <h3 class="text-lg font-medium mb-4">新增外部條件</h3>
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">外部條件名稱</label>
                 <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
@@ -338,7 +353,7 @@
 
         <!-- 編輯外部條件模態框 -->
         <div id="editExternalConditionModal" class="modal hidden">
-            <div class="bg-white p-6 rounded-lg w-96">
+            <div class="modal-content">
                 <h3 class="text-lg font-medium mb-4">編輯外部條件</h3>
                 <input type="hidden" id="editExternalConditionId">
                 
@@ -516,8 +531,8 @@
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
                     <tr>
-                        <td class="border px-4 py-2">${strategy.name}</td>
-                        <td class="border px-4 py-2">${strategy.description}</td>
+                        <td class="border px-4 py-2">${escapeHTML(strategy.name)}</td>
+                        <td class="border px-4 py-2">${escapeHTML(strategy.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -539,7 +554,7 @@
                 strategyFilter.innerHTML = `
                     <option value="">全部策略</option>
                     ${strategies.map(strategy => `
-                        <option value="${strategy.id}">${strategy.name}</option>
+                        <option value="${strategy.id}">${escapeHTML(strategy.name)}</option>
                     `).join('')}
                 `;
             }
@@ -549,8 +564,8 @@
                 const externalConditionsList = document.getElementById('externalConditionsList');
                 externalConditionsList.innerHTML = externalConditions.map(condition => `
                     <tr>
-                        <td class="border px-4 py-2">${condition.name}</td>
-                        <td class="border px-4 py-2">${condition.description}</td>
+                        <td class="border px-4 py-2">${escapeHTML(condition.name)}</td>
+                        <td class="border px-4 py-2">${escapeHTML(condition.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -572,9 +587,18 @@
                 externalConditionFilter.innerHTML = `
                     <option value="">全部外部條件</option>
                     ${externalConditions.map(condition => `
-                        <option value="${condition.id}">${condition.name}</option>
+                        <option value="${condition.id}">${escapeHTML(condition.name)}</option>
                     `).join('')}
                 `;
+            }
+
+            // HTML 轉義，防止 XSS
+            function escapeHTML(str) {
+                return str.replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(/"/g, "&quot;")
+                          .replace(/'/g, "&#039;");
             }
 
             // 渲染交易記錄
@@ -592,25 +616,33 @@
                 }
 
                 // 對過濾後的交易紀錄進行排序，基於開倉日（升序），空日期優先
-                filteredTrades.sort((a, b) => {
+                let sortedTrades = filteredTrades.slice().sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1; // 空日期放在頂端
-                    if (b.openDate === '') return 1;  // 空日期放在頂端
+                    if (a.openDate === '') return -1; // 空日期放在底部
+                    if (b.openDate === '') return 1;  // 空日期放在底部
                     return new Date(a.openDate) - new Date(b.openDate); // 升序排列
                 });
 
-                // 渲染排序後的交易紀錄
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                // 為每筆交易添加編號
+                sortedTrades = sortedTrades.map((trade, index) => ({ ...trade, number: index + 1 }));
+
+                // 反轉排序，以便最新的交易顯示在最頂端
+                const displayTrades = sortedTrades.slice().reverse();
+
+                // 渲染交易紀錄
+                tradesList.innerHTML = displayTrades.map((trade, displayIndex) => {
+                    // 找到原始的排序索引
+                    const originalIndex = sortedTrades.length - 1 - displayIndex;
                     return `
                         <tr>
-                            <td class="border px-4 py-2">${index + 1}</td>
+                            <td class="border px-4 py-2">${trade.number}</td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${index}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(${originalIndex}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="openDate"
                                 >
                             </td>
@@ -618,9 +650,9 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${index}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${originalIndex}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="closeDate"
                                 >
                             </td>
@@ -628,57 +660,57 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${index}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(${originalIndex}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="returnRate"
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="text"
-                                    value="${trade.assetName}"
-                                    oninput="handleTradeChange(${index}, 'assetName', this.value)"
+                                    value="${escapeHTML(trade.assetName)}"
+                                    oninput="handleTradeChange(${originalIndex}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="assetName"
                                 >
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(${originalIndex}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="strategyId"
                                 >
                                     <option value="">選擇策略</option>
                                     ${strategies.map(strategy => `
                                         <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
-                                            ${strategy.name}
+                                            ${escapeHTML(strategy.name)}
                                         </option>
                                     `).join('')}
                                 </select>
                             </td>
                             <td class="border px-4 py-2">
                                 <select
-                                    onchange="handleTradeChange(${index}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(${originalIndex}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${index}"
+                                    data-row-index="${originalIndex}"
                                     data-field="externalConditionId"
                                 >
                                     <option value="">選擇外部條件</option>
                                     ${externalConditions.map(condition => `
                                         <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>
-                                            ${condition.name}
+                                            ${escapeHTML(condition.name)}
                                         </option>
                                     `).join('')}
                                 </select>
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${index})" class="delete-button">
+                                    <button onclick="removeTrade(${originalIndex})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 ` : ''}
@@ -726,7 +758,7 @@
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
                                     addTrade(); // 添加新的交易欄位
                                     setTimeout(() => {
-                                        const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                                        const newInput = document.querySelector(`#tradesList tr:first-child input[data-field="returnRate"]`);
                                         if (newInput) {
                                             newInput.focus(); // 聚焦到新交易的報酬率欄位
                                         }
@@ -800,9 +832,9 @@
                 calculateStats();
                 saveData(); // 保存數據
 
-                // 聚焦到新添加的交易的報酬率輸入框（排序後位於最後一筆，索引為 trades.length - 1）
+                // 聚焦到新添加的交易的報酬率輸入框（最新交易在最頂端）
                 setTimeout(() => {
-                    const newInput = document.querySelector(`input[data-row-index="${trades.length - 1}"][data-field="returnRate"]`);
+                    const newInput = document.querySelector(`#tradesList tr:first-child input[data-field="returnRate"]`);
                     if (newInput) {
                         newInput.focus(); // 聚焦到新交易的報酬率欄位
                     }
@@ -823,11 +855,15 @@
             // 開啟新增策略模態框
             function openAddStrategyModal() {
                 document.getElementById('addStrategyModal').classList.remove('hidden');
+                document.getElementById('addStrategyModal').classList.add('visible');
+                document.getElementById('newStrategyName').focus();
             }
 
             // 關閉新增策略模態框
             function closeAddStrategyModal() {
-                document.getElementById('addStrategyModal').classList.add('hidden');
+                const modal = document.getElementById('addStrategyModal');
+                modal.classList.remove('visible');
+                modal.classList.add('hidden');
                 document.getElementById('newStrategyName').value = '';
                 document.getElementById('newStrategyDescription').value = '';
             }
@@ -872,11 +908,15 @@
                 document.getElementById('editStrategyName').value = strategy.name;
                 document.getElementById('editStrategyDescription').value = strategy.description;
                 document.getElementById('editStrategyModal').classList.remove('hidden');
+                document.getElementById('editStrategyModal').classList.add('visible');
+                document.getElementById('editStrategyName').focus();
             }
 
             // 關閉編輯策略模態框
             function closeEditStrategyModal() {
-                document.getElementById('editStrategyModal').classList.add('hidden');
+                const modal = document.getElementById('editStrategyModal');
+                modal.classList.remove('visible');
+                modal.classList.add('hidden');
                 document.getElementById('editStrategyId').value = '';
                 document.getElementById('editStrategyName').value = '';
                 document.getElementById('editStrategyDescription').value = '';
@@ -936,11 +976,15 @@
             // 開啟新增外部條件模態框
             function openAddExternalConditionModal() {
                 document.getElementById('addExternalConditionModal').classList.remove('hidden');
+                document.getElementById('addExternalConditionModal').classList.add('visible');
+                document.getElementById('newExternalConditionName').focus();
             }
 
             // 關閉新增外部條件模態框
             function closeAddExternalConditionModal() {
-                document.getElementById('addExternalConditionModal').classList.add('hidden');
+                const modal = document.getElementById('addExternalConditionModal');
+                modal.classList.remove('visible');
+                modal.classList.add('hidden');
                 document.getElementById('newExternalConditionName').value = '';
                 document.getElementById('newExternalConditionDescription').value = '';
             }
@@ -985,11 +1029,15 @@
                 document.getElementById('editExternalConditionName').value = condition.name;
                 document.getElementById('editExternalConditionDescription').value = condition.description;
                 document.getElementById('editExternalConditionModal').classList.remove('hidden');
+                document.getElementById('editExternalConditionModal').classList.add('visible');
+                document.getElementById('editExternalConditionName').focus();
             }
 
             // 關閉編輯外部條件模態框
             function closeEditExternalConditionModal() {
-                document.getElementById('editExternalConditionModal').classList.add('hidden');
+                const modal = document.getElementById('editExternalConditionModal');
+                modal.classList.remove('visible');
+                modal.classList.add('hidden');
                 document.getElementById('editExternalConditionId').value = '';
                 document.getElementById('editExternalConditionName').value = '';
                 document.getElementById('editExternalConditionDescription').value = '';
@@ -1209,21 +1257,6 @@
                 }
             }
             */
-
-            // 獲取所有交易記錄的最大編號，以便後續新增交易時編號遞增
-            function getMaxTradeNumber() {
-                if (trades.length === 0) return 0;
-                // 根據開倉日排序，找到最新的交易
-                const sortedTrades = [...trades].sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1;
-                    if (b.openDate === '') return 1;
-                    return new Date(a.openDate) - new Date(b.openDate);
-                });
-                return sortedTrades.length;
-            }
-
-            // 渲染交易編號，已在 renderTrades() 中修改
 
         </script>
     </div>
