@@ -608,6 +608,19 @@
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
 
+                // 分配交易編號：根據開倉日升序
+                const sortedAscending = [...filteredTrades].sort((a, b) => {
+                    if (a.openDate === '' && b.openDate === '') return 0;
+                    if (a.openDate === '') return 1; // 空日期放在最後
+                    if (b.openDate === '') return -1;  // 空日期放在最後
+                    return new Date(a.openDate) - new Date(b.openDate); // 升序排列
+                });
+
+                const transactionNumbers = new Map();
+                sortedAscending.forEach((trade, index) => {
+                    transactionNumbers.set(trade.id, index + 1);
+                });
+
                 // 對過濾後的交易紀錄進行排序，基於開倉日（降序），空日期放在最後
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
@@ -620,7 +633,511 @@
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     return `
                         <tr>
-                            <td class="border px-4 py-2">${index + 1}</td>
+                            <td class="border px-4 py-2">${transactionNumbers.get(trade.id)}</td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="date"
+                                    value="${trade.openDate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="openDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="date"
+                                    value="${trade.closeDate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="closeDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="+6.66 或 -2.92"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="returnRate"
+                                    data-trade-id="${trade.id}"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.assetName}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入標的名稱"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="assetName"
+                                >
+                            </td>
+                            <td class="border px-4 py-2">
+                                <select
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="strategyId"
+                                >
+                                    <option value="">選擇策略</option>
+                                    ${strategies.map(strategy => `
+                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
+                                            ${strategy.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </td>
+                            <td class="border px-4 py-2">
+                                <select
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="externalConditionId"
+                                >
+                                    <option value="">選擇外部條件</option>
+                                    ${externalConditions.map(condition => `
+                                        <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>
+                                            ${condition.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </td>
+                            <td class="border px-4 py-2 text-center">
+                                ${trades.length > 1 ? `
+                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // 重新初始化 Lucide 圖標
+                lucide.createIcons();
+
+                // 添加按鍵事件監聽器
+                const tradeInputs = document.querySelectorAll('.trade-input');
+                tradeInputs.forEach(input => {
+                    input.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            const currentRow = parseInt(this.getAttribute('data-row-index'));
+                            const currentField = this.getAttribute('data-field');
+
+                            if (currentField === 'returnRate') {
+                                // 移動到標的名稱欄位
+                                const nextField = 'assetName';
+                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'assetName') {
+                                // 移動到策略名稱欄位
+                                const nextField = 'strategyId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'strategyId') {
+                                // 移動到外部條件欄位
+                                const nextField = 'externalConditionId';
+                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'externalConditionId') {
+                                // 檢查是否為最後一筆交易，且有有效輸入
+                                const trade = trades[currentRow];
+                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
+                                    addTrade(); // 添加新的交易欄位
+                                    setTimeout(() => {
+                                        const newInput = document.querySelector(`input[data-trade-id="${nextTradeId - 1}"][data-field="returnRate"]`);
+                                        if (newInput) {
+                                            newInput.focus(); // 聚焦到新交易的報酬率欄位
+                                        }
+                                    }, 100);
+                                } else {
+                                    // 如果當前交易有未填寫的欄位，保持在當前欄位
+                                    alert('請確保報酬率、策略和外部條件已正確填寫。');
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // 處理交易數據變更
+            function handleTradeChange(index, field, value) {
+                if (field === 'returnRate') {
+                    const cleanedValue = value.replace('%', '').trim();
+                    if (cleanedValue === '' || isNaN(cleanedValue)) {
+                        trades[index].returnRate = '';
+                    } else {
+                        trades[index].returnRate = cleanedValue;
+                    }
+                } else if (field === 'assetName') {
+                    trades[index].assetName = value.trim();
+                } else if (field === 'strategyId') {
+                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'externalConditionId') {
+                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
+                } else if (field === 'openDate') {
+                    trades[index].openDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const closeDate = trades[index].closeDate;
+                    if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
+                } else if (field === 'closeDate') {
+                    trades[index].closeDate = value;
+                    // 驗證平倉日是否早於開倉日
+                    const openDate = trades[index].openDate;
+                    if (openDate !== '' && new Date(value) < new Date(openDate)) {
+                        alert('平倉日不能早於開倉日。');
+                        trades[index].closeDate = '';
+                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                    }
+                }
+                
+                // 計算統計數據和保存
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 添加交易記錄
+            function addTrade() {
+                if (strategies.length === 0) {
+                    alert('請先新增至少一個交易策略。');
+                    return;
+                }
+                if (externalConditions.length === 0) {
+                    alert('請先新增至少一個外部條件。');
+                    return;
+                }
+
+                // 創建新交易並分配唯一的 ID
+                const newTrade = { 
+                    id: nextTradeId++, 
+                    returnRate: '', 
+                    assetName: '', 
+                    strategyId: null, 
+                    externalConditionId: null, 
+                    openDate: '', 
+                    closeDate: '' 
+                };
+                trades.push(newTrade);
+                
+                // 渲染交易記錄、計算統計數據並保存
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+
+                // 聚焦到新添加的交易的報酬率輸入框
+                setTimeout(() => {
+                    const newInput = document.querySelector(`input[data-trade-id="${newTrade.id}"][data-field="returnRate"]`);
+                    if (newInput) {
+                        newInput.focus(); // 聚焦到新交易的報酬率欄位
+                    }
+                }, 100);
+            }
+
+            // 刪除交易記錄
+            function removeTrade(index) {
+                trades = trades.filter((_, i) => i !== index);
+                if (trades.length === 0) {
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                }
+                renderTrades();
+                calculateStats();
+                saveData(); // 保存數據
+            }
+
+            // 開啟新增策略模態框
+            function openAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉新增策略模態框
+            function closeAddStrategyModal() {
+                document.getElementById('addStrategyModal').classList.add('hidden');
+                document.getElementById('newStrategyName').value = '';
+                document.getElementById('newStrategyDescription').value = '';
+            }
+
+            // 新增策略
+            function addStrategy() {
+                const nameInput = document.getElementById('newStrategyName');
+                const descriptionInput = document.getElementById('newStrategyDescription');
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在
+                const existingStrategy = strategies.find(strategy => strategy.name === name);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                // 生成新的策略 ID
+                const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
+
+                // 新增策略
+                strategies.push({ id: newId, name, description });
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
+                closeAddStrategyModal();
+            }
+
+            // 開啟編輯策略模態框
+            function openEditStrategyModal(strategyId) {
+                const strategy = strategies.find(s => s.id === strategyId);
+                if (!strategy) return;
+
+                document.getElementById('editStrategyId').value = strategy.id;
+                document.getElementById('editStrategyName').value = strategy.name;
+                document.getElementById('editStrategyDescription').value = strategy.description;
+                document.getElementById('editStrategyModal').classList.remove('hidden');
+            }
+
+            // 關閉編輯策略模態框
+            function closeEditStrategyModal() {
+                document.getElementById('editStrategyModal').classList.add('hidden');
+                document.getElementById('editStrategyId').value = '';
+                document.getElementById('editStrategyName').value = '';
+                document.getElementById('editStrategyDescription').value = '';
+            }
+
+            // 更新策略
+            function updateStrategy() {
+                const id = parseInt(document.getElementById('editStrategyId').value, 10);
+                const name = document.getElementById('editStrategyName').value.trim();
+                const description = document.getElementById('editStrategyDescription').value.trim();
+
+                if (name === '') {
+                    alert('策略名稱不能為空。');
+                    return;
+                }
+
+                // 檢查策略名稱是否已存在（排除當前策略）
+                const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
+                if (existingStrategy) {
+                    alert('策略名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                const strategyIndex = strategies.findIndex(s => s.id === id);
+                if (strategyIndex === -1) return;
+
+                // 更新策略
+                strategies[strategyIndex].name = name;
+                strategies[strategyIndex].description = description;
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
+                closeEditStrategyModal();
+            }
+
+            // 刪除策略
+            function deleteStrategy(strategyId) {
+                // 檢查是否有交易使用該策略
+                const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
+                if (tradesUsingStrategy.length > 0) {
+                    alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
+                    return;
+                }
+
+                if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
+                    return;
+                }
+
+                strategies = strategies.filter(strategy => strategy.id !== strategyId);
+                saveStrategies();
+                renderStrategies();
+                renderTrades(); // 更新交易表格中的策略下拉選單
+                calculateStats(); // 更新統計數據
+            }
+
+            // 開啟新增外部條件模態框
+            function openAddExternalConditionModal() {
+                document.getElementById('addExternalConditionModal').classList.remove('hidden');
+            }
+
+            // 關閉新增外部條件模態框
+            function closeAddExternalConditionModal() {
+                document.getElementById('addExternalConditionModal').classList.add('hidden');
+                document.getElementById('newExternalConditionName').value = '';
+                document.getElementById('newExternalConditionDescription').value = '';
+            }
+
+            // 新增外部條件
+            function addExternalCondition() {
+                const nameInput = document.getElementById('newExternalConditionName');
+                const descriptionInput = document.getElementById('newExternalConditionDescription');
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+
+                if (name === '') {
+                    alert('外部條件名稱不能為空。');
+                    return;
+                }
+
+                // 檢查外部條件名稱是否已存在
+                const existingCondition = externalConditions.find(condition => condition.name === name);
+                if (existingCondition) {
+                    alert('外部條件名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                // 生成新的外部條件 ID
+                const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
+
+                // 新增外部條件
+                externalConditions.push({ id: newId, name, description });
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+                closeAddExternalConditionModal();
+            }
+
+            // 開啟編輯外部條件模態框
+            function openEditExternalConditionModal(conditionId) {
+                const condition = externalConditions.find(c => c.id === conditionId);
+                if (!condition) return;
+
+                document.getElementById('editExternalConditionId').value = condition.id;
+                document.getElementById('editExternalConditionName').value = condition.name;
+                document.getElementById('editExternalConditionDescription').value = condition.description;
+                document.getElementById('editExternalConditionModal').classList.remove('hidden');
+            }
+
+            // 關閉編輯外部條件模態框
+            function closeEditExternalConditionModal() {
+                document.getElementById('editExternalConditionModal').classList.add('hidden');
+                document.getElementById('editExternalConditionId').value = '';
+                document.getElementById('editExternalConditionName').value = '';
+                document.getElementById('editExternalConditionDescription').value = '';
+            }
+
+            // 更新外部條件
+            function updateExternalCondition() {
+                const id = parseInt(document.getElementById('editExternalConditionId').value, 10);
+                const name = document.getElementById('editExternalConditionName').value.trim();
+                const description = document.getElementById('editExternalConditionDescription').value.trim();
+
+                if (name === '') {
+                    alert('外部條件名稱不能為空。');
+                    return;
+                }
+
+                // 檢查外部條件名稱是否已存在（排除當前外部條件）
+                const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
+                if (existingCondition) {
+                    alert('外部條件名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+
+                const conditionIndex = externalConditions.findIndex(c => c.id === id);
+                if (conditionIndex === -1) return;
+
+                // 更新外部條件
+                externalConditions[conditionIndex].name = name;
+                externalConditions[conditionIndex].description = description;
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+                closeEditExternalConditionModal();
+            }
+
+            // 刪除外部條件
+            function deleteExternalCondition(conditionId) {
+                // 檢查是否有交易使用該外部條件
+                const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
+                if (tradesUsingCondition.length > 0) {
+                    alert('有交易紀錄正在使用此外部條件，請先移除或更改相關交易紀錄。');
+                    return;
+                }
+
+                if (!confirm('您確定要刪除此外部條件嗎？此操作無法撤銷。')) {
+                    return;
+                }
+
+                externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
+                saveExternalConditions();
+                renderExternalConditions();
+                renderTrades(); // 更新交易表格中的外部條件下拉選單
+                calculateStats(); // 更新統計數據
+            }
+
+            // 策略和外部條件篩選功能
+            function applyFilters() {
+                const strategyId = document.getElementById('strategyFilter').value;
+                const externalConditionId = document.getElementById('externalConditionFilter').value;
+
+                selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
+                selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
+
+                calculateStats();
+                renderTrades();
+            }
+
+            // 渲染交易記錄
+            function renderTrades() {
+                const tradesList = document.getElementById('tradesList');
+                tradesList.innerHTML = '';
+
+                // 根據篩選條件過濾交易紀錄
+                let filteredTrades = trades;
+                if (selectedStrategyFilter !== null) {
+                    filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+                }
+                if (selectedExternalConditionFilter !== null) {
+                    filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+                }
+
+                // 分配交易編號：根據開倉日升序
+                const sortedAscending = [...filteredTrades].sort((a, b) => {
+                    if (a.openDate === '' && b.openDate === '') return 0;
+                    if (a.openDate === '') return 1; // 空日期放在最後
+                    if (b.openDate === '') return -1;  // 空日期放在最後
+                    return new Date(a.openDate) - new Date(b.openDate); // 升序排列
+                });
+
+                const transactionNumbers = new Map();
+                sortedAscending.forEach((trade, index) => {
+                    transactionNumbers.set(trade.id, index + 1);
+                });
+
+                // 對過濾後的交易紀錄進行排序，基於開倉日（降序），空日期放在最後
+                filteredTrades.sort((a, b) => {
+                    if (a.openDate === '' && b.openDate === '') return 0;
+                    if (a.openDate === '') return 1; // 空日期放在最後
+                    if (b.openDate === '') return -1;  // 空日期放在最後
+                    return new Date(b.openDate) - new Date(a.openDate); // 降序排列
+                });
+
+                // 渲染排序後的交易紀錄
+                tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                    return `
+                        <tr>
+                            <td class="border px-4 py-2">${transactionNumbers.get(trade.id)}</td>
                             <td class="border px-4 py-2">
                                 <input
                                     type="date"
@@ -1236,19 +1753,6 @@
                 }
             }
             */
-
-            // 獲取所有交易記錄的最大編號，以便後續新增交易時編號遞增
-            function getMaxTradeNumber() {
-                if (trades.length === 0) return 0;
-                // 根據開倉日排序，找到最新的交易
-                const sortedTrades = [...trades].sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1;
-                    if (b.openDate === '') return 1;
-                    return new Date(a.openDate) - new Date(b.openDate);
-                });
-                return sortedTrades.length;
-            }
 
             // 渲染交易編號，已在 renderTrades() 中修改
 
