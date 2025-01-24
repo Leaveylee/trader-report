@@ -111,6 +111,7 @@
         th {
             background-color: #f9fafb; /* Tailwind 的 gray-50 */
             font-weight: 600;
+            cursor: move; /* 顯示拖曳指示 */
         }
 
         /* 模態框樣式 */
@@ -424,20 +425,8 @@
                 <!-- 表格滾動區域 -->
                 <div class="overflow-x-auto" id="bottomScrollbar">
                     <table class="min-w-full bg-white rounded">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-2 min-w-[80px]">交易</th>
-                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
-                                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[80px]">操作</th>
-                            </tr>
+                        <thead id="tradesHeader">
+                            <!-- 表頭將由 JavaScript 動態渲染 -->
                         </thead>
                         <tbody id="tradesList">
                             <!-- 交易記錄將在這裡動態添加為表格行 -->
@@ -463,37 +452,20 @@
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
 
-            // 新增一個全局變數來追踪下一個交易的 ID
-            let nextTradeId = 1;
-
-            // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
-            function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
-                const number = parseFloat(value);
-                if (isNaN(number)) return '0';
-                
-                if (isMoneyAmount) {
-                    return number >= 0 ? 
-                        `+${number.toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}` : 
-                        `-${Math.abs(number).toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}`;
-                }
-                return number >= 0 ? 
-                    `+${number.toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}` : 
-                    `-${Math.abs(number).toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces})}`;
-            }
-
-            // 新增工具函數：格式化數字，不帶 "+" 符號，無小數點
-            function formatNumberNoSign(value, decimalPlaces = 2) {
-                const number = parseFloat(value);
-                if (isNaN(number)) return '0';
-                return number.toLocaleString(undefined, {minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces});
-            }
-
-            // 新增工具函數：格式化交易數，不帶 "+" 符號，無小數點
-            function formatTradeCount(value) {
-                const number = parseInt(value, 10);
-                if (isNaN(number)) return '0';
-                return number.toLocaleString();
-            }
+            // 定義表格欄位配置
+            let columns = [
+                { key: 'transactionNumber', label: '交易', minWidth: '80px' },
+                { key: 'openDate', label: '開倉日', minWidth: '100px' },
+                { key: 'closeDate', label: '平倉日', minWidth: '100px' },
+                { key: 'holdingDays', label: '持倉天數', minWidth: '100px' },
+                { key: 'returnRate', label: '報酬率 (%)', minWidth: '100px' },
+                { key: 'assetName', label: '標的名稱', minWidth: '150px' },
+                { key: 'strategyName', label: '策略名稱', minWidth: '150px' },
+                { key: 'externalConditionName', label: '外部條件', minWidth: '150px' },
+                { key: 'description', label: '文字說明', minWidth: '200px' },
+                { key: 'imageUrl', label: '圖片', minWidth: '200px' },
+                { key: 'actions', label: '操作', minWidth: '80px' }
+            ];
 
             // 保存數據到 localStorage
             function saveData() {
@@ -678,6 +650,7 @@
             // 渲染交易記錄
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
+                const tradesHeader = document.getElementById('tradesHeader'); // 新增表頭ID
                 tradesList.innerHTML = '';
 
                 // 根據篩選條件過濾交易紀錄
@@ -705,6 +678,26 @@
                     return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
                 });
 
+                // 渲染表頭
+                const tableHeader = `
+                    <tr>
+                        ${columns.map(col => `
+                            <th 
+                                class="px-4 py-2 min-w-[${col.minWidth}]" 
+                                draggable="true"
+                                ondragstart="dragStart(event, '${col.key}')"
+                                ondragover="dragOver(event)"
+                                ondrop="drop(event, '${col.key}')"
+                            >
+                                ${col.label}
+                                <i data-lucide="move" class="inline-block ml-2 cursor-move"></i>
+                            </th>
+                        `).join('')}
+                    </tr>
+                `;
+                document.querySelector('#bottomScrollbar table thead').innerHTML = tableHeader;
+                lucide.createIcons();
+
                 // 渲染排序後的交易紀錄
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
@@ -727,73 +720,110 @@
 
                     return `
                         <tr>
-                            <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
-                            <td class="border px-4 py-2 min-w-[100px]">
-                                <input
-                                    type="date"
-                                    value="${trade.openDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="openDate"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 min-w-[100px]">
-                                <input
-                                    type="date"
-                                    value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="closeDate"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
-                                ${holdingDays}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[100px]">
-                                <input
-                                    type="text"
-                                    value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="+6.66 或 -2.92"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="returnRate"
-                                    data-trade-id="${trade.id}"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[200px]">
-                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[200px]">
-                                <input
-                                    type="text"
-                                    value="${trade.imageUrl}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入圖片URL"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="imageUrl"
-                                >
-                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
-                            </td>
-                            <td class="border px-4 py-2 text-center min-w-[80px]">
-                                ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                ` : ''}
-                            </td>
+                            ${columns.map(col => {
+                                switch(col.key) {
+                                    case 'transactionNumber':
+                                        return `<td class="border px-4 py-2 text-center min-w-[${col.minWidth}]">${transactionNumber}</td>`;
+                                    case 'openDate':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                <input
+                                                    type="date"
+                                                    value="${trade.openDate}"
+                                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
+                                                    class="w-full p-1 border rounded trade-input"
+                                                    data-row-index="${trades.indexOf(trade)}"
+                                                    data-field="openDate"
+                                                >
+                                            </td>
+                                        `;
+                                    case 'closeDate':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                <input
+                                                    type="date"
+                                                    value="${trade.closeDate}"
+                                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                                    class="w-full p-1 border rounded trade-input"
+                                                    data-row-index="${trades.indexOf(trade)}"
+                                                    data-field="closeDate"
+                                                >
+                                            </td>
+                                        `;
+                                    case 'holdingDays':
+                                        return `
+                                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[${col.minWidth}]">
+                                                ${holdingDays}
+                                            </td>
+                                        `;
+                                    case 'returnRate':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                <input
+                                                    type="text"
+                                                    value="${trade.returnRate}"
+                                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
+                                                    class="w-full p-1 border rounded trade-input"
+                                                    placeholder="+6.66 或 -2.92"
+                                                    data-row-index="${trades.indexOf(trade)}"
+                                                    data-field="returnRate"
+                                                    data-trade-id="${trade.id}"
+                                                >
+                                            </td>
+                                        `;
+                                    case 'assetName':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
+                                            </td>
+                                        `;
+                                    case 'strategyName':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
+                                            </td>
+                                        `;
+                                    case 'externalConditionName':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
+                                            </td>
+                                        `;
+                                    case 'description':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
+                                            </td>
+                                        `;
+                                    case 'imageUrl':
+                                        return `
+                                            <td class="border px-4 py-2 min-w-[${col.minWidth}]">
+                                                <input
+                                                    type="text"
+                                                    value="${trade.imageUrl}"
+                                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
+                                                    class="w-full p-1 border rounded trade-input"
+                                                    placeholder="輸入圖片URL"
+                                                    data-row-index="${trades.indexOf(trade)}"
+                                                    data-field="imageUrl"
+                                                >
+                                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                                            </td>
+                                        `;
+                                    case 'actions':
+                                        return `
+                                            <td class="border px-4 py-2 text-center min-w-[${col.minWidth}]">
+                                                ${trades.length > 1 ? `
+                                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
+                                                        <i data-lucide="trash-2"></i>
+                                                    </button>
+                                                ` : ''}
+                                            </td>
+                                        `;
+                                    default:
+                                        return `<td class="border px-4 py-2 min-w-[${col.minWidth}]"></td>`;
+                                }
+                            }).join('')}
                         </tr>
                     `;
                 }).join('');
@@ -1376,6 +1406,40 @@
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
                 saveCollapseState(); // 保存收合狀態
             }
+
+            // 拖曳開始時記錄被拖曳的欄位
+            let draggedColumnKey = null;
+
+            function dragStart(event, columnKey) {
+                draggedColumnKey = columnKey;
+                event.dataTransfer.effectAllowed = 'move';
+            }
+
+            // 拖曳過程中，阻止默認行為以允許放置
+            function dragOver(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+            }
+
+            // 放置時調整欄位順序
+            function drop(event, targetColumnKey) {
+                event.preventDefault();
+                if (draggedColumnKey === targetColumnKey) return;
+
+                // 找到拖曳欄位和目標欄位的索引
+                const draggedIndex = columns.findIndex(col => col.key === draggedColumnKey);
+                const targetIndex = columns.findIndex(col => col.key === targetColumnKey);
+
+                if (draggedIndex === -1 || targetIndex === -1) return;
+
+                // 移動欄位
+                const [draggedColumn] = columns.splice(draggedIndex, 1);
+                columns.splice(targetIndex, 0, draggedColumn);
+
+                // 重新渲染表格
+                renderTrades();
+            }
+
         </script>
     </div>
 </body>
