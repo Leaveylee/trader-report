@@ -17,10 +17,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入 Tippy.js 用於工具提示 -->
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -586,11 +582,6 @@
                 }
 
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
-                // 初始化 Tippy.js 工具提示
-                tippy('[data-tippy-content]', {
-                    placement: 'top',
-                    animation: 'scale',
-                });
             }
 
             // 渲染策略列表
@@ -747,16 +738,16 @@
                                     data-trade-id="${trade.id}"
                                 >
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${trade.assetName}">
+                            <td class="border px-4 py-2 min-w-[150px]">
                                 ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${getStrategyName(trade.strategyId)}">
+                            <td class="border px-4 py-2 min-w-[150px]">
                                 ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${getExternalConditionName(trade.externalConditionId)}">
+                            <td class="border px-4 py-2 min-w-[150px]">
                                 ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
                             </td>
-                            <td class="border px-4 py-2 min-w-[200px]" data-tippy-content="${trade.description}">
+                            <td class="border px-4 py-2 min-w-[200px]">
                                 ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
@@ -784,12 +775,6 @@
                 
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
-
-                // 初始化 Tippy.js 工具提示
-                tippy('[data-tippy-content]', {
-                    placement: 'top',
-                    animation: 'scale',
-                });
 
                 // 添加按鍵事件監聽器
                 const tradeInputs = document.querySelectorAll('.trade-input');
