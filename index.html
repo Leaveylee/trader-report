@@ -130,6 +130,7 @@
             background-color: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
+            z-index: 50;
         }
 
         .hidden {
@@ -435,17 +436,17 @@
                     <table class="min-w-full bg-white rounded">
                         <thead>
                             <tr id="tradeTableHeader">
-                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-index="0">交易</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-index="1">開倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-index="2">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-index="3">持倉天數</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-index="4">報酬率 (%)</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-index="5">標的名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-index="6">策略名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-index="7">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-index="8">文字說明</th>
-                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-index="9">圖片</th>
-                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-index="10">操作</th>
+                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-id="col0">交易</th>
+                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col1">開倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col2">平倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col3">持倉天數</th>
+                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col4">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col5">標的名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col6">策略名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col7">外部條件</th>
+                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-id="col8">文字說明</th>
+                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-id="col9">圖片</th>
+                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-id="col10">操作</th>
                             </tr>
                         </thead>
                         <tbody id="tradesList">
@@ -540,7 +541,7 @@
             // 保存欄位順序到 localStorage
             function saveColumnOrder() {
                 const headers = document.querySelectorAll('#tradeTableHeader th');
-                const order = Array.from(headers).map(th => th.getAttribute('data-col-index'));
+                const order = Array.from(headers).map(th => th.getAttribute('data-col-id'));
                 localStorage.setItem('tradeTableColumnOrder', JSON.stringify(order));
             }
 
@@ -1343,6 +1344,7 @@
                     localStorage.removeItem('externalConditions');
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
+                    localStorage.removeItem('tradeTableColumnOrder'); // 移除欄位順序
                     trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
@@ -1429,17 +1431,17 @@
             // 初始化拖曳功能
             function initializeColumnDragAndDrop() {
                 const headers = document.querySelectorAll('#tradeTableHeader th');
-                let draggedColIndex = null;
+                let draggedColId = null;
 
-                headers.forEach(th => {
-                    th.addEventListener('dragstart', handleDragStart);
-                    th.addEventListener('dragover', handleDragOver);
-                    th.addEventListener('drop', handleDrop);
-                    th.addEventListener('dragend', handleDragEnd);
+                headers.forEach(header => {
+                    header.addEventListener('dragstart', handleDragStart);
+                    header.addEventListener('dragover', handleDragOver);
+                    header.addEventListener('drop', handleDrop);
+                    header.addEventListener('dragend', handleDragEnd);
                 });
 
                 function handleDragStart(e) {
-                    draggedColIndex = this.getAttribute('data-col-index');
+                    draggedColId = this.getAttribute('data-col-id');
                     this.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
                 }
@@ -1447,102 +1449,73 @@
                 function handleDragOver(e) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
-                    if (this.getAttribute('data-col-index') !== draggedColIndex) {
+                    if (this.getAttribute('data-col-id') !== draggedColId) {
                         this.classList.add('over');
                     }
                 }
 
                 function handleDrop(e) {
                     e.stopPropagation();
-                    const targetColIndex = this.getAttribute('data-col-index');
-                    if (draggedColIndex === targetColIndex) return;
+                    const targetColId = this.getAttribute('data-col-id');
+                    if (draggedColId === targetColId) return;
 
-                    reorderColumns(draggedColIndex, targetColIndex);
-                    saveData(); // 保存新的欄位順序
+                    // Reorder headers
+                    const headerRow = document.getElementById('tradeTableHeader');
+                    const draggedHeader = headerRow.querySelector(`th[data-col-id="${draggedColId}"]`);
+                    const targetHeader = headerRow.querySelector(`th[data-col-id="${targetColId}"]`);
+
+                    // Insert draggedHeader before targetHeader
+                    headerRow.insertBefore(draggedHeader, targetHeader);
+
+                    // Reorder each row's cells
+                    const tbody = document.getElementById('tradesList');
+                    const rows = tbody.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        const draggedCell = cells.find(td => td.getAttribute('data-col-id') === draggedColId);
+                        const targetCell = cells.find(td => td.getAttribute('data-col-id') === targetColId);
+                        if (draggedCell && targetCell) {
+                            row.insertBefore(draggedCell, targetCell);
+                        }
+                    });
+
+                    // Update column order in localStorage
+                    saveColumnOrder();
+
+                    // Remove visual classes
+                    headers.forEach(header => header.classList.remove('over'));
                 }
 
                 function handleDragEnd(e) {
-                    headers.forEach(th => th.classList.remove('dragging', 'over'));
-                }
-
-                function reorderColumns(fromIndex, toIndex) {
-                    const headersRow = document.getElementById('tradeTableHeader');
-                    const headers = headersRow.querySelectorAll('th');
-                    const fromTh = headersRow.querySelector(`th[data-col-index="${fromIndex}"]`);
-                    const toTh = headersRow.querySelector(`th[data-col-index="${toIndex}"]`);
-
-                    if (fromTh && toTh) {
-                        // 獲取從和到的索引
-                        const fromPosition = Array.from(headers).indexOf(fromTh);
-                        const toPosition = Array.from(headers).indexOf(toTh);
-
-                        // 移動 header
-                        if (fromPosition < toPosition) {
-                            headersRow.insertBefore(fromTh, toTh.nextSibling);
-                        } else {
-                            headersRow.insertBefore(fromTh, toTh);
-                        }
-
-                        // 移動每一行的相應單元格
-                        const tbody = document.getElementById('tradesList');
-                        const rows = tbody.querySelectorAll('tr');
-                        rows.forEach(row => {
-                            const cells = row.querySelectorAll('td');
-                            const fromCell = row.querySelector(`td:nth-child(${parseInt(fromIndex) + 1})`);
-                            const toCell = row.querySelector(`td:nth-child(${parseInt(toIndex) + 1})`);
-
-                            if (fromPosition < toPosition) {
-                                row.insertBefore(fromCell, toCell.nextSibling);
-                            } else {
-                                row.insertBefore(fromCell, toCell);
-                            }
-                        });
-
-                        // 更新 data-col-index
-                        updateColumnIndices();
-                    }
-                }
-
-                function updateColumnIndices() {
-                    const headers = document.querySelectorAll('#tradeTableHeader th');
-                    headers.forEach((th, index) => {
-                        th.setAttribute('data-col-index', index);
-                    });
-
-                    // Update corresponding data-col-index in cells if needed
+                    headers.forEach(header => header.classList.remove('dragging', 'over'));
+                    draggedColId = null;
                 }
             }
 
             // 應用保存的欄位順序
             function applyColumnOrder(order) {
-                const headersRow = document.getElementById('tradeTableHeader');
-                const headers = headersRow.querySelectorAll('th');
-                const headersArray = Array.from(headers);
-                const orderedHeaders = order.map(index => headersArray.find(th => th.getAttribute('data-col-index') === index));
+                const headerRow = document.getElementById('tradeTableHeader');
+                const headers = Array.from(headerRow.querySelectorAll('th'));
                 
-                orderedHeaders.forEach(th => {
-                    if (th) {
-                        headersRow.appendChild(th);
+                // Reorder headers based on saved order
+                order.forEach(colId => {
+                    const header = headers.find(th => th.getAttribute('data-col-id') === colId);
+                    if (header) {
+                        headerRow.appendChild(header);
                     }
                 });
 
-                // Reorder table body cells accordingly
+                // Reorder each row's cells based on saved order
                 const tbody = document.getElementById('tradesList');
-                const rows = tbody.querySelectorAll('tr');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
                 rows.forEach(row => {
                     const cells = Array.from(row.querySelectorAll('td'));
-                    const orderedCells = order.map(index => cells.find((td, i) => i === parseInt(index)));
-                    orderedCells.forEach(td => {
-                        if (td) {
-                            row.appendChild(td);
+                    order.forEach(colId => {
+                        const cell = cells.find(td => td.getAttribute('data-col-id') === colId);
+                        if (cell) {
+                            row.appendChild(cell);
                         }
                     });
-                });
-
-                // Update data-col-index to match the new order
-                const newHeaders = headersRow.querySelectorAll('th');
-                newHeaders.forEach((th, index) => {
-                    th.setAttribute('data-col-index', index);
                 });
             }
 
@@ -1572,7 +1545,9 @@
                     deleteExternalCondition(conditionId);
                 }
             });
+        </script>
 
+        <script>
             // 渲染交易記錄時的安全插入
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
@@ -1625,8 +1600,8 @@
 
                     return `
                         <tr>
-                            <td class="border px-4 py-2 text-center min-w-[80px]">${sanitizeHTML(transactionNumber)}</td>
-                            <td class="border px-4 py-2 min-w-[100px]">
+                            <td class="border px-4 py-2 text-center min-w-[80px]" data-col-id="col0">${sanitizeHTML(transactionNumber)}</td>
+                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col1">
                                 <input
                                     type="date"
                                     value="${sanitizeHTML(trade.openDate)}"
@@ -1636,7 +1611,7 @@
                                     data-field="openDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2 min-w-[100px]">
+                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col2">
                                 <input
                                     type="date"
                                     value="${sanitizeHTML(trade.closeDate)}"
@@ -1646,10 +1621,10 @@
                                     data-field="closeDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
+                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]" data-col-id="col3">
                                 ${sanitizeHTML(holdingDays)}
                             </td>
-                            <td class="border px-4 py-2 min-w-[100px]">
+                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col4">
                                 <input
                                     type="text"
                                     value="${sanitizeHTML(trade.returnRate)}"
@@ -1661,19 +1636,19 @@
                                     data-trade-id="${trade.id}"
                                 >
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
+                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col5">
                                 ${trade.assetName.length > 10 ? sanitizeHTML(trade.assetName.substring(0, 10)) + '...' : sanitizeHTML(trade.assetName)}
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
+                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col6">
                                 ${getStrategyName(trade.strategyId).length > 10 ? sanitizeHTML(getStrategyName(trade.strategyId).substring(0, 10)) + '...' : sanitizeHTML(getStrategyName(trade.strategyId))}
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
+                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col7">
                                 ${getExternalConditionName(trade.externalConditionId).length > 10 ? sanitizeHTML(getExternalConditionName(trade.externalConditionId).substring(0, 10)) + '...' : sanitizeHTML(getExternalConditionName(trade.externalConditionId))}
                             </td>
-                            <td class="border px-4 py-2 min-w-[200px]">
+                            <td class="border px-4 py-2 min-w-[200px]" data-col-id="col8">
                                 ${trade.description.length > 15 ? sanitizeHTML(trade.description.substring(0, 15)) + '...' : sanitizeHTML(trade.description)}
                             </td>
-                            <td class="border px-4 py-2 min-w-[200px]">
+                            <td class="border px-4 py-2 min-w-[200px]" data-col-id="col9">
                                 <input
                                     type="text"
                                     value="${sanitizeHTML(trade.imageUrl)}"
@@ -1685,7 +1660,7 @@
                                 >
                                 ${trade.imageUrl ? `<button onclick="openImageLink('${sanitizeURL(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
-                            <td class="border px-4 py-2 text-center min-w-[80px]">
+                            <td class="border px-4 py-2 text-center min-w-[80px]" data-col-id="col10">
                                 ${trades.length > 1 ? `
                                     <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
@@ -1745,10 +1720,10 @@
                           .replace(/'/g, "&#039;");
             }
 
-            // 添加拖曳事件處理
+            // 初始化拖曳功能
             function initializeColumnDragAndDrop() {
                 const headers = document.querySelectorAll('#tradeTableHeader th');
-                let draggedHeader = null;
+                let draggedColId = null;
 
                 headers.forEach(header => {
                     header.addEventListener('dragstart', handleDragStart);
@@ -1758,102 +1733,81 @@
                 });
 
                 function handleDragStart(e) {
-                    draggedHeader = this;
+                    draggedColId = this.getAttribute('data-col-id');
                     this.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
                 }
 
                 function handleDragOver(e) {
                     e.preventDefault();
-                    if (this !== draggedHeader) {
+                    e.dataTransfer.dropEffect = 'move';
+                    if (this.getAttribute('data-col-id') !== draggedColId) {
                         this.classList.add('over');
-                        e.dataTransfer.dropEffect = 'move';
                     }
                 }
 
                 function handleDrop(e) {
                     e.stopPropagation();
-                    if (this === draggedHeader) return;
+                    const targetColId = this.getAttribute('data-col-id');
+                    if (draggedColId === targetColId) return;
 
-                    const fromIndex = Array.from(draggedHeader.parentNode.children).indexOf(draggedHeader);
-                    const toIndex = Array.from(this.parentNode.children).indexOf(this);
+                    // Reorder headers
+                    const headerRow = document.getElementById('tradeTableHeader');
+                    const draggedHeader = headerRow.querySelector(`th[data-col-id="${draggedColId}"]`);
+                    const targetHeader = headerRow.querySelector(`th[data-col-id="${targetColId}"]`);
 
-                    if (fromIndex < toIndex) {
-                        this.parentNode.insertBefore(draggedHeader, this.nextSibling);
-                    } else {
-                        this.parentNode.insertBefore(draggedHeader, this);
-                    }
+                    // Insert draggedHeader before targetHeader
+                    headerRow.insertBefore(draggedHeader, targetHeader);
 
-                    // Reorder table body cells
+                    // Reorder each row's cells
                     const tbody = document.getElementById('tradesList');
                     const rows = tbody.querySelectorAll('tr');
                     rows.forEach(row => {
-                        const cells = row.querySelectorAll('td');
-                        const fromCell = cells[fromIndex];
-                        const toCell = cells[toIndex];
-
-                        if (fromIndex < toIndex) {
-                            row.insertBefore(fromCell, toCell.nextSibling);
-                        } else {
-                            row.insertBefore(fromCell, toCell);
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        const draggedCell = cells.find(td => td.getAttribute('data-col-id') === draggedColId);
+                        const targetCell = cells.find(td => td.getAttribute('data-col-id') === targetColId);
+                        if (draggedCell && targetCell) {
+                            row.insertBefore(draggedCell, targetCell);
                         }
                     });
 
+                    // Update column order in localStorage
+                    saveColumnOrder();
+
                     // Remove visual classes
                     headers.forEach(header => header.classList.remove('over'));
-
-                    // Update data-col-index
-                    updateColumnIndices();
-
-                    // Save the new column order
-                    saveData();
                 }
 
                 function handleDragEnd(e) {
                     headers.forEach(header => header.classList.remove('dragging', 'over'));
-                    draggedHeader = null;
-                }
-
-                function updateColumnIndices() {
-                    const headers = document.querySelectorAll('#tradeTableHeader th');
-                    headers.forEach((header, index) => {
-                        header.setAttribute('data-col-index', index);
-                    });
-
-                    // Update corresponding data-col-index in cells if needed
+                    draggedColId = null;
                 }
             }
 
             // 應用保存的欄位順序
             function applyColumnOrder(order) {
-                const headersRow = document.getElementById('tradeTableHeader');
-                const headers = headersRow.querySelectorAll('th');
-                const headersArray = Array.from(headers);
-                const orderedHeaders = order.map(index => headersArray.find(th => th.getAttribute('data-col-index') === index));
+                const headerRow = document.getElementById('tradeTableHeader');
+                const headers = Array.from(headerRow.querySelectorAll('th'));
                 
-                orderedHeaders.forEach(th => {
-                    if (th) {
-                        headersRow.appendChild(th);
+                // Reorder headers based on saved order
+                order.forEach(colId => {
+                    const header = headers.find(th => th.getAttribute('data-col-id') === colId);
+                    if (header) {
+                        headerRow.appendChild(header);
                     }
                 });
 
-                // Reorder table body cells accordingly
+                // Reorder each row's cells based on saved order
                 const tbody = document.getElementById('tradesList');
-                const rows = tbody.querySelectorAll('tr');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
                 rows.forEach(row => {
                     const cells = Array.from(row.querySelectorAll('td'));
-                    const orderedCells = order.map(index => cells[index]);
-                    orderedCells.forEach(td => {
-                        if (td) {
-                            row.appendChild(td);
+                    order.forEach(colId => {
+                        const cell = cells.find(td => td.getAttribute('data-col-id') === colId);
+                        if (cell) {
+                            row.appendChild(cell);
                         }
                     });
-                });
-
-                // Update data-col-index to match the new order
-                const newHeaders = headersRow.querySelectorAll('th');
-                newHeaders.forEach((th, index) => {
-                    th.setAttribute('data-col-index', index);
                 });
             }
         </script>
