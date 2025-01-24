@@ -515,7 +515,8 @@
                 localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
                 saveExternalConditions(); // 保存外部條件數據
-                saveDateFilters(); // 保存日期篩選
+                // 移除保存日期篩選的部分
+                // saveDateFilters(); // 不再保存日期篩選
 
                 // 保存收合狀態
                 saveCollapseState();
@@ -532,10 +533,13 @@
             }
 
             // 保存日期篩選到 localStorage
+            // 移除 saveDateFilters 函數
+            /*
             function saveDateFilters() {
                 localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
                 localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
             }
+            */
 
             // 保存收合狀態到 localStorage
             function saveCollapseState() {
@@ -573,8 +577,9 @@
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
                 const savedAveragePosition = localStorage.getItem('averagePosition');
-                const savedStartDateFilter = localStorage.getItem('selectedStartDateFilter');
-                const savedEndDateFilter = localStorage.getItem('selectedEndDateFilter');
+                // 移除加載日期篩選的部分
+                // const savedStartDateFilter = localStorage.getItem('selectedStartDateFilter');
+                // const savedEndDateFilter = localStorage.getItem('selectedEndDateFilter');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
@@ -603,6 +608,8 @@
                     document.getElementById('averagePosition').value = savedAveragePosition;
                 }
                 
+                // 移除加載日期篩選的部分
+                /*
                 if (savedStartDateFilter !== null) {
                     selectedStartDateFilter = savedStartDateFilter;
                     document.getElementById('startDateFilter').value = selectedStartDateFilter;
@@ -612,7 +619,18 @@
                     selectedEndDateFilter = savedEndDateFilter;
                     document.getElementById('endDateFilter').value = selectedEndDateFilter;
                 }
-                
+                */
+
+                // 確保篩選器重置為默認狀態
+                selectedStrategyFilter = null;
+                selectedExternalConditionFilter = null;
+                selectedStartDateFilter = null;
+                selectedEndDateFilter = null;
+                document.getElementById('strategyFilter').value = '';
+                document.getElementById('externalConditionFilter').value = '';
+                document.getElementById('startDateFilter').value = '';
+                document.getElementById('endDateFilter').value = '';
+
                 renderStrategies(); // 渲染策略列表
                 renderExternalConditions(); // 渲染外部條件列表
                 renderTrades();
@@ -1258,7 +1276,8 @@
 
                 calculateStats();
                 renderTrades();
-                saveDateFilters(); // 保存日期篩選
+                // 移除保存日期篩選的部分
+                // saveDateFilters(); // 不再保存日期篩選
             }
 
             // 清除日期篩選
@@ -1417,6 +1436,7 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
+                    // 移除日期篩選
                     localStorage.removeItem('selectedStartDateFilter'); // 移除開始日期篩選
                     localStorage.removeItem('selectedEndDateFilter');   // 移除結束日期篩選
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
@@ -1425,8 +1445,9 @@
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
-                    document.getElementById('startDateFilter').value = ''; // 重置開始日期篩選
-                    document.getElementById('endDateFilter').value = '';   // 重置結束日期篩選
+                    // 重置日期篩選
+                    document.getElementById('startDateFilter').value = '';
+                    document.getElementById('endDateFilter').value = '';
                     renderStrategies();
                     renderExternalConditions();
                     renderTrades();
