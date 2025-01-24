@@ -126,6 +126,24 @@
         .hidden {
             display: none;
         }
+
+        /* 自定義頂部滾動條樣式 */
+        .scrollbar-top {
+            height: 16px; /* 標準滾動條高度 */
+            margin-bottom: 8px; /* 與表格之間的間距 */
+        }
+
+        #topScrollbarContent {
+            height: 1px; /* 只需要足夠的高度來顯示滾動條 */
+        }
+
+        /* 隱藏頂部滾動條的內容 */
+        #topScrollbarContent::after {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 1px;
+        }
     </style>
 </head>
 <body>
@@ -398,34 +416,34 @@
             <div class="text-sm text-gray-600 mb-2">
                 請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、開倉日和平倉日
             </div>
-            
-            <!-- 新增頂部滾動容器 -->
-            <div id="topScroll" class="overflow-x-auto mb-2">
-                <div style="width: 1000px;"></div> <!-- 這裡的寬度需要與表格寬度相匹配 -->
-            </div>
-            
-            <!-- 原本的底部滾動容器 -->
-            <div id="bottomScroll" class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded">
-                    <thead>
-                        <tr>
-                            <th class="px-4 py-2 min-w-[80px]">交易</th>
-                            <th class="px-4 py-2 min-w-[100px]">開倉日</th>
-                            <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                            <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
-                            <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
-                            <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
-                            <th class="px-4 py-2 min-w-[150px]">外部條件</th>
-                            <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2 min-w-[80px]">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tradesList">
-                        <!-- 交易記錄將在這裡動態添加為表格行 -->
-                    </tbody>
-                </table>
+            <div class="relative">
+                <!-- 頂部滾動條 -->
+                <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
+                    <div id="topScrollbarContent"></div>
+                </div>
+                <!-- 表格滾動區域 -->
+                <div class="overflow-x-auto" id="bottomScrollbar">
+                    <table class="min-w-full bg-white rounded">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 min-w-[80px]">交易</th>
+                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">外部條件</th>
+                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[80px]">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesList">
+                            <!-- 交易記錄將在這裡動態添加為表格行 -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -780,40 +798,40 @@
                     `;
                 }).join('');
                 
-                // 同步頂部滾動容器的寬度與表格寬度
-                const bottomScroll = document.getElementById('bottomScroll');
-                const topScroll = document.getElementById('topScroll');
-                const table = bottomScroll.querySelector('table');
-                const tableWidth = table.scrollWidth;
-                topScroll.firstElementChild.style.width = tableWidth + 'px';
-
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
 
-                // 同步滾動
-                synchronizeScroll(topScroll, bottomScroll);
-            }
+                // 設置頂部滾動條內容的寬度與表格一致
+                const topScrollbarContent = document.getElementById('topScrollbarContent');
+                const bottomScrollbar = document.getElementById('bottomScrollbar');
+                const table = bottomScrollbar.querySelector('table');
+                if (table) {
+                    topScrollbarContent.style.width = table.scrollWidth + 'px';
+                }
 
-            // 同步頂部和底部滾動容器
-            function synchronizeScroll(topScroll, bottomScroll) {
-                let isSyncingLeftScroll = false;
-                let isSyncingRightScroll = false;
+                // 同步頂部和底部滾動條
+                const topScrollbar = document.getElementById('topScrollbar');
+                const bottomScrollDiv = document.getElementById('bottomScrollbar');
 
-                topScroll.onscroll = function() {
-                    if (!isSyncingLeftScroll) {
-                        isSyncingRightScroll = true;
-                        bottomScroll.scrollLeft = topScroll.scrollLeft;
-                    }
-                    isSyncingLeftScroll = false;
-                };
+                // 解除先前的事件監聽器以防止重複綁定
+                topScrollbar.removeEventListener('scroll', syncTopToBottom);
+                bottomScrollDiv.removeEventListener('scroll', syncBottomToTop);
 
-                bottomScroll.onscroll = function() {
-                    if (!isSyncingRightScroll) {
-                        isSyncingLeftScroll = true;
-                        topScroll.scrollLeft = bottomScroll.scrollLeft;
-                    }
-                    isSyncingRightScroll = false;
-                };
+                // 定義同步函數
+                function syncTopToBottom() {
+                    bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft;
+                }
+
+                function syncBottomToTop() {
+                    topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
+                }
+
+                // 添加事件監聽器
+                topScrollbar.addEventListener('scroll', syncTopToBottom);
+                bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
+
+                // 初始化同步
+                topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
             }
 
             // 獲取策略名稱
