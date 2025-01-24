@@ -111,15 +111,6 @@
         th {
             background-color: #f9fafb; /* Tailwind 的 gray-50 */
             font-weight: 600;
-            cursor: move; /* 顯示可拖曳的光標 */
-        }
-
-        th.dragging {
-            opacity: 0.5;
-        }
-
-        th.over {
-            border-left: 2px solid #B86E52;
         }
 
         /* 模態框樣式 */
@@ -130,7 +121,6 @@
             background-color: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
-            z-index: 50;
         }
 
         .hidden {
@@ -435,18 +425,18 @@
                 <div class="overflow-x-auto" id="bottomScrollbar">
                     <table class="min-w-full bg-white rounded">
                         <thead>
-                            <tr id="tradeTableHeader">
-                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-id="col0">交易</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col1">開倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col2">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col3">持倉天數</th>
-                                <th class="px-4 py-2 min-w-[100px]" draggable="true" data-col-id="col4">報酬率 (%)</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col5">標的名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col6">策略名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" draggable="true" data-col-id="col7">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-id="col8">文字說明</th>
-                                <th class="px-4 py-2 min-w-[200px]" draggable="true" data-col-id="col9">圖片</th>
-                                <th class="px-4 py-2 min-w-[80px]" draggable="true" data-col-id="col10">操作</th>
+                            <tr>
+                                <th class="px-4 py-2 min-w-[80px]">交易</th>
+                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">外部條件</th>
+                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[80px]">操作</th>
                             </tr>
                         </thead>
                         <tbody id="tradesList">
@@ -515,9 +505,6 @@
 
                 // 保存收合狀態
                 saveCollapseState();
-
-                // 保存欄位順序
-                saveColumnOrder();
             }
 
             // 保存策略數據到 localStorage
@@ -536,13 +523,6 @@
                 const externalConditionCollapsed = document.getElementById('externalConditionManagementContent').classList.contains('hidden');
                 localStorage.setItem('strategyManagementCollapsed', strategyCollapsed);
                 localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
-            }
-
-            // 保存欄位順序到 localStorage
-            function saveColumnOrder() {
-                const headers = document.querySelectorAll('#tradeTableHeader th');
-                const order = Array.from(headers).map(th => th.getAttribute('data-col-id'));
-                localStorage.setItem('tradeTableColumnOrder', JSON.stringify(order));
             }
 
             // 從 localStorage 加載策略數據
@@ -575,8 +555,7 @@
                 const savedAveragePosition = localStorage.getItem('averagePosition');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
-                const savedColumnOrder = JSON.parse(localStorage.getItem('tradeTableColumnOrder'));
-
+                
                 if (savedTrades && Array.isArray(savedTrades)) {
                     // 確保每個交易都有唯一的 ID 和 imageUrl
                     trades = savedTrades.map(trade => {
@@ -609,11 +588,6 @@
 
                 // 應用收合狀態
                 applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
-
-                // 應用欄位順序
-                if (savedColumnOrder && Array.isArray(savedColumnOrder)) {
-                    applyColumnOrder(savedColumnOrder);
-                }
             }
 
             // 應用已保存的收合狀態
@@ -640,13 +614,13 @@
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
                     <tr>
-                        <td class="border px-4 py-2 min-w-[150px]">${sanitizeHTML(strategy.name)}</td>
-                        <td class="border px-4 py-2 min-w-[200px]">${sanitizeHTML(strategy.description)}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${strategy.name}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${strategy.description}</td>
                         <td class="border px-4 py-2 text-center">
-                            <button data-action="edit" data-id="${strategy.id}" class="mr-2">
+                            <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
                             </button>
-                            <button data-action="delete" data-id="${strategy.id}" class="delete-button">
+                            <button onclick="deleteStrategy(${strategy.id})" class="delete-button">
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </td>
@@ -663,7 +637,7 @@
                 strategyFilter.innerHTML = `
                     <option value="">全部策略</option>
                     ${strategies.map(strategy => `
-                        <option value="${strategy.id}">${sanitizeHTML(strategy.name)}</option>
+                        <option value="${strategy.id}">${strategy.name}</option>
                     `).join('')}
                 `;
             }
@@ -673,13 +647,13 @@
                 const externalConditionsList = document.getElementById('externalConditionsList');
                 externalConditionsList.innerHTML = externalConditions.map(condition => `
                     <tr>
-                        <td class="border px-4 py-2 min-w-[150px]">${sanitizeHTML(condition.name)}</td>
-                        <td class="border px-4 py-2 min-w-[200px]">${sanitizeHTML(condition.description)}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${condition.name}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${condition.description}</td>
                         <td class="border px-4 py-2 text-center">
-                            <button data-action="edit" data-id="${condition.id}" class="mr-2">
+                            <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
                             </button>
-                            <button data-action="delete" data-id="${condition.id}" class="delete-button">
+                            <button onclick="deleteExternalCondition(${condition.id})" class="delete-button">
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </td>
@@ -696,7 +670,7 @@
                 externalConditionFilter.innerHTML = `
                     <option value="">全部外部條件</option>
                     ${externalConditions.map(condition => `
-                        <option value="${condition.id}">${sanitizeHTML(condition.name)}</option>
+                        <option value="${condition.id}">${condition.name}</option>
                     `).join('')}
                 `;
             }
@@ -753,11 +727,11 @@
 
                     return `
                         <tr>
-                            <td class="border px-4 py-2 text-center min-w-[80px]">${sanitizeHTML(transactionNumber)}</td>
+                            <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
                             <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="date"
-                                    value="${sanitizeHTML(trade.openDate)}"
+                                    value="${trade.openDate}"
                                     oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -767,7 +741,7 @@
                             <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="date"
-                                    value="${sanitizeHTML(trade.closeDate)}"
+                                    value="${trade.closeDate}"
                                     oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -775,12 +749,12 @@
                                 >
                             </td>
                             <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
-                                ${sanitizeHTML(holdingDays)}
+                                ${holdingDays}
                             </td>
                             <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="text"
-                                    value="${sanitizeHTML(trade.returnRate)}"
+                                    value="${trade.returnRate}"
                                     oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
@@ -790,28 +764,28 @@
                                 >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${trade.assetName.length > 10 ? sanitizeHTML(trade.assetName.substring(0, 10)) + '...' : sanitizeHTML(trade.assetName)}
+                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getStrategyName(trade.strategyId).length > 10 ? sanitizeHTML(getStrategyName(trade.strategyId).substring(0, 10)) + '...' : sanitizeHTML(getStrategyName(trade.strategyId))}
+                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? sanitizeHTML(getExternalConditionName(trade.externalConditionId).substring(0, 10)) + '...' : sanitizeHTML(getExternalConditionName(trade.externalConditionId))}
+                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
-                                ${trade.description.length > 15 ? sanitizeHTML(trade.description.substring(0, 15)) + '...' : sanitizeHTML(trade.description)}
+                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
                                 <input
                                     type="text"
-                                    value="${sanitizeHTML(trade.imageUrl)}"
+                                    value="${trade.imageUrl}"
                                     oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入圖片URL"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="imageUrl"
                                 >
-                                ${trade.imageUrl ? `<button onclick="openImageLink('${sanitizeURL(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
                             <td class="border px-4 py-2 text-center min-w-[80px]">
                                 ${trades.length > 1 ? `
@@ -858,9 +832,6 @@
 
                 // 初始化同步
                 topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-
-                // 初始化拖曳功能
-                initializeColumnDragAndDrop();
             }
 
             // 獲取策略名稱
@@ -976,12 +947,14 @@
 
             // 開啟新增策略模態框
             function openAddStrategyModal() {
-                openModal('addStrategyModal');
+                document.getElementById('addStrategyModal').classList.remove('hidden');
             }
 
             // 關閉新增策略模態框
             function closeAddStrategyModal() {
-                closeModal('addStrategyModal');
+                document.getElementById('addStrategyModal').classList.add('hidden');
+                document.getElementById('newStrategyName').value = '';
+                document.getElementById('newStrategyDescription').value = '';
             }
 
             // 新增策略
@@ -1023,12 +996,15 @@
                 document.getElementById('editStrategyId').value = strategy.id;
                 document.getElementById('editStrategyName').value = strategy.name;
                 document.getElementById('editStrategyDescription').value = strategy.description;
-                openModal('editStrategyModal');
+                document.getElementById('editStrategyModal').classList.remove('hidden');
             }
 
             // 關閉編輯策略模態框
             function closeEditStrategyModal() {
-                closeModal('editStrategyModal');
+                document.getElementById('editStrategyModal').classList.add('hidden');
+                document.getElementById('editStrategyId').value = '';
+                document.getElementById('editStrategyName').value = '';
+                document.getElementById('editStrategyDescription').value = '';
             }
 
             // 更新策略
@@ -1084,12 +1060,14 @@
 
             // 開啟新增外部條件模態框
             function openAddExternalConditionModal() {
-                openModal('addExternalConditionModal');
+                document.getElementById('addExternalConditionModal').classList.remove('hidden');
             }
 
             // 關閉新增外部條件模態框
             function closeAddExternalConditionModal() {
-                closeModal('addExternalConditionModal');
+                document.getElementById('addExternalConditionModal').classList.add('hidden');
+                document.getElementById('newExternalConditionName').value = '';
+                document.getElementById('newExternalConditionDescription').value = '';
             }
 
             // 新增外部條件
@@ -1131,12 +1109,15 @@
                 document.getElementById('editExternalConditionId').value = condition.id;
                 document.getElementById('editExternalConditionName').value = condition.name;
                 document.getElementById('editExternalConditionDescription').value = condition.description;
-                openModal('editExternalConditionModal');
+                document.getElementById('editExternalConditionModal').classList.remove('hidden');
             }
 
             // 關閉編輯外部條件模態框
             function closeEditExternalConditionModal() {
-                closeModal('editExternalConditionModal');
+                document.getElementById('editExternalConditionModal').classList.add('hidden');
+                document.getElementById('editExternalConditionId').value = '';
+                document.getElementById('editExternalConditionName').value = '';
+                document.getElementById('editExternalConditionDescription').value = '';
             }
 
             // 更新外部條件
@@ -1344,7 +1325,6 @@
                     localStorage.removeItem('externalConditions');
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
-                    localStorage.removeItem('tradeTableColumnOrder'); // 移除欄位順序
                     trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
@@ -1395,420 +1375,6 @@
 
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
                 saveCollapseState(); // 保存收合狀態
-            }
-
-            // 打開模態框的通用函數
-            function openModal(modalId) {
-                document.getElementById(modalId).classList.remove('hidden');
-            }
-
-            // 關閉模態框的通用函數
-            function closeModal(modalId) {
-                const modal = document.getElementById(modalId);
-                modal.classList.add('hidden');
-                // 清空輸入欄位
-                const inputs = modal.querySelectorAll('input, textarea');
-                inputs.forEach(input => input.value = '');
-            }
-
-            // 安全地插入HTML，防止XSS攻擊
-            function sanitizeHTML(str) {
-                if (!str) return '';
-                return str.replace(/&/g, "&amp;")
-                          .replace(/</g, "&lt;")
-                          .replace(/>/g, "&gt;")
-                          .replace(/"/g, "&quot;")
-                          .replace(/'/g, "&#039;");
-            }
-
-            // 安全地插入URL，防止XSS攻擊
-            function sanitizeURL(url) {
-                const a = document.createElement('a');
-                a.href = url;
-                return a.href;
-            }
-
-            // 初始化拖曳功能
-            function initializeColumnDragAndDrop() {
-                const headers = document.querySelectorAll('#tradeTableHeader th');
-                let draggedColId = null;
-
-                headers.forEach(header => {
-                    header.addEventListener('dragstart', handleDragStart);
-                    header.addEventListener('dragover', handleDragOver);
-                    header.addEventListener('drop', handleDrop);
-                    header.addEventListener('dragend', handleDragEnd);
-                });
-
-                function handleDragStart(e) {
-                    draggedColId = this.getAttribute('data-col-id');
-                    this.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                }
-
-                function handleDragOver(e) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    if (this.getAttribute('data-col-id') !== draggedColId) {
-                        this.classList.add('over');
-                    }
-                }
-
-                function handleDrop(e) {
-                    e.stopPropagation();
-                    const targetColId = this.getAttribute('data-col-id');
-                    if (draggedColId === targetColId) return;
-
-                    // Reorder headers
-                    const headerRow = document.getElementById('tradeTableHeader');
-                    const draggedHeader = headerRow.querySelector(`th[data-col-id="${draggedColId}"]`);
-                    const targetHeader = headerRow.querySelector(`th[data-col-id="${targetColId}"]`);
-
-                    // Insert draggedHeader before targetHeader
-                    headerRow.insertBefore(draggedHeader, targetHeader);
-
-                    // Reorder each row's cells
-                    const tbody = document.getElementById('tradesList');
-                    const rows = tbody.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const cells = Array.from(row.querySelectorAll('td'));
-                        const draggedCell = cells.find(td => td.getAttribute('data-col-id') === draggedColId);
-                        const targetCell = cells.find(td => td.getAttribute('data-col-id') === targetColId);
-                        if (draggedCell && targetCell) {
-                            row.insertBefore(draggedCell, targetCell);
-                        }
-                    });
-
-                    // Update column order in localStorage
-                    saveColumnOrder();
-
-                    // Remove visual classes
-                    headers.forEach(header => header.classList.remove('over'));
-                }
-
-                function handleDragEnd(e) {
-                    headers.forEach(header => header.classList.remove('dragging', 'over'));
-                    draggedColId = null;
-                }
-            }
-
-            // 應用保存的欄位順序
-            function applyColumnOrder(order) {
-                const headerRow = document.getElementById('tradeTableHeader');
-                const headers = Array.from(headerRow.querySelectorAll('th'));
-                
-                // Reorder headers based on saved order
-                order.forEach(colId => {
-                    const header = headers.find(th => th.getAttribute('data-col-id') === colId);
-                    if (header) {
-                        headerRow.appendChild(header);
-                    }
-                });
-
-                // Reorder each row's cells based on saved order
-                const tbody = document.getElementById('tradesList');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-                rows.forEach(row => {
-                    const cells = Array.from(row.querySelectorAll('td'));
-                    order.forEach(colId => {
-                        const cell = cells.find(td => td.getAttribute('data-col-id') === colId);
-                        if (cell) {
-                            row.appendChild(cell);
-                        }
-                    });
-                });
-            }
-
-            // 渲染策略列表和外部條件列表的事件委派
-            document.getElementById('strategiesList').addEventListener('click', function(event) {
-                const button = event.target.closest('button');
-                if (!button) return;
-
-                const action = button.getAttribute('data-action');
-                const strategyId = parseInt(button.getAttribute('data-id'), 10);
-                if (action === 'edit') {
-                    openEditStrategyModal(strategyId);
-                } else if (action === 'delete') {
-                    deleteStrategy(strategyId);
-                }
-            });
-
-            document.getElementById('externalConditionsList').addEventListener('click', function(event) {
-                const button = event.target.closest('button');
-                if (!button) return;
-
-                const action = button.getAttribute('data-action');
-                const conditionId = parseInt(button.getAttribute('data-id'), 10);
-                if (action === 'edit') {
-                    openEditExternalConditionModal(conditionId);
-                } else if (action === 'delete') {
-                    deleteExternalCondition(conditionId);
-                }
-            });
-        </script>
-
-        <script>
-            // 渲染交易記錄時的安全插入
-            function renderTrades() {
-                const tradesList = document.getElementById('tradesList');
-                tradesList.innerHTML = '';
-
-                // 根據篩選條件過濾交易紀錄
-                let filteredTrades = trades;
-                if (selectedStrategyFilter !== null) {
-                    filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-                }
-                if (selectedExternalConditionFilter !== null) {
-                    filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-                }
-
-                // 分配交易編號：僅對有開倉日的交易編號，根據開倉日升序
-                const tradesWithOpenDate = filteredTrades.filter(trade => trade.openDate !== '');
-                const sortedAscending = [...tradesWithOpenDate].sort((a, b) => new Date(a.openDate) - new Date(b.openDate));
-                const transactionNumbers = new Map();
-                sortedAscending.forEach((trade, index) => {
-                    transactionNumbers.set(trade.id, index + 1);
-                });
-
-                // 將沒有開倉日的交易放在最頂端，排序有開倉日的交易為降序
-                filteredTrades.sort((a, b) => {
-                    if (a.openDate === '' && b.openDate === '') return 0;
-                    if (a.openDate === '') return -1; // 無開倉日的交易排在最上方
-                    if (b.openDate === '') return 1;  // 無開倉日的交易排在最上方
-                    return new Date(b.openDate) - new Date(a.openDate); // 有開倉日的交易按降序排列
-                });
-
-                // 渲染排序後的交易紀錄
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
-                    const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
-                    let holdingDays = '';
-                    let holdingDaysClass = '';
-                    if (trade.openDate !== '' && trade.closeDate !== '') {
-                        const openDate = new Date(trade.openDate);
-                        const closeDate = new Date(trade.closeDate);
-                        const timeDiff = closeDate - openDate;
-                        holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-                        if (holdingDays >= 0) {
-                            holdingDays = holdingDays;
-                        } else {
-                            holdingDays = ''; // 錯誤的日期，不顯示
-                        }
-                    } else {
-                        holdingDays = '未平倉';
-                        holdingDaysClass = 'text-red-500'; // 使用紅色字體
-                    }
-
-                    return `
-                        <tr>
-                            <td class="border px-4 py-2 text-center min-w-[80px]" data-col-id="col0">${sanitizeHTML(transactionNumber)}</td>
-                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col1">
-                                <input
-                                    type="date"
-                                    value="${sanitizeHTML(trade.openDate)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="openDate"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col2">
-                                <input
-                                    type="date"
-                                    value="${sanitizeHTML(trade.closeDate)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="closeDate"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]" data-col-id="col3">
-                                ${sanitizeHTML(holdingDays)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[100px]" data-col-id="col4">
-                                <input
-                                    type="text"
-                                    value="${sanitizeHTML(trade.returnRate)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="+6.66 或 -2.92"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="returnRate"
-                                    data-trade-id="${trade.id}"
-                                >
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col5">
-                                ${trade.assetName.length > 10 ? sanitizeHTML(trade.assetName.substring(0, 10)) + '...' : sanitizeHTML(trade.assetName)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col6">
-                                ${getStrategyName(trade.strategyId).length > 10 ? sanitizeHTML(getStrategyName(trade.strategyId).substring(0, 10)) + '...' : sanitizeHTML(getStrategyName(trade.strategyId))}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]" data-col-id="col7">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? sanitizeHTML(getExternalConditionName(trade.externalConditionId).substring(0, 10)) + '...' : sanitizeHTML(getExternalConditionName(trade.externalConditionId))}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[200px]" data-col-id="col8">
-                                ${trade.description.length > 15 ? sanitizeHTML(trade.description.substring(0, 15)) + '...' : sanitizeHTML(trade.description)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[200px]" data-col-id="col9">
-                                <input
-                                    type="text"
-                                    value="${sanitizeHTML(trade.imageUrl)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入圖片URL"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="imageUrl"
-                                >
-                                ${trade.imageUrl ? `<button onclick="openImageLink('${sanitizeURL(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
-                            </td>
-                            <td class="border px-4 py-2 text-center min-w-[80px]" data-col-id="col10">
-                                ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-                
-                // 重新初始化 Lucide 圖標
-                lucide.createIcons();
-
-                // 設置頂部滾動條內容的寬度與表格一致
-                const topScrollbarContent = document.getElementById('topScrollbarContent');
-                const bottomScrollbar = document.getElementById('bottomScrollbar');
-                const table = bottomScrollbar.querySelector('table');
-                if (table) {
-                    topScrollbarContent.style.width = table.scrollWidth + 'px';
-                }
-
-                // 同步頂部和底部滾動條
-                const topScrollbar = document.getElementById('topScrollbar');
-                const bottomScrollDiv = document.getElementById('bottomScrollbar');
-
-                // 解除先前的事件監聽器以防止重複綁定
-                topScrollbar.removeEventListener('scroll', syncTopToBottom);
-                bottomScrollDiv.removeEventListener('scroll', syncBottomToTop);
-
-                // 定義同步函數
-                function syncTopToBottom() {
-                    bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft;
-                }
-
-                function syncBottomToTop() {
-                    topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-                }
-
-                // 添加事件監聽器
-                topScrollbar.addEventListener('scroll', syncTopToBottom);
-                bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
-
-                // 初始化同步
-                topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-
-                // 初始化拖曳功能
-                initializeColumnDragAndDrop();
-            }
-
-            // 安全插入數據
-            function sanitizeHTML(str) {
-                if (!str) return '';
-                return str.replace(/&/g, "&amp;")
-                          .replace(/</g, "&lt;")
-                          .replace(/>/g, "&gt;")
-                          .replace(/"/g, "&quot;")
-                          .replace(/'/g, "&#039;");
-            }
-
-            // 初始化拖曳功能
-            function initializeColumnDragAndDrop() {
-                const headers = document.querySelectorAll('#tradeTableHeader th');
-                let draggedColId = null;
-
-                headers.forEach(header => {
-                    header.addEventListener('dragstart', handleDragStart);
-                    header.addEventListener('dragover', handleDragOver);
-                    header.addEventListener('drop', handleDrop);
-                    header.addEventListener('dragend', handleDragEnd);
-                });
-
-                function handleDragStart(e) {
-                    draggedColId = this.getAttribute('data-col-id');
-                    this.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                }
-
-                function handleDragOver(e) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    if (this.getAttribute('data-col-id') !== draggedColId) {
-                        this.classList.add('over');
-                    }
-                }
-
-                function handleDrop(e) {
-                    e.stopPropagation();
-                    const targetColId = this.getAttribute('data-col-id');
-                    if (draggedColId === targetColId) return;
-
-                    // Reorder headers
-                    const headerRow = document.getElementById('tradeTableHeader');
-                    const draggedHeader = headerRow.querySelector(`th[data-col-id="${draggedColId}"]`);
-                    const targetHeader = headerRow.querySelector(`th[data-col-id="${targetColId}"]`);
-
-                    // Insert draggedHeader before targetHeader
-                    headerRow.insertBefore(draggedHeader, targetHeader);
-
-                    // Reorder each row's cells
-                    const tbody = document.getElementById('tradesList');
-                    const rows = tbody.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const cells = Array.from(row.querySelectorAll('td'));
-                        const draggedCell = cells.find(td => td.getAttribute('data-col-id') === draggedColId);
-                        const targetCell = cells.find(td => td.getAttribute('data-col-id') === targetColId);
-                        if (draggedCell && targetCell) {
-                            row.insertBefore(draggedCell, targetCell);
-                        }
-                    });
-
-                    // Update column order in localStorage
-                    saveColumnOrder();
-
-                    // Remove visual classes
-                    headers.forEach(header => header.classList.remove('over'));
-                }
-
-                function handleDragEnd(e) {
-                    headers.forEach(header => header.classList.remove('dragging', 'over'));
-                    draggedColId = null;
-                }
-            }
-
-            // 應用保存的欄位順序
-            function applyColumnOrder(order) {
-                const headerRow = document.getElementById('tradeTableHeader');
-                const headers = Array.from(headerRow.querySelectorAll('th'));
-                
-                // Reorder headers based on saved order
-                order.forEach(colId => {
-                    const header = headers.find(th => th.getAttribute('data-col-id') === colId);
-                    if (header) {
-                        headerRow.appendChild(header);
-                    }
-                });
-
-                // Reorder each row's cells based on saved order
-                const tbody = document.getElementById('tradesList');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-                rows.forEach(row => {
-                    const cells = Array.from(row.querySelectorAll('td'));
-                    order.forEach(colId => {
-                        const cell = cells.find(td => td.getAttribute('data-col-id') === colId);
-                        if (cell) {
-                            row.appendChild(cell);
-                        }
-                    });
-                });
             }
         </script>
     </div>
