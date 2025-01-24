@@ -235,15 +235,16 @@
             </div>
         </div>
 
-        <!-- 策略管理區塊 -->
+        <!-- 策略管理區塊（可收合） -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">策略管理</h2>
-                <button class="button" onclick="openAddStrategyModal()">
-                    新增策略
+                <button class="button" onclick="toggleStrategyManagement()">
+                    <i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>
+                    收合
                 </button>
             </div>
-            <div class="overflow-x-auto">
+            <div id="strategyManagementContent" class="overflow-x-auto">
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
@@ -1115,46 +1116,6 @@
                 renderTrades();
             }
 
-            // 處理交易數據變更
-            function handleTradeChange(index, field, value) {
-                if (field === 'returnRate') {
-                    const cleanedValue = value.replace('%', '').trim();
-                    if (cleanedValue === '' || isNaN(cleanedValue)) {
-                        trades[index].returnRate = '';
-                    } else {
-                        trades[index].returnRate = cleanedValue;
-                    }
-                } else if (field === 'assetName') {
-                    trades[index].assetName = value.trim();
-                } else if (field === 'strategyId') {
-                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
-                } else if (field === 'externalConditionId') {
-                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
-                } else if (field === 'openDate') {
-                    trades[index].openDate = value;
-                    // 驗證平倉日是否早於開倉日
-                    const closeDate = trades[index].closeDate;
-                    if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
-                        alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
-                    }
-                } else if (field === 'closeDate') {
-                    trades[index].closeDate = value;
-                    // 驗證平倉日是否早於開倉日
-                    const openDate = trades[index].openDate;
-                    if (openDate !== '' && new Date(value) < new Date(openDate)) {
-                        alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
-                    }
-                }
-                
-                // 計算統計數據和保存
-                calculateStats();
-                saveData(); // 保存數據
-            }
-
             // 渲染交易記錄
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
@@ -1500,6 +1461,25 @@
                 }
             }
             */
+
+            // 收合/展開 策略管理區塊
+            function toggleStrategyManagement() {
+                const content = document.getElementById('strategyManagementContent');
+                const toggleIcon = document.getElementById('strategyToggleIcon');
+                const toggleButton = toggleIcon.parentElement;
+
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    toggleIcon.setAttribute('data-lucide', 'chevron-down');
+                    toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+                } else {
+                    content.classList.add('hidden');
+                    toggleIcon.setAttribute('data-lucide', 'chevron-right');
+                    toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+                }
+
+                lucide.createIcons(); // 重新初始化 Lucide 圖標
+            }
         </script>
     </div>
 </body>
