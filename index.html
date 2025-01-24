@@ -398,7 +398,14 @@
             <div class="text-sm text-gray-600 mb-2">
                 請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、開倉日和平倉日
             </div>
-            <div class="overflow-x-auto">
+            
+            <!-- 新增頂部滾動容器 -->
+            <div id="topScroll" class="overflow-x-auto mb-2">
+                <div style="width: 1000px;"></div> <!-- 這裡的寬度需要與表格寬度相匹配 -->
+            </div>
+            
+            <!-- 原本的底部滾動容器 -->
+            <div id="bottomScroll" class="overflow-x-auto">
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
@@ -773,72 +780,40 @@
                     `;
                 }).join('');
                 
+                // 同步頂部滾動容器的寬度與表格寬度
+                const bottomScroll = document.getElementById('bottomScroll');
+                const topScroll = document.getElementById('topScroll');
+                const table = bottomScroll.querySelector('table');
+                const tableWidth = table.scrollWidth;
+                topScroll.firstElementChild.style.width = tableWidth + 'px';
+
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
 
-                // 添加按鍵事件監聽器
-                const tradeInputs = document.querySelectorAll('.trade-input');
-                tradeInputs.forEach(input => {
-                    input.addEventListener('keydown', function(event) {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            const currentRow = parseInt(this.getAttribute('data-row-index'));
-                            const currentField = this.getAttribute('data-field');
+                // 同步滾動
+                synchronizeScroll(topScroll, bottomScroll);
+            }
 
-                            if (currentField === 'returnRate') {
-                                // 移動到標的名稱欄位
-                                const nextField = 'assetName';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'assetName') {
-                                // 移動到策略名稱欄位
-                                const nextField = 'strategyId';
-                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'strategyId') {
-                                // 移動到外部條件欄位
-                                const nextField = 'externalConditionId';
-                                const nextInput = document.querySelector(`select[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'externalConditionId') {
-                                // 移動到文字說明欄位
-                                const nextField = 'description';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'description') {
-                                // 移動到圖片URL欄位
-                                const nextField = 'imageUrl';
-                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                }
-                            } else if (currentField === 'imageUrl') {
-                                // 檢查是否為最後一筆交易，且有有效輸入
-                                const trade = trades[currentRow];
-                                if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
-                                    addTrade(); // 添加新的交易欄位
-                                    setTimeout(() => {
-                                        const newInput = document.querySelector(`input[data-trade-id="${nextTradeId - 1}"][data-field="returnRate"]`);
-                                        if (newInput) {
-                                            newInput.focus(); // 聚焦到新交易的報酬率欄位
-                                        }
-                                    }, 100);
-                                } else {
-                                    // 如果當前交易有未填寫的欄位，保持在當前欄位
-                                    alert('請確保報酬率、策略和外部條件已正確填寫。');
-                                }
-                            }
-                        }
-                    });
-                });
+            // 同步頂部和底部滾動容器
+            function synchronizeScroll(topScroll, bottomScroll) {
+                let isSyncingLeftScroll = false;
+                let isSyncingRightScroll = false;
+
+                topScroll.onscroll = function() {
+                    if (!isSyncingLeftScroll) {
+                        isSyncingRightScroll = true;
+                        bottomScroll.scrollLeft = topScroll.scrollLeft;
+                    }
+                    isSyncingLeftScroll = false;
+                };
+
+                bottomScroll.onscroll = function() {
+                    if (!isSyncingRightScroll) {
+                        isSyncingLeftScroll = true;
+                        topScroll.scrollLeft = bottomScroll.scrollLeft;
+                    }
+                    isSyncingRightScroll = false;
+                };
             }
 
             // 獲取策略名稱
