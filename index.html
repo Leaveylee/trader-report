@@ -17,6 +17,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入 Tippy.js 用於工具提示 -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -103,6 +107,9 @@
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            /* 允許文字換行 */
+            white-space: normal;
+            word-break: break-word;
         }
 
         th {
@@ -253,8 +260,8 @@
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
-                            <th class="px-4 py-2">策略名稱</th>
-                            <th class="px-4 py-2">描述</th>
+                            <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                            <th class="px-4 py-2 min-w-[200px]">描述</th>
                             <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
@@ -283,8 +290,8 @@
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
-                            <th class="px-4 py-2">外部條件名稱</th>
-                            <th class="px-4 py-2">描述</th>
+                            <th class="px-4 py-2 min-w-[150px]">外部條件名稱</th>
+                            <th class="px-4 py-2 min-w-[200px]">描述</th>
                             <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
@@ -399,17 +406,17 @@
                 <table class="min-w-full bg-white rounded">
                     <thead>
                         <tr>
-                            <th class="px-4 py-2">交易</th>
-                            <th class="px-4 py-2">開倉日</th>
-                            <th class="px-4 py-2">平倉日</th>
-                            <th class="px-4 py-2">持倉天數</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2">報酬率 (%)</th>
-                            <th class="px-4 py-2">標的名稱</th>
-                            <th class="px-4 py-2">策略名稱</th>
-                            <th class="px-4 py-2">外部條件</th>
-                            <th class="px-4 py-2">文字說明</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2">圖片</th> <!-- 新增欄位 -->
-                            <th class="px-4 py-2">操作</th>
+                            <th class="px-4 py-2 min-w-[80px]">交易</th>
+                            <th class="px-4 py-2 min-w-[100px]">開倉日</th>
+                            <th class="px-4 py-2 min-w-[100px]">平倉日</th>
+                            <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                            <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                            <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
+                            <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                            <th class="px-4 py-2 min-w-[150px]">外部條件</th>
+                            <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
+                            <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                            <th class="px-4 py-2 min-w-[80px]">操作</th>
                         </tr>
                     </thead>
                     <tbody id="tradesList">
@@ -579,6 +586,11 @@
                 }
 
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
+                // 初始化 Tippy.js 工具提示
+                tippy('[data-tippy-content]', {
+                    placement: 'top',
+                    animation: 'scale',
+                });
             }
 
             // 渲染策略列表
@@ -586,8 +598,8 @@
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
                     <tr>
-                        <td class="border px-4 py-2">${strategy.name}</td>
-                        <td class="border px-4 py-2">${strategy.description}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${strategy.name}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${strategy.description}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -619,8 +631,8 @@
                 const externalConditionsList = document.getElementById('externalConditionsList');
                 externalConditionsList.innerHTML = externalConditions.map(condition => `
                     <tr>
-                        <td class="border px-4 py-2">${condition.name}</td>
-                        <td class="border px-4 py-2">${condition.description}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${condition.name}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${condition.description}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -699,8 +711,8 @@
 
                     return `
                         <tr>
-                            <td class="border px-4 py-2 text-center">${transactionNumber}</td>
-                            <td class="border px-4 py-2">
+                            <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
+                            <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
@@ -710,7 +722,7 @@
                                     data-field="openDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2">
+                            <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
@@ -720,10 +732,10 @@
                                     data-field="closeDate"
                                 >
                             </td>
-                            <td class="border px-4 py-2 text-center ${holdingDaysClass}">
+                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
                                 ${holdingDays}
                             </td>
-                            <td class="border px-4 py-2">
+                            <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
@@ -735,59 +747,19 @@
                                     data-trade-id="${trade.id}"
                                 >
                             </td>
-                            <td class="border px-4 py-2">
-                                <input
-                                    type="text"
-                                    value="${trade.assetName}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入標的名稱"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="assetName"
-                                >
+                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${trade.assetName}">
+                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
                             </td>
-                            <td class="border px-4 py-2">
-                                <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="strategyId"
-                                >
-                                    <option value="">選擇策略</option>
-                                    ${strategies.map(strategy => `
-                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>
-                                            ${strategy.name}
-                                        </option>
-                                    `).join('')}
-                                </select>
+                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${getStrategyName(trade.strategyId)}">
+                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
                             </td>
-                            <td class="border px-4 py-2">
-                                <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="externalConditionId"
-                                >
-                                    <option value="">選擇外部條件</option>
-                                    ${externalConditions.map(condition => `
-                                        <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>
-                                            ${condition.name}
-                                        </option>
-                                    `).join('')}
-                                </select>
+                            <td class="border px-4 py-2 min-w-[150px]" data-tippy-content="${getExternalConditionName(trade.externalConditionId)}">
+                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
                             </td>
-                            <td class="border px-4 py-2">
-                                <input
-                                    type="text"
-                                    value="${trade.description}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
-                                    placeholder="輸入交易描述"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="description"
-                                >
+                            <td class="border px-4 py-2 min-w-[200px]" data-tippy-content="${trade.description}">
+                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
                             </td>
-                            <td class="border px-4 py-2">
+                            <td class="border px-4 py-2 min-w-[200px]">
                                 <input
                                     type="text"
                                     value="${trade.imageUrl}"
@@ -799,7 +771,7 @@
                                 >
                                 ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
-                            <td class="border px-4 py-2 text-center">
+                            <td class="border px-4 py-2 text-center min-w-[80px]">
                                 ${trades.length > 1 ? `
                                     <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
@@ -812,6 +784,12 @@
                 
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
+
+                // 初始化 Tippy.js 工具提示
+                tippy('[data-tippy-content]', {
+                    placement: 'top',
+                    animation: 'scale',
+                });
 
                 // 添加按鍵事件監聽器
                 const tradeInputs = document.querySelectorAll('.trade-input');
@@ -876,6 +854,18 @@
                         }
                     });
                 });
+            }
+
+            // 獲取策略名稱
+            function getStrategyName(strategyId) {
+                const strategy = strategies.find(s => s.id === strategyId);
+                return strategy ? strategy.name : '';
+            }
+
+            // 獲取外部條件名稱
+            function getExternalConditionName(conditionId) {
+                const condition = externalConditions.find(c => c.id === conditionId);
+                return condition ? condition.name : '';
             }
 
             // 處理交易數據變更
