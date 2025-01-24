@@ -427,15 +427,15 @@
                         <thead>
                             <tr>
                                 <th class="px-4 py-2 min-w-[80px]">交易</th>
-                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
                                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
                                 <th class="px-4 py-2 min-w-[150px]">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th>
+                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[200px]">文字說明</th>
+                                <th class="px-4 py-2 min-w-[200px]">圖片</th>
                                 <th class="px-4 py-2 min-w-[80px]">操作</th>
                             </tr>
                         </thead>
@@ -728,6 +728,43 @@
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                <input
+                                    type="text"
+                                    value="${trade.assetName}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入標的名稱"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="assetName"
+                                >
+                            </td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                <select
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="strategyId"
+                                >
+                                    <option value="">選擇策略</option>
+                                    ${strategies.map(strategy => `
+                                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${strategy.name}</option>
+                                    `).join('')}
+                                </select>
+                            </td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                <select
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="externalConditionId"
+                                >
+                                    <option value="">選擇外部條件</option>
+                                    ${externalConditions.map(condition => `
+                                        <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${condition.name}</option>
+                                    `).join('')}
+                                </select>
+                            </td>
                             <td class="border px-4 py-2 min-w-[100px]">
                                 <input
                                     type="date"
@@ -763,17 +800,16 @@
                                     data-trade-id="${trade.id}"
                                 >
                             </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
-                            </td>
-                            <td class="border px-4 py-2 min-w-[150px]">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
-                            </td>
                             <td class="border px-4 py-2 min-w-[200px]">
-                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
+                                <input
+                                    type="text"
+                                    value="${trade.description}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入文字說明"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="description"
+                                >
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
                                 <input
