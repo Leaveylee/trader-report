@@ -17,8 +17,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入 SortableJS -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -113,15 +111,6 @@
         th {
             background-color: #f9fafb; /* Tailwind 的 gray-50 */
             font-weight: 600;
-            cursor: move; /* 更改可拖曳欄位的游標 */
-        }
-
-        /* 拖曳手柄 */
-        #tradesTableHead th::after {
-            content: '⇅';
-            margin-left: 8px;
-            font-size: 0.8rem;
-            color: #a1a1aa; /* Tailwind 的 gray-400 */
         }
 
         /* 模態框樣式 */
@@ -163,7 +152,258 @@
             交易員報告書
         </h1>
 
-        <!-- ... 其他區塊保持不變 ... -->
+        <!-- 策略和外部條件篩選下拉選單 -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                篩選條件
+            </label>
+            <div class="flex space-x-4">
+                <!-- 策略篩選 -->
+                <div class="flex-1">
+                    <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選策略
+                    </label>
+                    <select id="strategyFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+                        <option value="">全部策略</option>
+                        <!-- 策略選項將在 JavaScript 中動態添加 -->
+                    </select>
+                </div>
+                <!-- 外部條件篩選 -->
+                <div class="flex-1">
+                    <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選外部條件
+                    </label>
+                    <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+                        <option value="">全部外部條件</option>
+                        <!-- 外部條件選項將在 JavaScript 中動態添加 -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析結果區塊 -->
+        <div class="bg-gray-50 p-4 rounded mb-6">
+            <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
+            
+            <!-- 報告書的結論 -->
+            <div class="space-y-4">
+                <!-- 第一行：交易數、勝率、風報比 -->
+                <div class="flex justify-between font-bold text-lg">
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-600">交易數：</span>
+                        <span id="totalTrades" class="font-medium">0</span>
+                    </div>
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-600">勝率：</span>
+                        <span id="winRate" class="font-medium">0% (0勝0敗)</span>
+                    </div>
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-600">風報比：</span>
+                        <span id="riskRewardRatio" class="font-medium">0</span>
+                    </div>
+                </div>
+
+                <!-- 第二行：期望值 -->
+                <div class="flex justify-between font-bold text-lg">
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-700">期望值：</span>
+                        <span id="expectedValue" class="font-bold text-lg">
+                            0.0%
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 第三行：總報酬 -->
+                <div class="flex justify-between font-bold text-lg">
+                    <div class="flex-1 text-center">
+                        <span class="text-gray-700">總報酬：</span>
+                        <span id="totalReturn" class="font-bold text-lg">
+                            0%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 損益統計 -->
+            <div class="mt-6">
+                <h3 class="text-md font-medium text-gray-700 mb-3">
+                    損益統計
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 第一行：平均獲利、平均虧損 -->
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">平均獲利：</span>
+                        <span id="avgWin" class="font-medium">+0 (+0.00%)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">平均虧損：</span>
+                        <span id="avgLoss" class="font-medium">-0 (-0.00%)</span>
+                    </div>
+                    <!-- 分隔線 -->
+                    <div class="col-span-2 divider"></div>
+                    <!-- 第二行：最大獲利、最大虧損 -->
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">最大獲利：</span>
+                        <span id="maxWin" class="font-medium">+0 (+0.00%)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">最大虧損：</span>
+                        <span id="maxLoss" class="font-medium">-0 (-0.00%)</span>
+                    </div>
+                    <!-- 分隔線 -->
+                    <div class="col-span-2 divider"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 策略管理區塊（可收合） -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-700">策略管理</h2>
+                <div class="flex space-x-2">
+                    <button class="button" onclick="toggleStrategyManagement()">
+                        <i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>
+                        收合
+                    </button>
+                    <button class="button" onclick="openAddStrategyModal()">
+                        新增策略
+                    </button>
+                </div>
+            </div>
+            <div id="strategyManagementContent" class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                            <th class="px-4 py-2 min-w-[200px]">描述</th>
+                            <th class="px-4 py-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="strategiesList">
+                        <!-- 策略記錄將在這裡動態添加為表格行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 外部條件管理區塊（可收合） -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-700">外部條件管理</h2>
+                <div class="flex space-x-2">
+                    <button class="button" onclick="toggleExternalConditionManagement()">
+                        <i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>
+                        收合
+                    </button>
+                    <button class="button" onclick="openAddExternalConditionModal()">
+                        新增外部條件
+                    </button>
+                </div>
+            </div>
+            <div id="externalConditionManagementContent" class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2 min-w-[150px]">外部條件名稱</th>
+                            <th class="px-4 py-2 min-w-[200px]">描述</th>
+                            <th class="px-4 py-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="externalConditionsList">
+                        <!-- 外部條件記錄將在這裡動態添加為表格行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 新增策略模態框 -->
+        <div id="addStrategyModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">新增策略</h3>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyName">策略名稱</label>
+                <input type="text" id="newStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyDescription">描述</label>
+                <textarea id="newStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeAddStrategyModal()">取消</button>
+                    <button class="button" onclick="addStrategy()">新增</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 編輯策略模態框 -->
+        <div id="editStrategyModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">編輯策略</h3>
+                <input type="hidden" id="editStrategyId">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyName">策略名稱</label>
+                <input type="text" id="editStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyDescription">描述</label>
+                <textarea id="editStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeEditStrategyModal()">取消</button>
+                    <button class="button" onclick="updateStrategy()">更新</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增外部條件模態框 -->
+        <div id="addExternalConditionModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">新增外部條件</h3>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">外部條件名稱</label>
+                <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionDescription">描述</label>
+                <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeAddExternalConditionModal()">取消</button>
+                    <button class="button" onclick="addExternalCondition()">新增</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 編輯外部條件模態框 -->
+        <div id="editExternalConditionModal" class="modal hidden">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h3 class="text-lg font-medium mb-4">編輯外部條件</h3>
+                <input type="hidden" id="editExternalConditionId">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">外部條件名稱</label>
+                <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionDescription">描述</label>
+                <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+                
+                <div class="flex justify-end">
+                    <button class="button mr-2" onclick="closeEditExternalConditionModal()">取消</button>
+                    <button class="button" onclick="updateExternalCondition()">更新</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 平均部位輸入 -->
+        <div class="mb-6">
+            <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
+                平均部位金額（選填）
+            </label>
+            <input
+                type="number"
+                id="averagePosition"
+                placeholder="輸入平均部位金額"
+                class="w-full p-2 border rounded"
+                onchange="calculateStats()"
+            >
+            <div class="text-sm text-gray-500 mt-1">
+                若填寫此欄位，將會計算實際金額的獲利/虧損和期望值
+            </div>
+        </div>
 
         <!-- 交易記錄區域 -->
         <div class="mb-6">
@@ -184,19 +424,19 @@
                 <!-- 表格滾動區域 -->
                 <div class="overflow-x-auto" id="bottomScrollbar">
                     <table class="min-w-full bg-white rounded">
-                        <thead id="tradesTableHead">
+                        <thead>
                             <tr>
-                                <th class="px-4 py-2 min-w-[80px]" data-column-index="0">交易</th>
-                                <th class="px-4 py-2 min-w-[100px]" data-column-index="1">開倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" data-column-index="2">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]" data-column-index="3">持倉天數</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[100px]" data-column-index="4">報酬率 (%)</th>
-                                <th class="px-4 py-2 min-w-[150px]" data-column-index="5">標的名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" data-column-index="6">策略名稱</th>
-                                <th class="px-4 py-2 min-w-[150px]" data-column-index="7">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]" data-column-index="8">文字說明</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[200px]" data-column-index="9">圖片</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[80px]" data-column-index="10">操作</th>
+                                <th class="px-4 py-2 min-w-[80px]">交易</th>
+                                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
+                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
+                                <th class="px-4 py-2 min-w-[150px]">外部條件</th>
+                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[80px]">操作</th>
                             </tr>
                         </thead>
                         <tbody id="tradesList">
@@ -207,7 +447,10 @@
             </div>
         </div>
 
-        <!-- ... 其他區塊保持不變 ... -->
+        <!-- 可選：清除數據按鈕 -->
+        <!-- <button class="button mt-4 bg-red-500" onclick="clearData()">
+            清除所有數據
+        </button> -->
 
         <script>
             // 策略列表
@@ -463,7 +706,7 @@
                 });
 
                 // 渲染排序後的交易紀錄
-                filteredTrades.forEach(trade => {
+                tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     let holdingDays = '';
                     let holdingDaysClass = '';
@@ -482,107 +725,79 @@
                         holdingDaysClass = 'text-red-500'; // 使用紅色字體
                     }
 
-                    // 生成表格行
-                    const tr = document.createElement('tr');
-
-                    // 對應的欄位順序
-                    const columnOrder = getColumnOrder();
-
-                    columnOrder.forEach(columnIndex => {
-                        let td = document.createElement('td');
-                        td.className = 'border px-4 py-2 min-w-[80px]';
-
-                        switch (columnIndex) {
-                            case 0: // 交易
-                                td.textContent = transactionNumber;
-                                break;
-                            case 1: // 開倉日
-                                td.innerHTML = `
-                                    <input
-                                        type="date"
-                                        value="${trade.openDate}"
-                                        oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
-                                        class="w-full p-1 border rounded trade-input"
-                                        data-row-index="${trades.indexOf(trade)}"
-                                        data-field="openDate"
-                                    >
-                                `;
-                                break;
-                            case 2: // 平倉日
-                                td.innerHTML = `
-                                    <input
-                                        type="date"
-                                        value="${trade.closeDate}"
-                                        oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
-                                        class="w-full p-1 border rounded trade-input"
-                                        data-row-index="${trades.indexOf(trade)}"
-                                        data-field="closeDate"
-                                    >
-                                `;
-                                break;
-                            case 3: // 持倉天數
-                                td.classList.add(holdingDaysClass);
-                                td.textContent = holdingDays;
-                                break;
-                            case 4: // 報酬率 (%)
-                                td.innerHTML = `
-                                    <input
-                                        type="text"
-                                        value="${trade.returnRate}"
-                                        oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
-                                        class="w-full p-1 border rounded trade-input"
-                                        placeholder="+6.66 或 -2.92"
-                                        data-row-index="${trades.indexOf(trade)}"
-                                        data-field="returnRate"
-                                        data-trade-id="${trade.id}"
-                                    >
-                                `;
-                                break;
-                            case 5: // 標的名稱
-                                td.textContent = trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName;
-                                break;
-                            case 6: // 策略名稱
-                                td.textContent = getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId);
-                                break;
-                            case 7: // 外部條件
-                                td.textContent = getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId);
-                                break;
-                            case 8: // 文字說明
-                                td.textContent = trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description;
-                                break;
-                            case 9: // 圖片
-                                td.innerHTML = `
-                                    <input
-                                        type="text"
-                                        value="${trade.imageUrl}"
-                                        oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
-                                        class="w-full p-1 border rounded trade-input"
-                                        placeholder="輸入圖片URL"
-                                        data-row-index="${trades.indexOf(trade)}"
-                                        data-field="imageUrl"
-                                    >
-                                    ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
-                                `;
-                                break;
-                            case 10: // 操作
-                                if (trades.length > 1) {
-                                    td.innerHTML = `
-                                        <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
-                                            <i data-lucide="trash-2"></i>
-                                        </button>
-                                    `;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-
-                        tr.appendChild(td);
-                    });
-
-                    tradesList.appendChild(tr);
-                });
-
+                    return `
+                        <tr>
+                            <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
+                            <td class="border px-4 py-2 min-w-[100px]">
+                                <input
+                                    type="date"
+                                    value="${trade.openDate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="openDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2 min-w-[100px]">
+                                <input
+                                    type="date"
+                                    value="${trade.closeDate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="closeDate"
+                                >
+                            </td>
+                            <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
+                                ${holdingDays}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[100px]">
+                                <input
+                                    type="text"
+                                    value="${trade.returnRate}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="+6.66 或 -2.92"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="returnRate"
+                                    data-trade-id="${trade.id}"
+                                >
+                            </td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[150px]">
+                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[200px]">
+                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[200px]">
+                                <input
+                                    type="text"
+                                    value="${trade.imageUrl}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入圖片URL"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="imageUrl"
+                                >
+                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                            </td>
+                            <td class="border px-4 py-2 text-center min-w-[80px]">
+                                ${trades.length > 1 ? `
+                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
                 // 重新初始化 Lucide 圖標
                 lucide.createIcons();
 
@@ -617,9 +832,6 @@
 
                 // 初始化同步
                 topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-
-                // 初始化 SortableJS 以實現欄位拖曳
-                initializeColumnSortable();
             }
 
             // 獲取策略名稱
@@ -1163,79 +1375,6 @@
 
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
                 saveCollapseState(); // 保存收合狀態
-            }
-
-            // 獲取當前欄位順序
-            function getColumnOrder() {
-                const headers = document.querySelectorAll('#tradesTableHead th');
-                let order = [];
-                headers.forEach(header => {
-                    const index = parseInt(header.getAttribute('data-column-index'), 10);
-                    order.push(index);
-                });
-                return order;
-            }
-
-            // 設置當前欄位順序
-            function setColumnOrder(order) {
-                const headers = document.querySelectorAll('#tradesTableHead th');
-                headers.forEach(header => {
-                    const currentIndex = parseInt(header.getAttribute('data-column-index'), 10);
-                    const newPosition = order.indexOf(currentIndex);
-                    header.style.order = newPosition;
-                });
-
-                // 同步表格數據列順序
-                const rows = document.querySelectorAll('#tradesList tr');
-                rows.forEach(row => {
-                    const cells = Array.from(row.children);
-                    // 建立一個映射，根據 columnIndex 找到對應的 cell
-                    const cellMap = {};
-                    cells.forEach(cell => {
-                        const field = cell.getAttribute('data-field');
-                        if (field === 'openDate') cellMap[1] = cell;
-                        if (field === 'closeDate') cellMap[2] = cell;
-                        if (field === 'holdingDays') cellMap[3] = cell;
-                        if (field === 'returnRate') cellMap[4] = cell;
-                        if (field === 'assetName') cellMap[5] = cell;
-                        if (field === 'strategyName') cellMap[6] = cell;
-                        if (field === 'externalCondition') cellMap[7] = cell;
-                        if (field === 'description') cellMap[8] = cell;
-                        if (field === 'imageUrl') cellMap[9] = cell;
-                        if (field === 'operation') cellMap[10] = cell;
-                    });
-
-                    // 根據新的順序，重新排列 cells
-                    order.forEach(index => {
-                        if (cellMap[index] !== undefined) {
-                            row.appendChild(cellMap[index]);
-                        }
-                    });
-                });
-
-                // 保存欄位順序到 localStorage
-                localStorage.setItem('tradesTableColumnOrder', JSON.stringify(order));
-            }
-
-            // 初始化 SortableJS 以實現欄位拖曳
-            function initializeColumnSortable() {
-                const tableHead = document.getElementById('tradesTableHead');
-                Sortable.create(tableHead, {
-                    animation: 150,
-                    onEnd: function (evt) {
-                        const newOrder = getColumnOrder();
-                        setColumnOrder(newOrder);
-                    },
-                    // 將拖曳操作限制在 `<th>` 之間
-                    filter: 'th:last-child', // 避免拖曳「操作」欄
-                    preventOnFilter: true
-                });
-
-                // 加載保存的欄位順序（如果有）
-                const savedOrder = JSON.parse(localStorage.getItem('tradesTableColumnOrder'));
-                if (savedOrder && Array.isArray(savedOrder)) {
-                    setColumnOrder(savedOrder);
-                }
             }
         </script>
     </div>
