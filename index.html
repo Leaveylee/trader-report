@@ -152,7 +152,7 @@
             交易員報告書
         </h1>
 
-        <!-- 策略、外部條件和時間範圍篩選下拉選單 -->
+        <!-- 策略、外部條件和手動日期範圍篩選 -->
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 篩選條件
@@ -178,18 +178,16 @@
                         <!-- 外部條件選項將在 JavaScript 中動態添加 -->
                     </select>
                 </div>
-                <!-- 時間範圍篩選 -->
+                <!-- 手動日期範圍篩選 -->
                 <div class="flex-1">
-                    <label for="timePeriodFilter" class="block text-sm font-medium text-gray-700 mb-1">
-                        篩選時間範圍
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選日期範圍
                     </label>
-                    <select id="timePeriodFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
-                        <option value="all">全部時間</option>
-                        <option value="7">過去 7 天</option>
-                        <option value="30">過去 30 天</option>
-                        <option value="thisMonth">本月</option>
-                        <option value="thisYear">本年</option>
-                    </select>
+                    <div class="flex space-x-2">
+                        <input type="date" id="startDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="開始日期">
+                        <input type="date" id="endDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="結束日期">
+                    </div>
+                    <button class="button mt-2" onclick="clearDateFilters()">清除日期篩選</button>
                 </div>
             </div>
         </div>
@@ -475,7 +473,8 @@
             // 當前篩選條件
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
-            let selectedTimePeriodFilter = 'all'; // 新增時間篩選
+            let selectedStartDateFilter = null; // 新增開始日期篩選
+            let selectedEndDateFilter = null;   // 新增結束日期篩選
 
             // 新增一個全局變數來追踪下一個交易的 ID
             let nextTradeId = 1;
@@ -516,7 +515,7 @@
                 localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
                 saveExternalConditions(); // 保存外部條件數據
-                saveTimePeriodFilter(); // 保存時間篩選
+                saveDateFilters(); // 保存日期篩選
 
                 // 保存收合狀態
                 saveCollapseState();
@@ -532,9 +531,10 @@
                 localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
             }
 
-            // 保存時間篩選到 localStorage
-            function saveTimePeriodFilter() {
-                localStorage.setItem('timePeriodFilter', selectedTimePeriodFilter);
+            // 保存日期篩選到 localStorage
+            function saveDateFilters() {
+                localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
+                localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
             }
 
             // 保存收合狀態到 localStorage
@@ -573,7 +573,8 @@
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
                 const savedAveragePosition = localStorage.getItem('averagePosition');
-                const savedTimePeriodFilter = localStorage.getItem('timePeriodFilter');
+                const savedStartDateFilter = localStorage.getItem('selectedStartDateFilter');
+                const savedEndDateFilter = localStorage.getItem('selectedEndDateFilter');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
@@ -602,9 +603,14 @@
                     document.getElementById('averagePosition').value = savedAveragePosition;
                 }
                 
-                if (savedTimePeriodFilter !== null) {
-                    selectedTimePeriodFilter = savedTimePeriodFilter;
-                    document.getElementById('timePeriodFilter').value = selectedTimePeriodFilter;
+                if (savedStartDateFilter !== null) {
+                    selectedStartDateFilter = savedStartDateFilter;
+                    document.getElementById('startDateFilter').value = selectedStartDateFilter;
+                }
+
+                if (savedEndDateFilter !== null) {
+                    selectedEndDateFilter = savedEndDateFilter;
+                    document.getElementById('endDateFilter').value = selectedEndDateFilter;
                 }
                 
                 renderStrategies(); // 渲染策略列表
@@ -715,36 +721,13 @@
                 if (selectedExternalConditionFilter !== null) {
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
-                if (selectedTimePeriodFilter !== 'all') {
-                    const now = new Date();
-                    let startDate;
-
-                    switch (selectedTimePeriodFilter) {
-                        case '7':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-                            break;
-                        case '30':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-                            break;
-                        case 'thisMonth':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                            break;
-                        case 'thisYear':
-                            startDate = new Date(now.getFullYear(), 0, 1);
-                            break;
-                        default:
-                            startDate = null;
-                    }
-
-                    if (startDate) {
-                        filteredTrades = filteredTrades.filter(trade => {
-                            if (trade.openDate) {
-                                const tradeDate = new Date(trade.openDate);
-                                return tradeDate >= startDate && tradeDate <= now;
-                            }
-                            return false;
-                        });
-                    }
+                if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+                    const startDate = new Date(selectedStartDateFilter);
+                    filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+                }
+                if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+                    const endDate = new Date(selectedEndDateFilter);
+                    filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
                 }
 
                 // 分配交易編號：僅對有開倉日的交易編號，根據開倉日升序
@@ -1261,19 +1244,30 @@
                 calculateStats(); // 更新統計數據
             }
 
-            // 策略、外部條件和時間篩選功能
+            // 策略、外部條件和日期篩選功能
             function applyFilters() {
                 const strategyId = document.getElementById('strategyFilter').value;
                 const externalConditionId = document.getElementById('externalConditionFilter').value;
-                const timePeriod = document.getElementById('timePeriodFilter').value;
+                const startDate = document.getElementById('startDateFilter').value;
+                const endDate = document.getElementById('endDateFilter').value;
 
                 selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
                 selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
-                selectedTimePeriodFilter = timePeriod;
+                selectedStartDateFilter = startDate === '' ? null : startDate;
+                selectedEndDateFilter = endDate === '' ? null : endDate;
 
                 calculateStats();
                 renderTrades();
-                saveTimePeriodFilter(); // 保存時間篩選
+                saveDateFilters(); // 保存日期篩選
+            }
+
+            // 清除日期篩選
+            function clearDateFilters() {
+                document.getElementById('startDateFilter').value = '';
+                document.getElementById('endDateFilter').value = '';
+                selectedStartDateFilter = null;
+                selectedEndDateFilter = null;
+                applyFilters();
             }
 
             // 計算統計數據
@@ -1288,36 +1282,13 @@
                 if (selectedExternalConditionFilter !== null) {
                     validTrades = validTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
                 }
-                if (selectedTimePeriodFilter !== 'all') {
-                    const now = new Date();
-                    let startDate;
-
-                    switch (selectedTimePeriodFilter) {
-                        case '7':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-                            break;
-                        case '30':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-                            break;
-                        case 'thisMonth':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                            break;
-                        case 'thisYear':
-                            startDate = new Date(now.getFullYear(), 0, 1);
-                            break;
-                        default:
-                            startDate = null;
-                    }
-
-                    if (startDate) {
-                        validTrades = validTrades.filter(trade => {
-                            if (trade.openDate) {
-                                const tradeDate = new Date(trade.openDate);
-                                return tradeDate >= startDate && tradeDate <= now;
-                            }
-                            return false;
-                        });
-                    }
+                if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+                    const startDate = new Date(selectedStartDateFilter);
+                    validTrades = validTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+                }
+                if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+                    const endDate = new Date(selectedEndDateFilter);
+                    validTrades = validTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
                 }
 
                 if (validTrades.length === 0) {
@@ -1446,14 +1417,16 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
-                    localStorage.removeItem('timePeriodFilter'); // 移除時間篩選
+                    localStorage.removeItem('selectedStartDateFilter'); // 移除開始日期篩選
+                    localStorage.removeItem('selectedEndDateFilter');   // 移除結束日期篩選
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
                     trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
-                    document.getElementById('timePeriodFilter').value = 'all'; // 重置時間篩選
+                    document.getElementById('startDateFilter').value = ''; // 重置開始日期篩選
+                    document.getElementById('endDateFilter').value = '';   // 重置結束日期篩選
                     renderStrategies();
                     renderExternalConditions();
                     renderTrades();
