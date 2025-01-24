@@ -407,6 +407,7 @@
                             <th class="px-4 py-2">標的名稱</th>
                             <th class="px-4 py-2">策略名稱</th>
                             <th class="px-4 py-2">外部條件</th>
+                            <th class="px-4 py-2">文字說明</th> <!-- 新增欄位 -->
                             <th class="px-4 py-2">操作</th>
                         </tr>
                     </thead>
@@ -541,7 +542,7 @@
                 }
 
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '' });
                 }
 
                 if (savedAveragePosition !== null) {
@@ -771,6 +772,17 @@
                                     `).join('')}
                                 </select>
                             </td>
+                            <td class="border px-4 py-2">
+                                <input
+                                    type="text"
+                                    value="${trade.description}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入交易描述"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="description"
+                                >
+                            </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
                                     <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
@@ -816,6 +828,13 @@
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'externalConditionId') {
+                                // 移動到文字說明欄位
+                                const nextField = 'description';
+                                const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
+                                if (nextInput) {
+                                    nextInput.focus();
+                                }
+                            } else if (currentField === 'description') {
                                 // 檢查是否為最後一筆交易，且有有效輸入
                                 const trade = trades[currentRow];
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
@@ -869,6 +888,8 @@
                         trades[index].closeDate = '';
                         document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
                     }
+                } else if (field === 'description') { // 新增處理文字說明
+                    trades[index].description = value.trim();
                 }
                 
                 // 計算統計數據和保存
@@ -895,7 +916,8 @@
                     strategyId: null, 
                     externalConditionId: null, 
                     openDate: '', 
-                    closeDate: '' 
+                    closeDate: '',
+                    description: '' // 新增文字說明欄位
                 };
                 trades.unshift(newTrade); // 將新交易插入到陣列的最前端
                 
@@ -917,7 +939,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1304,7 +1326,7 @@
                     localStorage.removeItem('externalConditions');
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
-                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '' }];
+                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
