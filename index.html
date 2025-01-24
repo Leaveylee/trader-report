@@ -783,6 +783,16 @@
                         holdingDaysClass = 'text-red-500'; // 使用紅色字體
                     }
 
+                    // 生成策略選擇下拉選單
+                    const strategyOptions = strategies.map(strategy => `
+                        <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
+                    `).join('');
+
+                    // 生成外部條件選擇下拉選單
+                    const externalConditionOptions = externalConditions.map(condition => `
+                        <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
+                    `).join('');
+
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
@@ -822,16 +832,48 @@
                                 >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${trade.assetName.length > 10 ? escapeHtml(trade.assetName.substring(0, 10)) + '...' : escapeHtml(trade.assetName)}
+                                <input
+                                    type="text"
+                                    value="${escapeHtml(trade.assetName)}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入標的名稱"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="assetName"
+                                >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getStrategyName(trade.strategyId).length > 10 ? escapeHtml(getStrategyName(trade.strategyId).substring(0, 10)) + '...' : escapeHtml(getStrategyName(trade.strategyId))}
+                                <select
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="strategyId"
+                                >
+                                    <option value="">選擇策略</option>
+                                    ${strategyOptions}
+                                </select>
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? escapeHtml(getExternalConditionName(trade.externalConditionId).substring(0, 10)) + '...' : escapeHtml(getExternalConditionName(trade.externalConditionId))}
+                                <select
+                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="externalConditionId"
+                                >
+                                    <option value="">選擇外部條件</option>
+                                    ${externalConditionOptions}
+                                </select>
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
-                                ${trade.description.length > 15 ? escapeHtml(trade.description.substring(0, 15)) + '...' : escapeHtml(trade.description)}
+                                <input
+                                    type="text"
+                                    value="${escapeHtml(trade.description)}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入文字說明"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="description"
+                                >
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
                                 <input
@@ -1470,8 +1512,12 @@
                 const modal = document.getElementById(modalId);
                 modal.classList.add('hidden');
                 // 清空輸入欄位
-                const inputs = modal.querySelectorAll('input, textarea');
-                inputs.forEach(input => input.value = '');
+                const inputs = modal.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    if (input.type !== 'hidden') {
+                        input.value = '';
+                    }
+                });
             }
 
             // 安全地顯示用戶輸入的內容，防止 XSS 攻擊
