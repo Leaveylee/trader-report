@@ -152,7 +152,7 @@
             交易員報告書
         </h1>
 
-        <!-- 策略和外部條件篩選下拉選單 -->
+        <!-- 策略、外部條件和時間範圍篩選下拉選單 -->
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 篩選條件
@@ -176,6 +176,19 @@
                     <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
                         <option value="">全部外部條件</option>
                         <!-- 外部條件選項將在 JavaScript 中動態添加 -->
+                    </select>
+                </div>
+                <!-- 時間範圍篩選 -->
+                <div class="flex-1">
+                    <label for="timePeriodFilter" class="block text-sm font-medium text-gray-700 mb-1">
+                        篩選時間範圍
+                    </label>
+                    <select id="timePeriodFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+                        <option value="all">全部時間</option>
+                        <option value="7">過去 7 天</option>
+                        <option value="30">過去 30 天</option>
+                        <option value="thisMonth">本月</option>
+                        <option value="thisYear">本年</option>
                     </select>
                 </div>
             </div>
@@ -462,6 +475,7 @@
             // 當前篩選條件
             let selectedStrategyFilter = null;
             let selectedExternalConditionFilter = null;
+            let selectedTimePeriodFilter = 'all'; // 新增時間篩選
 
             // 新增一個全局變數來追踪下一個交易的 ID
             let nextTradeId = 1;
@@ -502,6 +516,7 @@
                 localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
                 saveExternalConditions(); // 保存外部條件數據
+                saveTimePeriodFilter(); // 保存時間篩選
 
                 // 保存收合狀態
                 saveCollapseState();
@@ -515,6 +530,11 @@
             // 保存外部條件數據到 localStorage
             function saveExternalConditions() {
                 localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
+            }
+
+            // 保存時間篩選到 localStorage
+            function saveTimePeriodFilter() {
+                localStorage.setItem('timePeriodFilter', selectedTimePeriodFilter);
             }
 
             // 保存收合狀態到 localStorage
@@ -549,10 +569,11 @@
                 }
             }
 
-            // 從 localStorage 加載交易數據
+            // 從 localStorage 加載交易數據和篩選條件
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
                 const savedAveragePosition = localStorage.getItem('averagePosition');
+                const savedTimePeriodFilter = localStorage.getItem('timePeriodFilter');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
@@ -579,6 +600,11 @@
 
                 if (savedAveragePosition !== null) {
                     document.getElementById('averagePosition').value = savedAveragePosition;
+                }
+                
+                if (savedTimePeriodFilter !== null) {
+                    selectedTimePeriodFilter = savedTimePeriodFilter;
+                    document.getElementById('timePeriodFilter').value = selectedTimePeriodFilter;
                 }
                 
                 renderStrategies(); // 渲染策略列表
@@ -614,8 +640,8 @@
                 const strategiesList = document.getElementById('strategiesList');
                 strategiesList.innerHTML = strategies.map(strategy => `
                     <tr>
-                        <td class="border px-4 py-2 min-w-[150px]">${strategy.name}</td>
-                        <td class="border px-4 py-2 min-w-[200px]">${strategy.description}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${escapeHtml(strategy.name)}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${escapeHtml(strategy.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -637,7 +663,7 @@
                 strategyFilter.innerHTML = `
                     <option value="">全部策略</option>
                     ${strategies.map(strategy => `
-                        <option value="${strategy.id}">${strategy.name}</option>
+                        <option value="${strategy.id}">${escapeHtml(strategy.name)}</option>
                     `).join('')}
                 `;
             }
@@ -647,8 +673,8 @@
                 const externalConditionsList = document.getElementById('externalConditionsList');
                 externalConditionsList.innerHTML = externalConditions.map(condition => `
                     <tr>
-                        <td class="border px-4 py-2 min-w-[150px]">${condition.name}</td>
-                        <td class="border px-4 py-2 min-w-[200px]">${condition.description}</td>
+                        <td class="border px-4 py-2 min-w-[150px]">${escapeHtml(condition.name)}</td>
+                        <td class="border px-4 py-2 min-w-[200px]">${escapeHtml(condition.description)}</td>
                         <td class="border px-4 py-2 text-center">
                             <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
                                 <i data-lucide="edit"></i>
@@ -670,7 +696,7 @@
                 externalConditionFilter.innerHTML = `
                     <option value="">全部外部條件</option>
                     ${externalConditions.map(condition => `
-                        <option value="${condition.id}">${condition.name}</option>
+                        <option value="${condition.id}">${escapeHtml(condition.name)}</option>
                     `).join('')}
                 `;
             }
@@ -682,11 +708,43 @@
 
                 // 根據篩選條件過濾交易紀錄
                 let filteredTrades = trades;
+
                 if (selectedStrategyFilter !== null) {
                     filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
                 }
                 if (selectedExternalConditionFilter !== null) {
                     filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+                }
+                if (selectedTimePeriodFilter !== 'all') {
+                    const now = new Date();
+                    let startDate;
+
+                    switch (selectedTimePeriodFilter) {
+                        case '7':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+                            break;
+                        case '30':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+                            break;
+                        case 'thisMonth':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                            break;
+                        case 'thisYear':
+                            startDate = new Date(now.getFullYear(), 0, 1);
+                            break;
+                        default:
+                            startDate = null;
+                    }
+
+                    if (startDate) {
+                        filteredTrades = filteredTrades.filter(trade => {
+                            if (trade.openDate) {
+                                const tradeDate = new Date(trade.openDate);
+                                return tradeDate >= startDate && tradeDate <= now;
+                            }
+                            return false;
+                        });
+                    }
                 }
 
                 // 分配交易編號：僅對有開倉日的交易編號，根據開倉日升序
@@ -764,16 +822,16 @@
                                 >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${trade.assetName.length > 10 ? trade.assetName.substring(0, 10) + '...' : trade.assetName}
+                                ${trade.assetName.length > 10 ? escapeHtml(trade.assetName.substring(0, 10)) + '...' : escapeHtml(trade.assetName)}
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getStrategyName(trade.strategyId).length > 10 ? getStrategyName(trade.strategyId).substring(0, 10) + '...' : getStrategyName(trade.strategyId)}
+                                ${getStrategyName(trade.strategyId).length > 10 ? escapeHtml(getStrategyName(trade.strategyId).substring(0, 10)) + '...' : escapeHtml(getStrategyName(trade.strategyId))}
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
-                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? getExternalConditionName(trade.externalConditionId).substring(0, 10) + '...' : getExternalConditionName(trade.externalConditionId)}
+                                ${getExternalConditionName(trade.externalConditionId).length > 10 ? escapeHtml(getExternalConditionName(trade.externalConditionId).substring(0, 10)) + '...' : escapeHtml(getExternalConditionName(trade.externalConditionId))}
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
-                                ${trade.description.length > 15 ? trade.description.substring(0, 15) + '...' : trade.description}
+                                ${trade.description.length > 15 ? escapeHtml(trade.description.substring(0, 15)) + '...' : escapeHtml(trade.description)}
                             </td>
                             <td class="border px-4 py-2 min-w-[200px]">
                                 <input
@@ -785,7 +843,7 @@
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="imageUrl"
                                 >
-                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                                ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURI(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
                             <td class="border px-4 py-2 text-center min-w-[80px]">
                                 ${trades.length > 1 ? `
@@ -947,14 +1005,12 @@
 
             // 開啟新增策略模態框
             function openAddStrategyModal() {
-                document.getElementById('addStrategyModal').classList.remove('hidden');
+                openModal('addStrategyModal');
             }
 
             // 關閉新增策略模態框
             function closeAddStrategyModal() {
-                document.getElementById('addStrategyModal').classList.add('hidden');
-                document.getElementById('newStrategyName').value = '';
-                document.getElementById('newStrategyDescription').value = '';
+                closeModal('addStrategyModal');
             }
 
             // 新增策略
@@ -996,15 +1052,12 @@
                 document.getElementById('editStrategyId').value = strategy.id;
                 document.getElementById('editStrategyName').value = strategy.name;
                 document.getElementById('editStrategyDescription').value = strategy.description;
-                document.getElementById('editStrategyModal').classList.remove('hidden');
+                openModal('editStrategyModal');
             }
 
             // 關閉編輯策略模態框
             function closeEditStrategyModal() {
-                document.getElementById('editStrategyModal').classList.add('hidden');
-                document.getElementById('editStrategyId').value = '';
-                document.getElementById('editStrategyName').value = '';
-                document.getElementById('editStrategyDescription').value = '';
+                closeModal('editStrategyModal');
             }
 
             // 更新策略
@@ -1060,14 +1113,12 @@
 
             // 開啟新增外部條件模態框
             function openAddExternalConditionModal() {
-                document.getElementById('addExternalConditionModal').classList.remove('hidden');
+                openModal('addExternalConditionModal');
             }
 
             // 關閉新增外部條件模態框
             function closeAddExternalConditionModal() {
-                document.getElementById('addExternalConditionModal').classList.add('hidden');
-                document.getElementById('newExternalConditionName').value = '';
-                document.getElementById('newExternalConditionDescription').value = '';
+                closeModal('addExternalConditionModal');
             }
 
             // 新增外部條件
@@ -1109,15 +1160,12 @@
                 document.getElementById('editExternalConditionId').value = condition.id;
                 document.getElementById('editExternalConditionName').value = condition.name;
                 document.getElementById('editExternalConditionDescription').value = condition.description;
-                document.getElementById('editExternalConditionModal').classList.remove('hidden');
+                openModal('editExternalConditionModal');
             }
 
             // 關閉編輯外部條件模態框
             function closeEditExternalConditionModal() {
-                document.getElementById('editExternalConditionModal').classList.add('hidden');
-                document.getElementById('editExternalConditionId').value = '';
-                document.getElementById('editExternalConditionName').value = '';
-                document.getElementById('editExternalConditionDescription').value = '';
+                closeModal('editExternalConditionModal');
             }
 
             // 更新外部條件
@@ -1171,16 +1219,19 @@
                 calculateStats(); // 更新統計數據
             }
 
-            // 策略和外部條件篩選功能
+            // 策略、外部條件和時間篩選功能
             function applyFilters() {
                 const strategyId = document.getElementById('strategyFilter').value;
                 const externalConditionId = document.getElementById('externalConditionFilter').value;
+                const timePeriod = document.getElementById('timePeriodFilter').value;
 
                 selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
                 selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
+                selectedTimePeriodFilter = timePeriod;
 
                 calculateStats();
                 renderTrades();
+                saveTimePeriodFilter(); // 保存時間篩選
             }
 
             // 計算統計數據
@@ -1192,9 +1243,39 @@
                 if (selectedStrategyFilter !== null) {
                     validTrades = validTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
                 }
-
                 if (selectedExternalConditionFilter !== null) {
                     validTrades = validTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+                }
+                if (selectedTimePeriodFilter !== 'all') {
+                    const now = new Date();
+                    let startDate;
+
+                    switch (selectedTimePeriodFilter) {
+                        case '7':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+                            break;
+                        case '30':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+                            break;
+                        case 'thisMonth':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                            break;
+                        case 'thisYear':
+                            startDate = new Date(now.getFullYear(), 0, 1);
+                            break;
+                        default:
+                            startDate = null;
+                    }
+
+                    if (startDate) {
+                        validTrades = validTrades.filter(trade => {
+                            if (trade.openDate) {
+                                const tradeDate = new Date(trade.openDate);
+                                return tradeDate >= startDate && tradeDate <= now;
+                            }
+                            return false;
+                        });
+                    }
                 }
 
                 if (validTrades.length === 0) {
@@ -1323,12 +1404,14 @@
                     localStorage.removeItem('averagePosition');
                     localStorage.removeItem('strategies');
                     localStorage.removeItem('externalConditions');
+                    localStorage.removeItem('timePeriodFilter'); // 移除時間篩選
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
                     trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
+                    document.getElementById('timePeriodFilter').value = 'all'; // 重置時間篩選
                     renderStrategies();
                     renderExternalConditions();
                     renderTrades();
@@ -1375,6 +1458,32 @@
 
                 lucide.createIcons(); // 重新初始化 Lucide 圖標
                 saveCollapseState(); // 保存收合狀態
+            }
+
+            // 開啟模態框
+            function openModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+            }
+
+            // 關閉模態框
+            function closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.add('hidden');
+                // 清空輸入欄位
+                const inputs = modal.querySelectorAll('input, textarea');
+                inputs.forEach(input => input.value = '');
+            }
+
+            // 安全地顯示用戶輸入的內容，防止 XSS 攻擊
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
             }
         </script>
     </div>
