@@ -123,14 +123,6 @@
         .hidden {
             display: none;
         }
-
-        /* 圖片縮略圖樣式 */
-        .thumbnail {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
@@ -537,7 +529,7 @@
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
                 if (savedTrades && Array.isArray(savedTrades)) {
-                    // 確保每個交易都有唯一的 ID 和 description
+                    // 確保每個交易都有唯一的 ID 和 imageUrl
                     trades = savedTrades.map(trade => {
                         if (!trade.id) {
                             trade.id = nextTradeId++;
@@ -546,15 +538,15 @@
                                 nextTradeId = trade.id + 1;
                             }
                         }
-                        // 確保 description 和 imageData 存在
+                        // 確保 description 和 imageUrl 存在
                         if (!trade.description) trade.description = '';
-                        if (!trade.imageData) trade.imageData = '';
+                        if (!trade.imageUrl) trade.imageUrl = '';
                         return trade;
                     });
                 }
 
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageData: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
 
                 if (savedAveragePosition !== null) {
@@ -705,12 +697,6 @@
                         holdingDaysClass = 'text-red-500'; // 使用紅色字體
                     }
 
-                    // 處理圖片顯示
-                    let imageDisplay = '';
-                    if (trade.imageData) {
-                        imageDisplay = `<img src="${trade.imageData}" alt="交易圖片" class="thumbnail" onclick="openImageModal('${trade.imageData}')">`;
-                    }
-
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center">${transactionNumber}</td>
@@ -803,14 +789,15 @@
                             </td>
                             <td class="border px-4 py-2">
                                 <input
-                                    type="file"
-                                    accept="image/*"
-                                    onchange="handleImageUpload(${trades.indexOf(trade)}, this)"
+                                    type="text"
+                                    value="${trade.imageUrl}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
                                     class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入圖片URL"
                                     data-row-index="${trades.indexOf(trade)}"
-                                    data-field="imageData"
+                                    data-field="imageUrl"
                                 >
-                                ${imageDisplay}
+                                ${trade.imageUrl ? `<button onclick="openImageLink('${trade.imageUrl}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
                             <td class="border px-4 py-2 text-center">
                                 ${trades.length > 1 ? `
@@ -864,13 +851,13 @@
                                     nextInput.focus();
                                 }
                             } else if (currentField === 'description') {
-                                // 移動到圖片欄位
-                                const nextField = 'imageData';
+                                // 移動到圖片URL欄位
+                                const nextField = 'imageUrl';
                                 const nextInput = document.querySelector(`input[data-row-index="${currentRow}"][data-field="${nextField}"]`);
                                 if (nextInput) {
                                     nextInput.focus();
                                 }
-                            } else if (currentField === 'imageData') {
+                            } else if (currentField === 'imageUrl') {
                                 // 檢查是否為最後一筆交易，且有有效輸入
                                 const trade = trades[currentRow];
                                 if (trade.strategyId !== null && trade.strategyId !== '' && trade.externalConditionId !== null && trade.externalConditionId !== '' && trade.returnRate.trim() !== '' && !isNaN(trade.returnRate)) {
@@ -926,6 +913,8 @@
                     }
                 } else if (field === 'description') { // 新增處理文字說明
                     trades[index].description = value.trim();
+                } else if (field === 'imageUrl') { // 新增處理圖片URL
+                    trades[index].imageUrl = value.trim();
                 }
                 
                 // 計算統計數據和保存
@@ -933,54 +922,9 @@
                 saveData(); // 保存數據
             }
 
-            // 處理圖片上傳
-            function handleImageUpload(index, inputElement) {
-                const file = inputElement.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        trades[index].imageData = event.target.result;
-                        renderTrades(); // 重新渲染交易記錄以顯示圖片
-                        calculateStats();
-                        saveData(); // 保存數據
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // 如果取消上傳，清除圖片數據
-                    trades[index].imageData = '';
-                    renderTrades();
-                    calculateStats();
-                    saveData();
-                }
-            }
-
-            // 打開圖片模態框
-            function openImageModal(imageData) {
-                // 如果尚未創建模態框，創建一個
-                if (!document.getElementById('imageModal')) {
-                    const modal = document.createElement('div');
-                    modal.id = 'imageModal';
-                    modal.className = 'modal hidden';
-                    modal.innerHTML = `
-                        <div class="bg-white p-4 rounded-lg max-w-lg">
-                            <button onclick="closeImageModal()" class="float-right text-gray-600 hover:text-gray-800">
-                                <i data-lucide="x"></i>
-                            </button>
-                            <img src="${imageData}" alt="交易圖片" class="w-full h-auto">
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-                    lucide.createIcons();
-                }
-
-                // 設置圖片並顯示模態框
-                document.querySelector('#imageModal img').src = imageData;
-                document.getElementById('imageModal').classList.remove('hidden');
-            }
-
-            // 關閉圖片模態框
-            function closeImageModal() {
-                document.getElementById('imageModal').classList.add('hidden');
+            // 開啟圖片連結
+            function openImageLink(url) {
+                window.open(url, '_blank');
             }
 
             // 添加交易記錄
@@ -1004,7 +948,7 @@
                     openDate: '', 
                     closeDate: '',
                     description: '', // 新增文字說明欄位
-                    imageData: '' // 新增圖片欄位
+                    imageUrl: '' // 新增圖片URL欄位
                 };
                 trades.unshift(newTrade); // 將新交易插入到陣列的最前端
                 
@@ -1026,7 +970,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageData: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1413,7 +1357,7 @@
                     localStorage.removeItem('externalConditions');
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
-                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageData: '' }];
+                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
@@ -1465,16 +1409,6 @@
                 saveCollapseState(); // 保存收合狀態
             }
         </script>
-    </div>
-
-    <!-- 圖片模態框 -->
-    <div id="imageModal" class="modal hidden">
-        <div class="bg-white p-4 rounded-lg max-w-lg">
-            <button onclick="closeImageModal()" class="float-right text-gray-600 hover:text-gray-800">
-                <i data-lucide="x"></i>
-            </button>
-            <img src="" alt="交易圖片" class="w-full h-auto">
-        </div>
     </div>
 </body>
 </html>
