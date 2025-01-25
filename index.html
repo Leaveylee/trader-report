@@ -231,7 +231,7 @@
                 </div>
 
                 <!-- 第二行：期望值 -->
-                <div class="flex justify-between font-bold text-lg">
+                <div class="flex justify-between font-bold text-lg" id="expectedValueContainer">
                     <div class="flex-1 text-center">
                         <span class="text-gray-700">期望值：</span>
                         <span id="expectedValue" class="font-bold text-lg">
@@ -241,7 +241,7 @@
                 </div>
 
                 <!-- 第三行：總報酬 -->
-                <div class="flex justify-between font-bold text-lg">
+                <div class="flex justify-between font-bold text-lg" id="totalReturnContainer">
                     <div class="flex-1 text-center">
                         <span class="text-gray-700">總報酬：</span>
                         <span id="totalReturn" class="font-bold text-lg">
@@ -1327,7 +1327,27 @@
                 }
 
                 if (validTrades.length === 0) {
-                    // 重置統計數據
+                    // 重置非金額統計數據
+                    document.getElementById('totalTrades').textContent = '0';
+                    document.getElementById('winRate').textContent = '0% (0勝0敗)';
+                    document.getElementById('riskRewardRatio').textContent = '0';
+
+                    // 隱藏期望值和總報酬
+                    document.getElementById('expectedValueContainer').style.display = 'none';
+                    document.getElementById('totalReturnContainer').style.display = 'none';
+
+                    // 移除顏色類別
+                    removeColorClasses(['expectedValue', 'totalReturn']);
+
+                    return;
+                } else {
+                    // 顯示期望值和總報酬
+                    document.getElementById('expectedValueContainer').style.display = 'flex';
+                    document.getElementById('totalReturnContainer').style.display = 'flex';
+                }
+
+                if (validTrades.length === 0) {
+                    // Reset stats if no valid trades
                     document.getElementById('totalTrades').textContent = '0';
                     document.getElementById('winRate').textContent = '0% (0勝0敗)';
                     document.getElementById('riskRewardRatio').textContent = '0';
@@ -1348,8 +1368,8 @@
                 const losses = validTrades.filter(trade => parseFloat(trade.returnRate) < 0);
 
                 const winRate = (wins.length / validTrades.length) * 100;
-                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate)) / wins.length : 0;
-                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate)) / losses.length : 0; // 保留負號
+                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate), 0) / wins.length : 0;
+                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate), 0) / losses.length : 0; // 保留負號
                 const maxWinRate = wins.length > 0 ? Math.max(...wins.map(trade => parseFloat(trade.returnRate))) : 0;
                 const maxLossRate = losses.length > 0 ? Math.min(...losses.map(trade => parseFloat(trade.returnRate))) : 0; // 保留負號
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
