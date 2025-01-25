@@ -508,19 +508,6 @@
                 return number.toLocaleString();
             }
 
-            // 工具函數：格式化數字為有逗號的形式
-            function formatWithCommas(value) {
-                if (value === '') return '';
-                const number = parseFloat(value.replace(/,/g, ''));
-                if (isNaN(number)) return '';
-                return number.toLocaleString();
-            }
-
-            // 工具函數：移除數字中的逗號
-            function removeCommas(value) {
-                return value.replace(/,/g, '');
-            }
-
             // 保存數據到 localStorage
             function saveData() {
                 localStorage.setItem('trades', JSON.stringify(trades));
@@ -811,10 +798,9 @@
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <input
-                                    type="text"
-                                    value="${formatWithCommas(trade.positionSize)}"
+                                    type="number"
+                                    value="${trade.positionSize}"
                                     oninput="handleTradeChange(${trade.id}, 'positionSize', this.value)"
-                                    onblur="formatPositionSize(this)"
                                     class="w-full p-1 border rounded trade-input no-spinner"
                                     placeholder="輸入建倉金額"
                                     data-trade-id="${trade.id}"
@@ -984,9 +970,7 @@
                         document.querySelector(`input[data-trade-id="${trade.id}"][data-field="closeDate"]`).value = '';
                     }
                 } else if (field === 'positionSize') { // 新增處理建倉部位
-                    // 移除逗號
-                    const numericValue = removeCommas(value);
-                    const position = parseFloat(numericValue);
+                    const position = parseFloat(value);
                     trade.positionSize = isNaN(position) ? 0 : position;
                 } else if (field === 'description') { // 新增處理文字說明
                     trade.description = value.trim();
@@ -1309,7 +1293,7 @@
                     endDateInput.value = formatDate(endDate);
                 } else {
                     // 如果結束日期未設置，可以選擇不做任何操作，或者設置為今天
-                    // 這裡我們選擇不做任何操作
+                    // 這裡我們選擇不做操作
                     alert('請先設定結束日期，再進行調整。');
                 }
 
@@ -1526,13 +1510,6 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-            }
-
-            // 格式化「建倉部位」輸入框的數字，添加逗號
-            function formatPositionSize(input) {
-                const value = input.value;
-                const formattedValue = formatWithCommas(value);
-                input.value = formattedValue;
             }
         </script>
     </div>
