@@ -17,6 +17,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入 Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -272,6 +274,12 @@
             </div>
         </div>
 
+        <!-- 總報酬逐日折線圖 -->
+        <div class="bg-gray-50 p-4 rounded mb-6">
+            <h2 class="text-lg font-medium text-gray-700 mb-4">總報酬逐日折線圖</h2>
+            <canvas id="totalReturnChart" width="400" height="200"></canvas>
+        </div>
+
         <!-- 策略管理區塊（可收合） -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
@@ -483,6 +491,9 @@
 
             // 新增一個全局變數來追踪下一個交易的 ID
             let nextTradeId = 1;
+
+            // 新增全局變數來管理圖表實例
+            let totalReturnChart;
 
             // 工具函數：格式化數字，每三位加上逗號，根據是否為金額決定是否顯示符號
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -915,7 +926,7 @@
                     topScrollbarContent.style.width = table.scrollWidth + 'px';
                 }
 
-                // 同步頂部和底部滾動條
+                // 同步頂部滾動條
                 const topScrollbar = document.getElementById('topScrollbar');
                 const bottomScrollDiv = document.getElementById('bottomScrollbar');
 
@@ -1353,6 +1364,9 @@
                     // 移除顏色類別
                     removeColorClasses(['expectedValue', 'totalReturn']);
                     
+                    // 更新圖表
+                    updateTotalReturnChart();
+
                     return;
                 }
 
@@ -1434,6 +1448,9 @@
                 } else {
                     totalReturnElem.classList.remove('text-red-500', 'text-green-500');
                 }
+
+                // 更新圖表
+                updateTotalReturnChart();
             }
 
             // 移除特定元素的顏色類別
@@ -1552,6 +1569,106 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+            // 新增函數：更新總報酬逐日折線圖
+            function updateTotalReturnChart() {
+                // 過濾符合篩選條件且有平倉日的交易
+                let validTrades = trades.filter(trade => 
+                    trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) &&
+                    trade.closeDate !== '' &&
+                    (selectedStartDateFilter === null || new Date(trade.closeDate) >= new Date(selectedStartDateFilter)) &&
+                    (selectedEndDateFilter === null || new Date(trade.closeDate) <= new Date(selectedEndDateFilter))
+                );
+
+                // 聚合每日總報酬
+                let dailyReturns = {};
+
+                validTrades.forEach(trade => {
+                    if (trade.closeDate) {
+                        if (!dailyReturns[trade.closeDate]) {
+                            dailyReturns[trade.closeDate] = 0;
+                        }
+                        dailyReturns[trade.closeDate] += parseFloat(trade.returnRate);
+                    }
+                });
+
+                // 獲取所有涉及的日期
+                let sortedDates = Object.keys(dailyReturns).sort((a, b) => new Date(a) - new Date(b));
+
+                // 若無交易，清空圖表
+                if (sortedDates.length === 0) {
+                    if (totalReturnChart) {
+                        totalReturnChart.data.labels = [];
+                        totalReturnChart.data.datasets[0].data = [];
+                        totalReturnChart.update();
+                    }
+                    return;
+                }
+
+                // 填補日期間的空缺，將無交易的日期總報酬設為 0
+                let startDate = new Date(sortedDates[0]);
+                let endDate = new Date(sortedDates[sortedDates.length -1]);
+                let dateArray = [];
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    let dateStr = formatDate(currentDate);
+                    dateArray.push(dateStr);
+                    if (!dailyReturns[dateStr]) {
+                        dailyReturns[dateStr] = 0;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // 更新排序後的日期
+                sortedDates = dateArray;
+
+                // 準備圖表的標籤和數據
+                let labels = sortedDates;
+                let data = sortedDates.map(date => dailyReturns[date]);
+
+                // 如果圖表已存在，則更新其資料
+                if (totalReturnChart) {
+                    totalReturnChart.data.labels = labels;
+                    totalReturnChart.data.datasets[0].data = data;
+                    totalReturnChart.update();
+                } else {
+                    // 否則，創建新的圖表
+                    const ctx = document.getElementById('totalReturnChart').getContext('2d');
+                    totalReturnChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '總報酬 (%)',
+                                data: data,
+                                fill: false,
+                                borderColor: 'rgba(230, 126, 81, 1)', // 配合主題的顏色
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: '日期'
+                                    }
+                                },
+                                y: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: '總報酬 (%)'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
             }
         </script>
     </div>
