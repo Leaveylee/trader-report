@@ -144,6 +144,17 @@
             width: 100%;
             height: 1px;
         }
+
+        /* 移除「建倉部位」數字輸入框的spinner箭頭 */
+        .no-spinner::-webkit-outer-spin-button,
+        .no-spinner::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .no-spinner {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
@@ -766,9 +777,9 @@
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="openDate"
                                 >
                             </td>
@@ -776,9 +787,9 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="closeDate"
                                 >
                             </td>
@@ -789,10 +800,10 @@
                                 <input
                                     type="number"
                                     value="${trade.positionSize}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'positionSize', this.value)"
-                                    class="w-full p-1 border rounded trade-input"
+                                    oninput="handleTradeChange(${trade.id}, 'positionSize', this.value)"
+                                    class="w-full p-1 border rounded trade-input no-spinner"
                                     placeholder="輸入建倉金額"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="positionSize"
                                 >
                             </td>
@@ -800,30 +811,29 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
-                                    data-row-index="${trades.indexOf(trade)}"
-                                    data-field="returnRate"
                                     data-trade-id="${trade.id}"
+                                    data-field="returnRate"
                                 >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <input
                                     type="text"
                                     value="${escapeHtml(trade.assetName)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="assetName"
                                 >
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(${trade.id}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="strategyId"
                                 >
                                     <option value="">選擇策略</option>
@@ -832,9 +842,9 @@
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(${trade.id}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="externalConditionId"
                                 >
                                     <option value="">選擇外部條件</option>
@@ -845,10 +855,10 @@
                                 <input
                                     type="text"
                                     value="${escapeHtml(trade.description)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'description', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入文字說明"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="description"
                                 >
                             </td>
@@ -856,17 +866,17 @@
                                 <input
                                     type="text"
                                     value="${trade.imageUrl}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
+                                    oninput="handleTradeChange(${trade.id}, 'imageUrl', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入圖片URL"
-                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-trade-id="${trade.id}"
                                     data-field="imageUrl"
                                 >
                                 ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURI(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
                             <td class="border px-4 py-2 text-center min-w-[80px]">
                                 ${trades.length > 1 ? `
-                                    <button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button">
+                                    <button onclick="removeTrade(${trade.id})" class="delete-button">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 ` : ''}
@@ -924,45 +934,48 @@
             }
 
             // 處理交易數據變更
-            function handleTradeChange(index, field, value) {
+            function handleTradeChange(tradeId, field, value) {
+                const trade = trades.find(t => t.id === tradeId);
+                if (!trade) return;
+
                 if (field === 'returnRate') {
                     const cleanedValue = value.replace('%', '').trim();
                     if (cleanedValue === '' || isNaN(cleanedValue)) {
-                        trades[index].returnRate = '';
+                        trade.returnRate = '';
                     } else {
-                        trades[index].returnRate = cleanedValue;
+                        trade.returnRate = cleanedValue;
                     }
                 } else if (field === 'assetName') {
-                    trades[index].assetName = value.trim();
+                    trade.assetName = value.trim();
                 } else if (field === 'strategyId') {
-                    trades[index].strategyId = value === '' ? null : parseInt(value, 10);
+                    trade.strategyId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'externalConditionId') {
-                    trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
+                    trade.externalConditionId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'openDate') {
-                    trades[index].openDate = value;
+                    trade.openDate = value;
                     // 驗證平倉日是否早於開倉日
-                    const closeDate = trades[index].closeDate;
+                    const closeDate = trade.closeDate;
                     if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
                         alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                        trade.closeDate = '';
+                        document.querySelector(`input[data-trade-id="${trade.id}"][data-field="closeDate"]`).value = '';
                     }
                 } else if (field === 'closeDate') {
-                    trades[index].closeDate = value;
+                    trade.closeDate = value;
                     // 驗證平倉日是否早於開倉日
-                    const openDate = trades[index].openDate;
+                    const openDate = trade.openDate;
                     if (openDate !== '' && new Date(value) < new Date(openDate)) {
                         alert('平倉日不能早於開倉日。');
-                        trades[index].closeDate = '';
-                        document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
+                        trade.closeDate = '';
+                        document.querySelector(`input[data-trade-id="${trade.id}"][data-field="closeDate"]`).value = '';
                     }
                 } else if (field === 'positionSize') { // 新增處理建倉部位
                     const position = parseFloat(value);
-                    trades[index].positionSize = isNaN(position) ? 0 : position;
+                    trade.positionSize = isNaN(position) ? 0 : position;
                 } else if (field === 'description') { // 新增處理文字說明
-                    trades[index].description = value.trim();
+                    trade.description = value.trim();
                 } else if (field === 'imageUrl') { // 新增處理圖片URL
-                    trades[index].imageUrl = value.trim();
+                    trade.imageUrl = value.trim();
                 }
                 
                 // 計算統計數據和保存
@@ -1016,8 +1029,8 @@
             }
 
             // 刪除交易記錄
-            function removeTrade(index) {
-                trades = trades.filter((_, i) => i !== index);
+            function removeTrade(tradeId) {
+                trades = trades.filter(trade => trade.id !== tradeId);
                 if (trades.length === 0) {
                     trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, positionSize: 0, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
