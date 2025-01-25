@@ -17,6 +17,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入 noUiSlider CSS 和 JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.0/dist/nouislider.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.0/dist/nouislider.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -144,6 +147,11 @@
             width: 100%;
             height: 1px;
         }
+
+        /* noUiSlider 自定義樣式 */
+        .noUi-target {
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -188,6 +196,17 @@
                         <input type="date" id="endDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="結束日期">
                     </div>
                     <button class="button mt-2" onclick="clearDateFilters()">清除日期篩選</button>
+                </div>
+            </div>
+            <!-- 新增日期範圍滑桿 -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    快速調整日期範圍
+                </label>
+                <div id="dateRangeSlider"></div>
+                <div class="flex justify-between mt-2">
+                    <span id="sliderStartDate" class="text-sm text-gray-700">開始日期：--</span>
+                    <span id="sliderEndDate" class="text-sm text-gray-700">結束日期：--</span>
                 </div>
             </div>
         </div>
@@ -532,15 +551,6 @@
                 localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
             }
 
-            // 保存日期篩選到 localStorage
-            // 移除 saveDateFilters 函數
-            /*
-            function saveDateFilters() {
-                localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
-                localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
-            }
-            */
-
             // 保存收合狀態到 localStorage
             function saveCollapseState() {
                 const strategyCollapsed = document.getElementById('strategyManagementContent').classList.contains('hidden');
@@ -635,6 +645,9 @@
                 renderExternalConditions(); // 渲染外部條件列表
                 renderTrades();
                 calculateStats();
+
+                // 初始化日期範圍滑桿
+                initializeDateRangeSlider();
 
                 // 應用收合狀態
                 applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
@@ -1274,6 +1287,9 @@
                 selectedStartDateFilter = startDate === '' ? null : startDate;
                 selectedEndDateFilter = endDate === '' ? null : endDate;
 
+                // 更新滑桿範圍
+                updateDateRangeSlider();
+
                 calculateStats();
                 renderTrades();
                 // 移除保存日期篩選的部分
@@ -1416,6 +1432,109 @@
                 });
             }
 
+            // 初始化日期範圍滑桿
+            function initializeDateRangeSlider() {
+                const dateRangeSlider = document.getElementById('dateRangeSlider');
+                if (!dateRangeSlider) return;
+
+                // 獲取所有交易的開倉日期
+                const openDates = trades
+                    .map(trade => trade.openDate)
+                    .filter(date => date !== '')
+                    .map(date => new Date(date).getTime());
+
+                if (openDates.length === 0) {
+                    // 如果沒有交易有開倉日期，禁用滑桿
+                    dateRangeSlider.innerHTML = '<p class="text-sm text-gray-500">沒有可用的開倉日期來初始化滑桿。</p>';
+                    return;
+                }
+
+                const minDate = Math.min(...openDates);
+                const maxDate = Math.max(...openDates);
+
+                // 初始化 noUiSlider
+                noUiSlider.create(dateRangeSlider, {
+                    start: [minDate, maxDate],
+                    connect: true,
+                    range: {
+                        'min': minDate,
+                        'max': maxDate
+                    },
+                    step: 24 * 60 * 60 * 1000, // 一天
+                    tooltips: true,
+                    format: {
+                        to: function(value) {
+                            const date = new Date(+value);
+                            const year = date.getFullYear();
+                            const month = ('0' + (date.getMonth() + 1)).slice(-2);
+                            const day = ('0' + date.getDate()).slice(-2);
+                            return `${year}-${month}-${day}`;
+                        },
+                        from: function(value) {
+                            return Date.parse(value);
+                        }
+                    }
+                });
+
+                // 顯示初始日期範圍
+                const sliderStartDate = document.getElementById('sliderStartDate');
+                const sliderEndDate = document.getElementById('sliderEndDate');
+                sliderStartDate.textContent = '開始日期：' + new Date(minDate).toISOString().split('T')[0];
+                sliderEndDate.textContent = '結束日期：' + new Date(maxDate).toISOString().split('T')[0];
+
+                // 監聽滑桿變化
+                dateRangeSlider.noUiSlider.on('update', function(values, handle) {
+                    const startDate = values[0];
+                    const endDate = values[1];
+                    sliderStartDate.textContent = '開始日期：' + startDate;
+                    sliderEndDate.textContent = '結束日期：' + endDate;
+
+                    // 更新日期篩選器
+                    selectedStartDateFilter = startDate;
+                    selectedEndDateFilter = endDate;
+
+                    // 更新日期輸入框
+                    document.getElementById('startDateFilter').value = startDate;
+                    document.getElementById('endDateFilter').value = endDate;
+
+                    // 觸發篩選
+                    applyFilters();
+                });
+            }
+
+            // 更新日期範圍滑桿
+            function updateDateRangeSlider() {
+                const dateRangeSlider = document.getElementById('dateRangeSlider');
+                if (!dateRangeSlider || !dateRangeSlider.noUiSlider) return;
+
+                if (selectedStartDateFilter && selectedEndDateFilter) {
+                    dateRangeSlider.noUiSlider.set([
+                        new Date(selectedStartDateFilter).getTime(),
+                        new Date(selectedEndDateFilter).getTime()
+                    ]);
+                } else {
+                    // 如果沒有選擇日期範圍，重置滑桿
+                    const openDates = trades
+                        .map(trade => trade.openDate)
+                        .filter(date => date !== '')
+                        .map(date => new Date(date).getTime());
+
+                    if (openDates.length === 0) return;
+
+                    const minDate = Math.min(...openDates);
+                    const maxDate = Math.max(...openDates);
+
+                    dateRangeSlider.noUiSlider.updateOptions({
+                        range: {
+                            'min': minDate,
+                            'max': maxDate
+                        }
+                    }, true);
+
+                    dateRangeSlider.noUiSlider.set([minDate, maxDate]);
+                }
+            }
+
             // 初始化
             loadStrategies();
             loadExternalConditions();
@@ -1527,5 +1646,110 @@
             }
         </script>
     </div>
+
+    <script>
+        // 初始化日期範圍滑桿函數
+        function initializeDateRangeSlider() {
+            const dateRangeSlider = document.getElementById('dateRangeSlider');
+            if (!dateRangeSlider) return;
+
+            // 獲取所有交易的開倉日期
+            const openDates = trades
+                .map(trade => trade.openDate)
+                .filter(date => date !== '')
+                .map(date => new Date(date).getTime());
+
+            if (openDates.length === 0) {
+                // 如果沒有交易有開倉日期，禁用滑桿
+                dateRangeSlider.innerHTML = '<p class="text-sm text-gray-500">沒有可用的開倉日期來初始化滑桿。</p>';
+                return;
+            }
+
+            const minDate = Math.min(...openDates);
+            const maxDate = Math.max(...openDates);
+
+            // 初始化 noUiSlider
+            noUiSlider.create(dateRangeSlider, {
+                start: [minDate, maxDate],
+                connect: true,
+                range: {
+                    'min': minDate,
+                    'max': maxDate
+                },
+                step: 24 * 60 * 60 * 1000, // 一天
+                tooltips: true,
+                format: {
+                    to: function(value) {
+                        const date = new Date(+value);
+                        const year = date.getFullYear();
+                        const month = ('0' + (date.getMonth() + 1)).slice(-2);
+                        const day = ('0' + date.getDate()).slice(-2);
+                        return `${year}-${month}-${day}`;
+                    },
+                    from: function(value) {
+                        return Date.parse(value);
+                    }
+                }
+            });
+
+            // 顯示初始日期範圍
+            const sliderStartDate = document.getElementById('sliderStartDate');
+            const sliderEndDate = document.getElementById('sliderEndDate');
+            sliderStartDate.textContent = '開始日期：' + new Date(minDate).toISOString().split('T')[0];
+            sliderEndDate.textContent = '結束日期：' + new Date(maxDate).toISOString().split('T')[0];
+
+            // 監聽滑桿變化
+            dateRangeSlider.noUiSlider.on('update', function(values, handle) {
+                const startDate = values[0];
+                const endDate = values[1];
+                sliderStartDate.textContent = '開始日期：' + startDate;
+                sliderEndDate.textContent = '結束日期：' + endDate;
+
+                // 更新日期篩選器
+                selectedStartDateFilter = startDate;
+                selectedEndDateFilter = endDate;
+
+                // 更新日期輸入框
+                document.getElementById('startDateFilter').value = startDate;
+                document.getElementById('endDateFilter').value = endDate;
+
+                // 觸發篩選
+                applyFilters();
+            });
+        }
+
+        // 更新日期範圍滑桿函數
+        function updateDateRangeSlider() {
+            const dateRangeSlider = document.getElementById('dateRangeSlider');
+            if (!dateRangeSlider || !dateRangeSlider.noUiSlider) return;
+
+            if (selectedStartDateFilter && selectedEndDateFilter) {
+                dateRangeSlider.noUiSlider.set([
+                    new Date(selectedStartDateFilter).getTime(),
+                    new Date(selectedEndDateFilter).getTime()
+                ]);
+            } else {
+                // 如果沒有選擇日期範圍，重置滑桿
+                const openDates = trades
+                    .map(trade => trade.openDate)
+                    .filter(date => date !== '')
+                    .map(date => new Date(date).getTime());
+
+                if (openDates.length === 0) return;
+
+                const minDate = Math.min(...openDates);
+                const maxDate = Math.max(...openDates);
+
+                dateRangeSlider.noUiSlider.updateOptions({
+                    range: {
+                        'min': minDate,
+                        'max': maxDate
+                    }
+                }, true);
+
+                dateRangeSlider.noUiSlider.set([minDate, maxDate]);
+            }
+        }
+    </script>
 </body>
 </html>
