@@ -157,6 +157,18 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+
+        /* 隱藏文本輸入框的下拉箭頭（如有） */
+        input[type=text]::-webkit-outer-spin-button,
+        input[type=text]::-webkit-inner-spin-button,
+        input[type=text]::-webkit-appearance {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=text] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
@@ -770,7 +782,7 @@
                                 <input
                                     type="date"
                                     value="${trade.openDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'openDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="openDate"
@@ -780,7 +792,7 @@
                                 <input
                                     type="date"
                                     value="${trade.closeDate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'closeDate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="closeDate"
@@ -793,7 +805,7 @@
                                 <input
                                     type="text"
                                     value="${formatWithCommas(trade.positionSize)}"
-                                    oninput="handleTradeChangeFormatted(${trades.indexOf(trade)}, 'positionSize', this.value)"
+                                    oninput="handleTradeChangeFormatted(event, ${trades.indexOf(trade)}, 'positionSize', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入建倉金額"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -804,7 +816,7 @@
                                 <input
                                     type="text"
                                     value="${trade.returnRate}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'returnRate', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="+6.66 或 -2.92"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -816,7 +828,7 @@
                                 <input
                                     type="text"
                                     value="${escapeHtml(trade.assetName)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'assetName', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入標的名稱"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -825,7 +837,7 @@
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)"
+                                    onchange="handleTradeChange(event, ${trades.indexOf(trade)}, 'strategyId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="strategyId"
@@ -836,7 +848,7 @@
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <select
-                                    onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)"
+                                    onchange="handleTradeChange(event, ${trades.indexOf(trade)}, 'externalConditionId', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="externalConditionId"
@@ -849,7 +861,7 @@
                                 <input
                                     type="text"
                                     value="${escapeHtml(trade.description)}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'description', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入文字說明"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -860,7 +872,7 @@
                                 <input
                                     type="text"
                                     value="${trade.imageUrl}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)"
+                                    oninput="handleTradeChange(event, ${trades.indexOf(trade)}, 'imageUrl', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入圖片URL"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -928,7 +940,7 @@
             }
 
             // 處理交易數據變更（未格式化輸入）
-            function handleTradeChange(index, field, value) {
+            function handleTradeChange(event, index, field, value) {
                 if (field === 'returnRate') {
                     const cleanedValue = value.replace('%', '').trim();
                     if (cleanedValue === '' || isNaN(cleanedValue)) {
@@ -960,9 +972,6 @@
                         trades[index].closeDate = '';
                         document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
                     }
-                } else if (field === 'positionSize') { // 新增處理建倉部位
-                    const position = parseFloat(value.replace(/,/g, ''));
-                    trades[index].positionSize = isNaN(position) ? 0 : position;
                 } else if (field === 'description') { // 新增處理文字說明
                     trades[index].description = value.trim();
                 } else if (field === 'imageUrl') { // 新增處理圖片URL
@@ -975,8 +984,11 @@
             }
 
             // 處理交易數據變更（格式化輸入）
-            function handleTradeChangeFormatted(index, field, value) {
+            function handleTradeChangeFormatted(event, index, field, value) {
                 if (field === 'positionSize') {
+                    // 獲取光標位置
+                    const cursorPosition = event.target.selectionStart;
+                    
                     // 移除所有非數字和非逗號字符
                     let cleanedValue = value.replace(/[^\d,]/g, '');
                     // 移除多餘的逗號
@@ -989,10 +1001,16 @@
                     if (!isNaN(numberValue)) {
                         // 格式化為帶逗號的數字
                         const formattedValue = numberValue.toLocaleString();
-                        // 更新輸入框的顯示
-                        event.target.value = formattedValue;
                         // 更新交易數據
                         trades[index].positionSize = numberValue;
+
+                        // 更新輸入框的顯示並保留光標位置
+                        event.target.value = formattedValue;
+                        // 計算新的光標位置
+                        const newLength = formattedValue.length;
+                        const oldLength = value.length;
+                        const diff = newLength - oldLength;
+                        event.target.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
                     } else {
                         trades[index].positionSize = 0;
                         event.target.value = '';
