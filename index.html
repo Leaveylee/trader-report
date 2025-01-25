@@ -187,10 +187,10 @@
                         <input type="date" id="startDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="開始日期">
                         <input type="date" id="endDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="結束日期">
                     </div>
-                    <!-- 新增的調整日期範圍按鈕 -->
+                    <!-- 新增的調整日期範圍按鈕，僅影響結束日期 -->
                     <div class="flex space-x-2 mt-2">
-                        <button class="button" onclick="shiftDateRange(-1)">前一天</button>
-                        <button class="button" onclick="shiftDateRange(1)">後一天</button>
+                        <button class="button" onclick="shiftEndDate(-1)">前一天</button>
+                        <button class="button" onclick="shiftEndDate(1)">後一天</button>
                         <button class="button" onclick="clearDateFilters()">清除日期篩選</button>
                     </div>
                 </div>
@@ -1294,22 +1294,19 @@
                 applyFilters();
             }
 
-            // 新增：調整篩選日期範圍的函數
-            function shiftDateRange(days) {
-                const startDateInput = document.getElementById('startDateFilter');
+            // 新增：調整結束日期範圍的函數
+            function shiftEndDate(days) {
                 const endDateInput = document.getElementById('endDateFilter');
 
-                let startDate = startDateInput.value ? new Date(startDateInput.value) : null;
                 let endDate = endDateInput.value ? new Date(endDateInput.value) : null;
-
-                if (startDate) {
-                    startDate.setDate(startDate.getDate() + days);
-                    startDateInput.value = formatDate(startDate);
-                }
 
                 if (endDate) {
                     endDate.setDate(endDate.getDate() + days);
                     endDateInput.value = formatDate(endDate);
+                } else {
+                    // 如果結束日期未設置，可以選擇不做任何操作，或者設置為今天
+                    // 這裡我們選擇不做操作
+                    alert('請先設定結束日期，再進行調整。');
                 }
 
                 applyFilters();
