@@ -187,7 +187,12 @@
                         <input type="date" id="startDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="開始日期">
                         <input type="date" id="endDateFilter" class="w-1/2 p-2 border rounded" onchange="applyFilters()" placeholder="結束日期">
                     </div>
-                    <button class="button mt-2" onclick="clearDateFilters()">清除日期篩選</button>
+                    <!-- 新增的調整日期範圍按鈕 -->
+                    <div class="flex space-x-2 mt-2">
+                        <button class="button" onclick="shiftDateRange(-1)">前一天</button>
+                        <button class="button" onclick="shiftDateRange(1)">後一天</button>
+                        <button class="button" onclick="clearDateFilters()">清除日期篩選</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1287,6 +1292,32 @@
                 selectedStartDateFilter = null;
                 selectedEndDateFilter = null;
                 applyFilters();
+            }
+
+            // 新增：調整篩選日期範圍的函數
+            function shiftDateRange(days) {
+                const startDateInput = document.getElementById('startDateFilter');
+                const endDateInput = document.getElementById('endDateFilter');
+
+                let startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+                let endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+
+                if (startDate) {
+                    startDate.setDate(startDate.getDate() + days);
+                    startDateInput.value = formatDate(startDate);
+                }
+
+                if (endDate) {
+                    endDate.setDate(endDate.getDate() + days);
+                    endDateInput.value = formatDate(endDate);
+                }
+
+                applyFilters();
+            }
+
+            // 新增：格式化日期為 YYYY-MM-DD
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
             }
 
             // 計算統計數據
