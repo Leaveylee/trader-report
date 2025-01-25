@@ -144,6 +144,19 @@
             width: 100%;
             height: 1px;
         }
+
+        /* 隱藏輸入框的上下調整箭頭 */
+        /* Chrome, Safari, Edge, Opera */
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
@@ -517,15 +530,6 @@
                 localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
             }
 
-            // 保存日期篩選到 localStorage
-            // 移除 saveDateFilters 函數
-            /*
-            function saveDateFilters() {
-                localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
-                localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
-            }
-            */
-
             // 保存收合狀態到 localStorage
             function saveCollapseState() {
                 const strategyCollapsed = document.getElementById('strategyManagementContent').classList.contains('hidden');
@@ -787,9 +791,9 @@
                             </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <input
-                                    type="number"
-                                    value="${trade.positionSize}"
-                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'positionSize', this.value)"
+                                    type="text"
+                                    value="${formatWithCommas(trade.positionSize)}"
+                                    oninput="handleTradeChangeFormatted(${trades.indexOf(trade)}, 'positionSize', this.value)"
                                     class="w-full p-1 border rounded trade-input"
                                     placeholder="輸入建倉金額"
                                     data-row-index="${trades.indexOf(trade)}"
@@ -923,7 +927,7 @@
                 return condition ? condition.name : '';
             }
 
-            // 處理交易數據變更
+            // 處理交易數據變更（未格式化輸入）
             function handleTradeChange(index, field, value) {
                 if (field === 'returnRate') {
                     const cleanedValue = value.replace('%', '').trim();
@@ -957,7 +961,7 @@
                         document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
                     }
                 } else if (field === 'positionSize') { // 新增處理建倉部位
-                    const position = parseFloat(value);
+                    const position = parseFloat(value.replace(/,/g, ''));
                     trades[index].positionSize = isNaN(position) ? 0 : position;
                 } else if (field === 'description') { // 新增處理文字說明
                     trades[index].description = value.trim();
@@ -968,6 +972,36 @@
                 // 計算統計數據和保存
                 calculateStats();
                 saveData(); // 保存數據
+            }
+
+            // 處理交易數據變更（格式化輸入）
+            function handleTradeChangeFormatted(index, field, value) {
+                if (field === 'positionSize') {
+                    // 移除所有非數字和非逗號字符
+                    let cleanedValue = value.replace(/[^\d,]/g, '');
+                    // 移除多餘的逗號
+                    cleanedValue = cleanedValue.replace(/,+/g, ',');
+                    // 分割數字並重新組合以確保正確格式
+                    const parts = cleanedValue.split(',');
+                    cleanedValue = parts.join('');
+                    // 轉換為數字
+                    const numberValue = parseInt(cleanedValue, 10);
+                    if (!isNaN(numberValue)) {
+                        // 格式化為帶逗號的數字
+                        const formattedValue = numberValue.toLocaleString();
+                        // 更新輸入框的顯示
+                        event.target.value = formattedValue;
+                        // 更新交易數據
+                        trades[index].positionSize = numberValue;
+                    } else {
+                        trades[index].positionSize = 0;
+                        event.target.value = '';
+                    }
+
+                    // 計算統計數據和保存
+                    calculateStats();
+                    saveData(); // 保存數據
+                }
             }
 
             // 開啟圖片連結
@@ -1256,8 +1290,6 @@
 
                 calculateStats();
                 renderTrades();
-                // 移除保存日期篩選的部分
-                // saveDateFilters(); // 不再保存日期篩選
             }
 
             // 清除日期篩選
@@ -1335,8 +1367,8 @@
                 const losses = validTrades.filter(trade => parseFloat(trade.returnRate) < 0);
 
                 const winRate = (wins.length / validTrades.length) * 100;
-                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate)) / wins.length : 0;
-                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate)) / losses.length : 0; // 保留負號
+                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate), 0) / wins.length : 0;
+                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate), 0) / losses.length : 0; // 保留負號
                 const maxWinRate = wins.length > 0 ? Math.max(...wins.map(trade => parseFloat(trade.returnRate))) : 0;
                 const maxLossRate = losses.length > 0 ? Math.min(...losses.map(trade => parseFloat(trade.returnRate))) : 0; // 保留負號
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
@@ -1497,6 +1529,12 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+            // 工具函數：格式化數字為帶逗號的格式
+            function formatWithCommas(number) {
+                if (number === '' || isNaN(number)) return '';
+                return parseInt(number, 10).toLocaleString();
             }
         </script>
     </div>
