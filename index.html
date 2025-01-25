@@ -446,6 +446,7 @@
                                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
                                 <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">開倉部位</th> <!-- 新增欄位 -->
                                 <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
                                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
@@ -601,12 +602,14 @@
                         // 確保 description 和 imageUrl 存在
                         if (!trade.description) trade.description = '';
                         if (!trade.imageUrl) trade.imageUrl = '';
+                        // 確保 openingPosition 存在
+                        if (!trade.openingPosition) trade.openingPosition = '';
                         return trade;
                     });
                 }
 
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', openingPosition: '' });
                 }
 
                 if (savedAveragePosition !== null) {
@@ -799,6 +802,9 @@
                         <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
                     `).join('');
 
+                    // 決定開倉部位的值
+                    const openingPositionValue = trade.openingPosition !== '' ? trade.openingPosition : (document.getElementById('averagePosition').value || '');
+
                     return `
                         <tr>
                             <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
@@ -824,6 +830,17 @@
                             </td>
                             <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
                                 ${holdingDays}
+                            </td>
+                            <td class="border px-4 py-2 min-w-[100px]">
+                                <input
+                                    type="number"
+                                    value="${trade.openingPosition}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'openingPosition', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="輸入開倉部位金額"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="openingPosition"
+                                >
                             </td>
                             <td class="border px-4 py-2 min-w-[100px]">
                                 <input
@@ -989,6 +1006,9 @@
                     trades[index].description = value.trim();
                 } else if (field === 'imageUrl') { // 新增處理圖片URL
                     trades[index].imageUrl = value.trim();
+                } else if (field === 'openingPosition') { // 新增處理開倉部位
+                    const cleanedValue = parseFloat(value);
+                    trades[index].openingPosition = isNaN(cleanedValue) ? '' : cleanedValue.toFixed(2);
                 }
                 
                 // 計算統計數據和保存
@@ -1022,7 +1042,8 @@
                     openDate: '', 
                     closeDate: '',
                     description: '', // 新增文字說明欄位
-                    imageUrl: '' // 新增圖片URL欄位
+                    imageUrl: '', // 新增圖片URL欄位
+                    openingPosition: '' // 新增開倉部位欄位
                 };
                 trades.unshift(newTrade); // 將新交易插入到陣列的最前端
                 
@@ -1044,7 +1065,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', openingPosition: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1374,8 +1395,14 @@
                 const averagePosition = parseFloat(averagePositionInput);
 
                 // 計算金額
-                const expectedValueAmount = (expectedReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
-                const totalReturnAmount = (totalReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
+                let expectedValueAmount = 0;
+                let totalReturnAmount = 0;
+
+                validTrades.forEach(trade => {
+                    const openingPosition = trade.openingPosition !== '' ? parseFloat(trade.openingPosition) : (isNaN(averagePosition) ? 0 : averagePosition);
+                    expectedValueAmount += (expectedReturnRate / 100) * openingPosition;
+                    totalReturnAmount += (totalReturnRate / 100) * openingPosition;
+                });
 
                 // 更新基本統計數據
                 document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
@@ -1469,7 +1496,7 @@
                     localStorage.removeItem('selectedEndDateFilter');   // 移除結束日期篩選
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
-                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
+                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', openingPosition: '' }];
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     document.getElementById('averagePosition').value = '';
