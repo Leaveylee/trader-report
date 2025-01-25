@@ -17,8 +17,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入 Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -272,12 +270,6 @@
                     <div class="col-span-2 divider"></div>
                 </div>
             </div>
-        </div>
-
-        <!-- 新增的每日總報酬折線圖區塊 -->
-        <div class="bg-gray-50 p-4 rounded mb-6">
-            <h2 class="text-lg font-medium text-gray-700 mb-4">每日總報酬率 (%)</h2>
-            <canvas id="dailyReturnChart" class="w-full h-64"></canvas>
         </div>
 
         <!-- 策略管理區塊（可收合） -->
@@ -923,7 +915,7 @@
                     topScrollbarContent.style.width = table.scrollWidth + 'px';
                 }
 
-                // 同步頂部滾動條和底部滾動條
+                // 同步頂部和底部滾動條
                 const topScrollbar = document.getElementById('topScrollbar');
                 const bottomScrollDiv = document.getElementById('bottomScrollbar');
 
@@ -946,9 +938,6 @@
 
                 // 初始化同步
                 topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-
-                // 更新圖表
-                updateDailyReturnChart();
             }
 
             // 獲取策略名稱
@@ -1363,10 +1352,7 @@
                     
                     // 移除顏色類別
                     removeColorClasses(['expectedValue', 'totalReturn']);
-
-                    // 更新圖表
-                    updateDailyReturnChart();
-
+                    
                     return;
                 }
 
@@ -1448,9 +1434,6 @@
                 } else {
                     totalReturnElem.classList.remove('text-red-500', 'text-green-500');
                 }
-
-                // 更新圖表
-                updateDailyReturnChart();
             }
 
             // 移除特定元素的顏色類別
@@ -1570,118 +1553,6 @@
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
             }
-
-            // 初始化 Chart.js 圖表
-            let dailyReturnChart;
-
-            function initializeChart(labels, data) {
-                const ctx = document.getElementById('dailyReturnChart').getContext('2d');
-                dailyReturnChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: '每日總報酬率 (%)',
-                            data: data,
-                            borderColor: '#F1945E',
-                            backgroundColor: 'rgba(241, 148, 94, 0.2)',
-                            fill: true,
-                            tension: 0.1,
-                            pointRadius: 3,
-                            pointBackgroundColor: '#F1945E',
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: '日期'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: '總報酬率 (%)'
-                                },
-                                beginAtZero: true
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${context.parsed.y}%`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // 更新 Chart.js 圖表數據
-            function updateDailyReturnChart() {
-                if (!dailyReturnChart) {
-                    initializeChart([], []);
-                }
-
-                const { labels, data } = calculateDailyReturns();
-                dailyReturnChart.data.labels = labels;
-                dailyReturnChart.data.datasets[0].data = data;
-                dailyReturnChart.update();
-            }
-
-            // 計算每日總報酬
-            function calculateDailyReturns() {
-                // 確保有選擇日期範圍
-                if (!selectedStartDateFilter || !selectedEndDateFilter) {
-                    return { labels: [], data: [] };
-                }
-
-                const startDate = new Date(selectedStartDateFilter);
-                const endDate = new Date(selectedEndDateFilter);
-
-                // 創建日期範圍內的所有日期
-                const dateMap = {};
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dateStr = d.toISOString().split('T')[0];
-                    dateMap[dateStr] = 0;
-                }
-
-                // 遍歷所有交易，累計每天的總報酬
-                trades.forEach(trade => {
-                    if (trade.openDate && trade.openDate >= selectedStartDateFilter && trade.openDate <= selectedEndDateFilter && !isNaN(parseFloat(trade.returnRate))) {
-                        dateMap[trade.openDate] += parseFloat(trade.returnRate);
-                    }
-                });
-
-                // 準備圖表數據
-                const labels = Object.keys(dateMap).sort();
-                const data = labels.map(date => dateMap[date]);
-
-                return { labels, data };
-            }
-
-            // 渲染策略列表
-            // ... (保持不變)
-
-            // 渲染外部條件列表
-            // ... (保持不變)
-
-            // 渲染交易記錄
-            // ... (保持不變)
-
-            // 計算統計數據
-            // ... (保持不變)
-
-            // 初始化 Chart.js 圖表
-            initializeChart([], []);
-
         </script>
     </div>
 </body>
