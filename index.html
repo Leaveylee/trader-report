@@ -419,9 +419,18 @@
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
-                <button class="button" onclick="addTrade()">
-                    添加交易
-                </button>
+                <div class="flex space-x-2">
+                    <button class="button" onclick="addTrade()">
+                        添加交易
+                    </button>
+                    <button class="button" onclick="exportData()">
+                        匯出
+                    </button>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importData(event)">
+                    <button class="button" onclick="document.getElementById('importFileInput').click()">
+                        匯入
+                    </button>
+                </div>
             </div>
             <div class="text-sm text-gray-600 mb-2">
                 請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、建倉部位、開倉日和平倉日
@@ -510,32 +519,15 @@
 
             // 保存數據到 localStorage
             function saveData() {
-                localStorage.setItem('trades', JSON.stringify(trades));
-                saveStrategies(); // 保存策略數據
-                saveExternalConditions(); // 保存外部條件數據
-
-                // 保存收合狀態
+                const data = {
+                    trades,
+                    strategies,
+                    externalConditions,
+                    nextTradeId
+                };
+                localStorage.setItem('tradesData', JSON.stringify(data));
                 saveCollapseState();
             }
-
-            // 保存策略數據到 localStorage
-            function saveStrategies() {
-                localStorage.setItem('strategies', JSON.stringify(strategies));
-            }
-
-            // 保存外部條件數據到 localStorage
-            function saveExternalConditions() {
-                localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
-            }
-
-            // 保存日期篩選到 localStorage
-            // 移除 saveDateFilters 函數
-            /*
-            function saveDateFilters() {
-                localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
-                localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
-            }
-            */
 
             // 保存收合狀態到 localStorage
             function saveCollapseState() {
@@ -545,52 +537,41 @@
                 localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
             }
 
-            // 從 localStorage 加載策略數據
-            function loadStrategies() {
-                const savedStrategies = JSON.parse(localStorage.getItem('strategies'));
-                if (savedStrategies && Array.isArray(savedStrategies)) {
-                    strategies = savedStrategies;
-                } else {
-                    // 如果沒有保存的策略，初始化一個默認策略
-                    strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-                    saveStrategies();
-                }
-            }
-
-            // 從 localStorage 加載外部條件數據
-            function loadExternalConditions() {
-                const savedExternalConditions = JSON.parse(localStorage.getItem('externalConditions'));
-                if (savedExternalConditions && Array.isArray(savedExternalConditions)) {
-                    externalConditions = savedExternalConditions;
-                } else {
-                    // 如果沒有保存的外部條件，初始化一個默認外部條件
-                    externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-                    saveExternalConditions();
-                }
-            }
-
-            // 從 localStorage 加載交易數據和篩選條件
+            // 從 localStorage 加載數據
             function loadData() {
-                const savedTrades = JSON.parse(localStorage.getItem('trades'));
+                const savedData = JSON.parse(localStorage.getItem('tradesData'));
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
-                if (savedTrades && Array.isArray(savedTrades)) {
-                    // 確保每個交易都有唯一的 ID 和 imageUrl
-                    trades = savedTrades.map(trade => {
-                        if (!trade.id) {
-                            trade.id = nextTradeId++;
-                        } else {
-                            if (trade.id >= nextTradeId) {
-                                nextTradeId = trade.id + 1;
+                if (savedData) {
+                    if (savedData.strategies && Array.isArray(savedData.strategies)) {
+                        strategies = savedData.strategies;
+                    }
+
+                    if (savedData.externalConditions && Array.isArray(savedData.externalConditions)) {
+                        externalConditions = savedData.externalConditions;
+                    }
+
+                    if (savedData.trades && Array.isArray(savedData.trades)) {
+                        trades = savedData.trades.map(trade => {
+                            if (!trade.id) {
+                                trade.id = nextTradeId++;
+                            } else {
+                                if (trade.id >= nextTradeId) {
+                                    nextTradeId = trade.id + 1;
+                                }
                             }
-                        }
-                        // 確保 description 和 imageUrl 存在
-                        if (!trade.description) trade.description = '';
-                        if (!trade.imageUrl) trade.imageUrl = '';
-                        if (trade.positionSize === undefined) trade.positionSize = 0; // 新增建倉部位
-                        return trade;
-                    });
+                            // 確保 description 和 imageUrl 存在
+                            if (!trade.description) trade.description = '';
+                            if (!trade.imageUrl) trade.imageUrl = '';
+                            if (trade.positionSize === undefined) trade.positionSize = 0; // 新增建倉部位
+                            return trade;
+                        });
+                    }
+
+                    if (savedData.nextTradeId) {
+                        nextTradeId = savedData.nextTradeId;
+                    }
                 }
 
                 if (trades.length === 0) {
@@ -741,7 +722,7 @@
                 });
 
                 // 渲染排序後的交易紀錄
-                tradesList.innerHTML = filteredTrades.map((trade, index) => {
+                tradesList.innerHTML = filteredTrades.map(trade => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     let holdingDays = '';
                     let holdingDaysClass = '';
@@ -1073,7 +1054,7 @@
 
                 // 新增策略
                 strategies.push({ id: newId, name, description });
-                saveStrategies();
+                saveData();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
                 calculateStats(); // 更新統計數據
@@ -1120,7 +1101,7 @@
                 // 更新策略
                 strategies[strategyIndex].name = name;
                 strategies[strategyIndex].description = description;
-                saveStrategies();
+                saveData();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
                 calculateStats(); // 更新統計數據
@@ -1141,7 +1122,7 @@
                 }
 
                 strategies = strategies.filter(strategy => strategy.id !== strategyId);
-                saveStrategies();
+                saveData();
                 renderStrategies();
                 renderTrades(); // 更新交易表格中的策略下拉選單
                 calculateStats(); // 更新統計數據
@@ -1181,7 +1162,7 @@
 
                 // 新增外部條件
                 externalConditions.push({ id: newId, name, description });
-                saveExternalConditions();
+                saveData();
                 renderExternalConditions();
                 renderTrades(); // 更新交易表格中的外部條件下拉選單
                 calculateStats(); // 更新統計數據
@@ -1228,7 +1209,7 @@
                 // 更新外部條件
                 externalConditions[conditionIndex].name = name;
                 externalConditions[conditionIndex].description = description;
-                saveExternalConditions();
+                saveData();
                 renderExternalConditions();
                 renderTrades(); // 更新交易表格中的外部條件下拉選單
                 calculateStats(); // 更新統計數據
@@ -1249,7 +1230,7 @@
                 }
 
                 externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
-                saveExternalConditions();
+                saveData();
                 renderExternalConditions();
                 renderTrades(); // 更新交易表格中的外部條件下拉選單
                 calculateStats(); // 更新統計數據
@@ -1348,8 +1329,8 @@
                 const losses = validTrades.filter(trade => parseFloat(trade.returnRate) < 0);
 
                 const winRate = (wins.length / validTrades.length) * 100;
-                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate)) / wins.length : 0;
-                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate)) / losses.length : 0; // 保留負號
+                const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + parseFloat(b.returnRate), 0) / wins.length : 0;
+                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + parseFloat(b.returnRate), 0) / losses.length : 0; // 保留負號
                 const maxWinRate = wins.length > 0 ? Math.max(...wins.map(trade => parseFloat(trade.returnRate))) : 0;
                 const maxLossRate = losses.length > 0 ? Math.min(...losses.map(trade => parseFloat(trade.returnRate))) : 0; // 保留負號
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
@@ -1412,18 +1393,14 @@
             }
 
             // 初始化
-            loadStrategies();
-            loadExternalConditions();
-            loadData(); // 載入數據
+            loadData();
 
             // 可選：添加清除數據的功能
             // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
             /*
             function clearData() {
                 if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
-                    localStorage.removeItem('trades');
-                    localStorage.removeItem('strategies');
-                    localStorage.removeItem('externalConditions');
+                    localStorage.removeItem('tradesData');
                     localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
                     localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
                     trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, positionSize: 0, openDate: '', closeDate: '', description: '', imageUrl: '' }];
@@ -1510,6 +1487,71 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+            // 匯出數據
+            function exportData() {
+                const data = {
+                    trades,
+                    strategies,
+                    externalConditions,
+                    nextTradeId
+                };
+                const dataStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'trades_data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // 匯入數據
+            function importData(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    alert('未選擇文件');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (!importedData.trades || !importedData.strategies || !importedData.externalConditions || !importedData.nextTradeId) {
+                            throw new Error('無效的文件格式');
+                        }
+                        trades = importedData.trades.map(trade => {
+                            if (!trade.id) {
+                                trade.id = nextTradeId++;
+                            } else {
+                                if (trade.id >= nextTradeId) {
+                                    nextTradeId = trade.id + 1;
+                                }
+                            }
+                            // 確保 description 和 imageUrl 存在
+                            if (!trade.description) trade.description = '';
+                            if (!trade.imageUrl) trade.imageUrl = '';
+                            if (trade.positionSize === undefined) trade.positionSize = 0; // 新增建倉部位
+                            return trade;
+                        });
+                        strategies = importedData.strategies;
+                        externalConditions = importedData.externalConditions;
+                        nextTradeId = importedData.nextTradeId;
+
+                        renderStrategies();
+                        renderExternalConditions();
+                        renderTrades();
+                        calculateStats();
+                        saveData();
+                        alert('匯入成功');
+                    } catch (error) {
+                        alert('匯入失敗: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
             }
         </script>
     </div>
