@@ -290,6 +290,12 @@
                     <button class="button" onclick="exportStrategiesToExcel()">
                         匯出策略為 Excel
                     </button>
+                    <!-- 新增的匯入策略按鈕 -->
+                    <button class="button" onclick="document.getElementById('importStrategiesInput').click()">
+                        匯入策略Excel
+                    </button>
+                    <!-- 隱藏的文件輸入元素 -->
+                    <input type="file" id="importStrategiesInput" accept=".xlsx, .xls" class="hidden" onchange="importStrategiesFromExcel(event)">
                 </div>
             </div>
             <div id="strategyManagementContent" class="overflow-x-auto">
@@ -569,6 +575,12 @@
                     strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
                     saveStrategies();
                 }
+
+                // 更新 nextTradeId 以避免ID衝突
+                const maxStrategyId = strategies.reduce((max, strategy) => strategy.id > max ? strategy.id : max, 0);
+                if (maxStrategyId >= nextTradeId) {
+                    nextTradeId = maxStrategyId + 1;
+                }
             }
 
             // 從 localStorage 加載外部條件數據
@@ -580,6 +592,12 @@
                     // 如果沒有保存的外部條件，初始化一個默認外部條件
                     externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
                     saveExternalConditions();
+                }
+
+                // 更新 nextTradeId 以避免ID衝突
+                const maxConditionId = externalConditions.reduce((max, condition) => condition.id > max ? condition.id : max, 0);
+                if (maxConditionId >= nextTradeId) {
+                    nextTradeId = maxConditionId + 1;
                 }
             }
 
@@ -1705,6 +1723,95 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            }
+
+            /**
+             * 新增功能：將策略匯入自Excel
+             */
+            function importStrategiesFromExcel(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = e.target.result;
+                    let workbook;
+                    try {
+                        workbook = XLSX.read(data, { type: 'binary' });
+                    } catch (error) {
+                        alert('無法解析該文件。請確認文件為有效的Excel格式。');
+                        return;
+                    }
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中沒有任何數據。');
+                        return;
+                    }
+
+                    // 定義必要的欄位
+                    const requiredFields = ["策略ID", "策略名稱", "描述"];
+
+                    // 檢查是否包含所有必要欄位
+                    const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+                    if (missingFields.length > 0) {
+                        alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+                        return;
+                    }
+
+                    // 轉換JSON數據為策略紀錄
+                    const importedStrategies = jsonData.map(item => {
+                        const name = item["策略名稱"].trim();
+                        const description = item["描述"].trim();
+
+                        // 檢查策略名稱是否已存在
+                        const existingStrategy = strategies.find(s => s.name === name);
+                        if (existingStrategy) {
+                            alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
+                            return null;
+                        }
+
+                        // 生成新的策略ID，確保唯一
+                        const newStrategyId = nextTradeId++;
+
+                        return {
+                            id: newStrategyId,
+                            name: name,
+                            description: description
+                        };
+                    }).filter(strategy => strategy !== null); // 移除無效的策略紀錄
+
+                    if (importedStrategies.length === 0) {
+                        alert('沒有有效的策略紀錄被匯入。');
+                        return;
+                    }
+
+                    // 將匯入的策略紀錄添加到現有的策略中
+                    strategies = strategies.concat(importedStrategies);
+
+                    // 渲染策略列表、更新篩選選單並保存
+                    renderStrategies();
+                    renderTrades(); // 更新交易表格中的策略下拉選單
+                    calculateStats(); // 更新統計數據
+                    saveStrategies();
+                    saveData(); // 保存數據
+
+                    alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
+
+                    // 重置文件輸入元素
+                    document.getElementById('importStrategiesInput').value = '';
+                };
+
+                reader.onerror = function() {
+                    alert('讀取文件時發生錯誤。');
+                };
+
+                reader.readAsBinaryString(file);
             }
 
         </script>
