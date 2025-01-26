@@ -286,6 +286,10 @@
                     <button class="button" onclick="openAddStrategyModal()">
                         新增策略
                     </button>
+                    <!-- 新增的匯出策略按鈕 -->
+                    <button class="button" onclick="exportStrategiesToExcel()">
+                        匯出策略為 Excel
+                    </button>
                 </div>
             </div>
             <div id="strategyManagementContent" class="overflow-x-auto">
@@ -1664,6 +1668,43 @@
                 };
 
                 reader.readAsBinaryString(file);
+            }
+
+            /**
+             * 新增功能：將策略匯出為Excel
+             */
+            function exportStrategiesToExcel() {
+                if (strategies.length === 0) {
+                    alert('目前沒有策略資料可供匯出。');
+                    return;
+                }
+
+                // 準備要匯出的數據
+                const exportData = strategies.map(strategy => ({
+                    "策略ID": strategy.id,
+                    "策略名稱": strategy.name,
+                    "描述": strategy.description
+                }));
+
+                // 使用 SheetJS 將JSON轉換為工作表
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+                // 創建一個新的工作簿並將工作表添加到其中
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
+
+                // 生成Excel文件並觸發下載
+                const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                // 生成下載鏈接
+                const link = document.createElement('a');
+                const today = new Date().toISOString().split('T')[0];
+                link.href = URL.createObjectURL(blob);
+                link.download = `策略管理_${today}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
 
         </script>
