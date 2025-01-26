@@ -891,7 +891,7 @@
                                         data-row-index="${trades.indexOf(trade)}"
                                         data-field="imageUrl"
                                     >
-                                    ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURI(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                                    ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                                 </td>
                                 <td class="border px-4 py-2 text-center min-w-[80px]">
                                     ${trades.length > 1 ? `
@@ -1443,99 +1443,7 @@
                     });
                 }
 
-                // 初始化
-                loadData(); // 載入數據
-
-                // 監聽平均部位金額的變化以保存數據
-                document.getElementById('averagePosition').addEventListener('change', function() {
-                    calculateStats();
-                    saveData(); // 保存數據
-                });
-
-                // 可選：添加清除數據的功能
-                // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
-                /*
-                function clearData() {
-                    if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
-                        localStorage.removeItem('tradesData');
-                        localStorage.removeItem('trades');
-                        localStorage.removeItem('strategies');
-                        localStorage.removeItem('externalConditions');
-                        localStorage.removeItem('averagePosition');
-                        localStorage.removeItem('strategyManagementCollapsed');
-                        localStorage.removeItem('externalConditionManagementCollapsed');
-                        trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
-                        strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-                        externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-                        document.getElementById('averagePosition').value = '';
-                        // 重置日期篩選
-                        document.getElementById('startDateFilter').value = '';
-                        document.getElementById('endDateFilter').value = '';
-                        renderStrategies();
-                        renderExternalConditions();
-                        renderTrades();
-                        calculateStats();
-                    }
-                }
-                */
-
-                // 收合/展開 策略管理區塊
-                function toggleStrategyManagement() {
-                    const content = document.getElementById('strategyManagementContent');
-                    const toggleIcon = document.getElementById('strategyToggleIcon');
-                    const toggleButton = toggleIcon.parentElement;
-
-                    if (content.classList.contains('hidden')) {
-                        content.classList.remove('hidden');
-                        toggleIcon.setAttribute('data-lucide', 'chevron-down');
-                        toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-                    } else {
-                        content.classList.add('hidden');
-                        toggleIcon.setAttribute('data-lucide', 'chevron-right');
-                        toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-                    }
-
-                    lucide.createIcons(); // 重新初始化 Lucide 圖標
-                    saveData(); // 保存收合狀態
-                }
-
-                // 收合/展開 外部條件管理區塊
-                function toggleExternalConditionManagement() {
-                    const content = document.getElementById('externalConditionManagementContent');
-                    const toggleIcon = document.getElementById('externalConditionToggleIcon');
-                    const toggleButton = toggleIcon.parentElement;
-
-                    if (content.classList.contains('hidden')) {
-                        content.classList.remove('hidden');
-                        toggleIcon.setAttribute('data-lucide', 'chevron-down');
-                        toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-                    } else {
-                        content.classList.add('hidden');
-                        toggleIcon.setAttribute('data-lucide', 'chevron-right');
-                        toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-                    }
-
-                    lucide.createIcons(); // 重新初始化 Lucide 圖標
-                    saveData(); // 保存收合狀態
-                }
-
-                // 開啟模態框
-                function openModal(modalId) {
-                    document.getElementById(modalId).classList.remove('hidden');
-                }
-
-                // 關閉模態框
-                function closeModal(modalId) {
-                    const modal = document.getElementById(modalId);
-                    modal.classList.add('hidden');
-                    // 清空輸入欄位
-                    const inputs = modal.querySelectorAll('input, textarea, select');
-                    inputs.forEach(input => {
-                        if (input.type !== 'hidden') {
-                            input.value = '';
-                        }
-                    });
-                }
+                // 渲染策略列表已在上方定義
 
                 // 安全地顯示用戶輸入的內容，防止 XSS 攻擊
                 function escapeHtml(text) {
@@ -1639,17 +1547,99 @@
                     fileInput.value = '';
                 }
 
-                // 安全地顯示用戶輸入的內容，防止 XSS 攻擊
-                function escapeHtml(text) {
-                    const map = {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#039;'
-                    };
-                    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+                // 收合/展開 策略管理區塊
+                function toggleStrategyManagement() {
+                    const content = document.getElementById('strategyManagementContent');
+                    const toggleIcon = document.getElementById('strategyToggleIcon');
+                    const toggleButton = toggleIcon.parentElement;
+
+                    if (content.classList.contains('hidden')) {
+                        content.classList.remove('hidden');
+                        toggleIcon.setAttribute('data-lucide', 'chevron-down');
+                        toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+                    } else {
+                        content.classList.add('hidden');
+                        toggleIcon.setAttribute('data-lucide', 'chevron-right');
+                        toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+                    }
+
+                    lucide.createIcons(); // 重新初始化 Lucide 圖標
+                    saveData(); // 保存收合狀態
                 }
+
+                // 收合/展開 外部條件管理區塊
+                function toggleExternalConditionManagement() {
+                    const content = document.getElementById('externalConditionManagementContent');
+                    const toggleIcon = document.getElementById('externalConditionToggleIcon');
+                    const toggleButton = toggleIcon.parentElement;
+
+                    if (content.classList.contains('hidden')) {
+                        content.classList.remove('hidden');
+                        toggleIcon.setAttribute('data-lucide', 'chevron-down');
+                        toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+                    } else {
+                        content.classList.add('hidden');
+                        toggleIcon.setAttribute('data-lucide', 'chevron-right');
+                        toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+                    }
+
+                    lucide.createIcons(); // 重新初始化 Lucide 圖標
+                    saveData(); // 保存收合狀態
+                }
+
+                // 開啟模態框
+                function openModal(modalId) {
+                    document.getElementById(modalId).classList.remove('hidden');
+                }
+
+                // 關閉模態框
+                function closeModal(modalId) {
+                    const modal = document.getElementById(modalId);
+                    modal.classList.add('hidden');
+                    // 清空輸入欄位
+                    const inputs = modal.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => {
+                        if (input.type !== 'hidden') {
+                            input.value = '';
+                        }
+                    });
+                }
+
+                // 初始化
+                loadData(); // 載入數據
+
+                // 監聽平均部位金額的變化以保存數據
+                document.getElementById('averagePosition').addEventListener('change', function() {
+                    calculateStats();
+                    saveData(); // 保存數據
+                });
+
+                // 可選：添加清除數據的功能
+                // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
+                /*
+                function clearData() {
+                    if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
+                        localStorage.removeItem('tradesData');
+                        localStorage.removeItem('trades');
+                        localStorage.removeItem('strategies');
+                        localStorage.removeItem('externalConditions');
+                        localStorage.removeItem('averagePosition');
+                        localStorage.removeItem('strategyManagementCollapsed');
+                        localStorage.removeItem('externalConditionManagementCollapsed');
+                        trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
+                        strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+                        externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
+                        document.getElementById('averagePosition').value = '';
+                        // 重置日期篩選
+                        document.getElementById('startDateFilter').value = '';
+                        document.getElementById('endDateFilter').value = '';
+                        renderStrategies();
+                        renderExternalConditions();
+                        renderTrades();
+                        calculateStats();
+                    }
+                }
+                */
             </script>
         </div>
     </body>
