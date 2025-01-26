@@ -434,6 +434,11 @@
                     <button class="button" onclick="exportToExcel()">
                         匯出為 Excel
                     </button>
+                    <button class="button" onclick="document.getElementById('importExcelInput').click()">
+                        匯入Excel
+                    </button>
+                    <!-- 隱藏的文件輸入元素 -->
+                    <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
                 </div>
             </div>
             <div class="text-sm text-gray-600 mb-2">
@@ -1557,6 +1562,110 @@
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 return diffDays >= 0 ? diffDays : '';
             }
+
+            /**
+             * 新增功能：將Excel匯入至交易紀錄
+             */
+            function importFromExcel(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = e.target.result;
+                    let workbook;
+                    try {
+                        workbook = XLSX.read(data, { type: 'binary' });
+                    } catch (error) {
+                        alert('無法解析該文件。請確認文件為有效的Excel格式。');
+                        return;
+                    }
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中沒有任何數據。');
+                        return;
+                    }
+
+                    // 定義必要的欄位
+                    const requiredFields = ["交易ID", "報酬率 (%)", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+
+                    // 檢查是否包含所有必要欄位
+                    const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+                    if (missingFields.length > 0) {
+                        alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+                        return;
+                    }
+
+                    // 轉換JSON數據為交易紀錄
+                    const importedTrades = jsonData.map(item => {
+                        // 轉換策略名稱和外部條件名稱為ID
+                        const strategy = strategies.find(s => s.name === item["策略名稱"]);
+                        const externalCondition = externalConditions.find(c => c.name === item["外部條件"]);
+
+                        // 如果策略或外部條件不存在，提示並跳過此條目
+                        if (!strategy) {
+                            alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
+                            return null;
+                        }
+                        if (!externalCondition) {
+                            alert(`外部條件名稱 "${item["外部條件"]}" 不存在。請先新增該外部條件後再匯入。`);
+                            return null;
+                        }
+
+                        // 生成新的交易ID，確保唯一
+                        const newTradeId = nextTradeId++;
+
+                        // 計算持倉天數（可選）
+                        let holdingDays = item["持倉天數"];
+                        if (holdingDays === '' || holdingDays === '未平倉') {
+                            holdingDays = '未平倉';
+                        }
+
+                        return {
+                            id: newTradeId,
+                            returnRate: item["報酬率 (%)"],
+                            assetName: item["標的名稱"],
+                            strategyId: strategy.id,
+                            externalConditionId: externalCondition.id,
+                            openDate: item["開倉日"],
+                            closeDate: item["平倉日"],
+                            description: item["文字說明"],
+                            imageUrl: item["圖片URL"]
+                        };
+                    }).filter(trade => trade !== null); // 移除無效的交易紀錄
+
+                    if (importedTrades.length === 0) {
+                        alert('沒有有效的交易紀錄被匯入。');
+                        return;
+                    }
+
+                    // 將匯入的交易紀錄添加到現有的交易紀錄中
+                    trades = trades.concat(importedTrades);
+
+                    // 渲染交易紀錄、計算統計數據並保存
+                    renderTrades();
+                    calculateStats();
+                    saveData(); // 保存數據
+
+                    alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
+
+                    // 重置文件輸入元素
+                    document.getElementById('importExcelInput').value = '';
+                };
+
+                reader.onerror = function() {
+                    alert('讀取文件時發生錯誤。');
+                };
+
+                reader.readAsBinaryString(file);
+            }
+
         </script>
     </div>
 </body>
