@@ -17,6 +17,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入 SheetJS (xlsx) CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -425,9 +427,14 @@
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
-                <button class="button" onclick="addTrade()">
-                    添加交易
-                </button>
+                <div class="flex space-x-2">
+                    <button class="button" onclick="addTrade()">
+                        添加交易
+                    </button>
+                    <button class="button" onclick="exportToExcel()">
+                        匯出為 Excel
+                    </button>
+                </div>
             </div>
             <div class="text-sm text-gray-600 mb-2">
                 請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、開倉日和平倉日
@@ -520,8 +527,6 @@
                 localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
                 saveExternalConditions(); // 保存外部條件數據
-                // 移除保存日期篩選的部分
-                // saveDateFilters(); // 不再保存日期篩選
 
                 // 保存收合狀態
                 saveCollapseState();
@@ -536,15 +541,6 @@
             function saveExternalConditions() {
                 localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
             }
-
-            // 保存日期篩選到 localStorage
-            // 移除 saveDateFilters 函數
-            /*
-            function saveDateFilters() {
-                localStorage.setItem('selectedStartDateFilter', selectedStartDateFilter);
-                localStorage.setItem('selectedEndDateFilter', selectedEndDateFilter);
-            }
-            */
 
             // 保存收合狀態到 localStorage
             function saveCollapseState() {
@@ -582,9 +578,6 @@
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
                 const savedAveragePosition = localStorage.getItem('averagePosition');
-                // 移除加載日期篩選的部分
-                // const savedStartDateFilter = localStorage.getItem('selectedStartDateFilter');
-                // const savedEndDateFilter = localStorage.getItem('selectedEndDateFilter');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
@@ -612,19 +605,6 @@
                 if (savedAveragePosition !== null) {
                     document.getElementById('averagePosition').value = savedAveragePosition;
                 }
-                
-                // 移除加載日期篩選的部分
-                /*
-                if (savedStartDateFilter !== null) {
-                    selectedStartDateFilter = savedStartDateFilter;
-                    document.getElementById('startDateFilter').value = selectedStartDateFilter;
-                }
-
-                if (savedEndDateFilter !== null) {
-                    selectedEndDateFilter = savedEndDateFilter;
-                    document.getElementById('endDateFilter').value = selectedEndDateFilter;
-                }
-                */
 
                 // 確保篩選器重置為默認狀態
                 selectedStrategyFilter = null;
@@ -891,7 +871,7 @@
                                     data-row-index="${trades.indexOf(trade)}"
                                     data-field="imageUrl"
                                 >
-                                ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURI(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                                ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                             </td>
                             <td class="border px-4 py-2 text-center min-w-[80px]">
                                 ${trades.length > 1 ? `
@@ -1281,8 +1261,6 @@
 
                 calculateStats();
                 renderTrades();
-                // 移除保存日期篩選的部分
-                // saveDateFilters(); // 不再保存日期篩選
             }
 
             // 清除日期篩選
@@ -1455,35 +1433,6 @@
                 saveData(); // 保存數據
             });
 
-            // 可選：添加清除數據的功能
-            // 若需要添加清除數據的按鈕，取消以下註解並在適當位置添加按鈕
-            /*
-            function clearData() {
-                if (confirm('您確定要清除所有數據嗎？此操作無法撤銷。')) {
-                    localStorage.removeItem('trades');
-                    localStorage.removeItem('averagePosition');
-                    localStorage.removeItem('strategies');
-                    localStorage.removeItem('externalConditions');
-                    // 移除日期篩選
-                    localStorage.removeItem('selectedStartDateFilter'); // 移除開始日期篩選
-                    localStorage.removeItem('selectedEndDateFilter');   // 移除結束日期篩選
-                    localStorage.removeItem('strategyManagementCollapsed'); // 移除收合狀態
-                    localStorage.removeItem('externalConditionManagementCollapsed'); // 移除收合狀態
-                    trades = [{ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' }];
-                    strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-                    externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-                    document.getElementById('averagePosition').value = '';
-                    // 重置日期篩選
-                    document.getElementById('startDateFilter').value = '';
-                    document.getElementById('endDateFilter').value = '';
-                    renderStrategies();
-                    renderExternalConditions();
-                    renderTrades();
-                    calculateStats();
-                }
-            }
-            */
-
             // 收合/展開 策略管理區塊
             function toggleStrategyManagement() {
                 const content = document.getElementById('strategyManagementContent');
@@ -1552,6 +1501,61 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+            /**
+             * 新增功能：將交易紀錄匯出為Excel
+             */
+            function exportToExcel() {
+                if (trades.length === 0) {
+                    alert('目前沒有交易紀錄可供匯出。');
+                    return;
+                }
+
+                // 準備要匯出的數據
+                const exportData = trades.map(trade => ({
+                    "交易ID": trade.id,
+                    "報酬率 (%)": trade.returnRate,
+                    "標的名稱": trade.assetName,
+                    "策略名稱": getStrategyName(trade.strategyId),
+                    "外部條件": getExternalConditionName(trade.externalConditionId),
+                    "開倉日": trade.openDate,
+                    "平倉日": trade.closeDate,
+                    "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
+                    "文字說明": trade.description,
+                    "圖片URL": trade.imageUrl
+                }));
+
+                // 使用 SheetJS 將JSON轉換為工作表
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+                // 創建一個新的工作簿並將工作表添加到其中
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "交易紀錄");
+
+                // 生成Excel文件並觸發下載
+                const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                // 生成下載鏈接
+                const link = document.createElement('a');
+                const today = new Date().toISOString().split('T')[0];
+                link.href = URL.createObjectURL(blob);
+                link.download = `交易紀錄_${today}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // 計算持倉天數
+            function calculateHoldingDays(openDate, closeDate) {
+                if (openDate === '' && closeDate === '') return '';
+                if (openDate === '' || closeDate === '') return '未平倉';
+                const open = new Date(openDate);
+                const close = new Date(closeDate);
+                const diffTime = close - open;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 ? diffDays : '';
             }
         </script>
     </div>
