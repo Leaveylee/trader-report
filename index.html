@@ -286,13 +286,13 @@
                     <button class="button" onclick="openAddStrategyModal()">
                         新增策略
                     </button>
-                    <!-- 新增的匯出策略按鈕 -->
+                    <!-- 修改後的匯出策略按鈕 -->
                     <button class="button" onclick="exportStrategiesToExcel()">
-                        匯出策略為 Excel
+                        匯出
                     </button>
-                    <!-- 新增的匯入策略按鈕 -->
+                    <!-- 修改後的匯入策略按鈕 -->
                     <button class="button" onclick="document.getElementById('importStrategiesInput').click()">
-                        匯入策略Excel
+                        匯入
                     </button>
                     <!-- 隱藏的文件輸入元素 -->
                     <input type="file" id="importStrategiesInput" accept=".xlsx, .xls" class="hidden" onchange="importStrategiesFromExcel(event)">
@@ -326,13 +326,13 @@
                     <button class="button" onclick="openAddExternalConditionModal()">
                         新增外部條件
                     </button>
-                    <!-- 新增的匯出外部條件按鈕 -->
+                    <!-- 修改後的匯出外部條件按鈕 -->
                     <button class="button" onclick="exportExternalConditionsToExcel()">
-                        匯出外部條件為 Excel
+                        匯出
                     </button>
-                    <!-- 新增的匯入外部條件按鈕 -->
+                    <!-- 修改後的匯入外部條件按鈕 -->
                     <button class="button" onclick="document.getElementById('importExternalConditionsInput').click()">
-                        匯入外部條件Excel
+                        匯入
                     </button>
                     <!-- 隱藏的文件輸入元素 -->
                     <input type="file" id="importExternalConditionsInput" accept=".xlsx, .xls" class="hidden" onchange="importExternalConditionsFromExcel(event)">
@@ -452,10 +452,10 @@
                         添加交易
                     </button>
                     <button class="button" onclick="exportToExcel()">
-                        匯出為 Excel
+                        匯出
                     </button>
                     <button class="button" onclick="document.getElementById('importExcelInput').click()">
-                        匯入Excel
+                        匯入
                     </button>
                     <!-- 隱藏的文件輸入元素 -->
                     <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
@@ -794,8 +794,8 @@
                     if (trade.openDate !== '' && trade.closeDate !== '') {
                         const openDate = new Date(trade.openDate);
                         const closeDate = new Date(trade.closeDate);
-                        const timeDiff = closeDate - openDate;
-                        holdingDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                        const diffTime = closeDate - openDate;
+                        holdingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                         if (holdingDays >= 0) {
                             holdingDays = holdingDays;
                         } else {
