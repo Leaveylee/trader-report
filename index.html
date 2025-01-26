@@ -326,6 +326,16 @@
                     <button class="button" onclick="openAddExternalConditionModal()">
                         新增外部條件
                     </button>
+                    <!-- 新增的匯出外部條件按鈕 -->
+                    <button class="button" onclick="exportExternalConditionsToExcel()">
+                        匯出外部條件為 Excel
+                    </button>
+                    <!-- 新增的匯入外部條件按鈕 -->
+                    <button class="button" onclick="document.getElementById('importExternalConditionsInput').click()">
+                        匯入外部條件Excel
+                    </button>
+                    <!-- 隱藏的文件輸入元素 -->
+                    <input type="file" id="importExternalConditionsInput" accept=".xlsx, .xls" class="hidden" onchange="importExternalConditionsFromExcel(event)">
                 </div>
             </div>
             <div id="externalConditionManagementContent" class="overflow-x-auto">
@@ -1005,7 +1015,7 @@
 
             // 開啟圖片連結
             function openImageLink(url) {
-                window.open(url, '_blank');
+                window.open(decodeURIComponent(url), '_blank');
             }
 
             // 添加交易記錄
@@ -1805,6 +1815,132 @@
 
                     // 重置文件輸入元素
                     document.getElementById('importStrategiesInput').value = '';
+                };
+
+                reader.onerror = function() {
+                    alert('讀取文件時發生錯誤。');
+                };
+
+                reader.readAsBinaryString(file);
+            }
+
+            /**
+             * 新增功能：將外部條件匯出為Excel
+             */
+            function exportExternalConditionsToExcel() {
+                if (externalConditions.length === 0) {
+                    alert('目前沒有外部條件資料可供匯出。');
+                    return;
+                }
+
+                // 準備要匯出的數據
+                const exportData = externalConditions.map(condition => ({
+                    "外部條件ID": condition.id,
+                    "外部條件名稱": condition.name,
+                    "描述": condition.description
+                }));
+
+                // 使用 SheetJS 將JSON轉換為工作表
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+                // 創建一個新的工作簿並將工作表添加到其中
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "外部條件管理");
+
+                // 生成Excel文件並觸發下載
+                const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                // 生成下載鏈接
+                const link = document.createElement('a');
+                const today = new Date().toISOString().split('T')[0];
+                link.href = URL.createObjectURL(blob);
+                link.download = `外部條件管理_${today}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            /**
+             * 新增功能：將外部條件匯入自Excel
+             */
+            function importExternalConditionsFromExcel(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = e.target.result;
+                    let workbook;
+                    try {
+                        workbook = XLSX.read(data, { type: 'binary' });
+                    } catch (error) {
+                        alert('無法解析該文件。請確認文件為有效的Excel格式。');
+                        return;
+                    }
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中沒有任何數據。');
+                        return;
+                    }
+
+                    // 定義必要的欄位
+                    const requiredFields = ["外部條件ID", "外部條件名稱", "描述"];
+
+                    // 檢查是否包含所有必要欄位
+                    const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+                    if (missingFields.length > 0) {
+                        alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+                        return;
+                    }
+
+                    // 轉換JSON數據為外部條件紀錄
+                    const importedExternalConditions = jsonData.map(item => {
+                        const name = item["外部條件名稱"].trim();
+                        const description = item["描述"].trim();
+
+                        // 檢查外部條件名稱是否已存在
+                        const existingCondition = externalConditions.find(c => c.name === name);
+                        if (existingCondition) {
+                            alert(`外部條件名稱 "${name}" 已存在。請避免重複新增。`);
+                            return null;
+                        }
+
+                        // 生成新的外部條件ID，確保唯一
+                        const newConditionId = nextTradeId++;
+
+                        return {
+                            id: newConditionId,
+                            name: name,
+                            description: description
+                        };
+                    }).filter(condition => condition !== null); // 移除無效的外部條件紀錄
+
+                    if (importedExternalConditions.length === 0) {
+                        alert('沒有有效的外部條件紀錄被匯入。');
+                        return;
+                    }
+
+                    // 將匯入的外部條件紀錄添加到現有的外部條件中
+                    externalConditions = externalConditions.concat(importedExternalConditions);
+
+                    // 渲染外部條件列表、更新篩選選單並保存
+                    renderExternalConditions();
+                    renderTrades(); // 更新交易表格中的外部條件下拉選單
+                    calculateStats(); // 更新統計數據
+                    saveExternalConditions();
+                    saveData(); // 保存數據
+
+                    alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
+
+                    // 重置文件輸入元素
+                    document.getElementById('importExternalConditionsInput').value = '';
                 };
 
                 reader.onerror = function() {
