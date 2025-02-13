@@ -769,14 +769,12 @@
                         const closeDate = new Date(trade.closeDate);
                         const diffTime = closeDate - openDate;
                         holdingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                        if (holdingDays >= 0) {
-                            holdingDays = holdingDays;
-                        } else {
-                            holdingDays = ''; // 錯誤的日期，不顯示
+                        if (holdingDays < 0) {
+                            holdingDays = '';
                         }
                     } else {
                         holdingDays = '未平倉';
-                        holdingDaysClass = 'text-red-500'; // 使用紅色字體
+                        holdingDaysClass = 'text-red-500';
                     }
 
                     // 生成策略選擇下拉選單
@@ -920,11 +918,9 @@
                 const topScrollbar = document.getElementById('topScrollbar');
                 const bottomScrollDiv = document.getElementById('bottomScrollbar');
 
-                // 解除先前的事件監聽器以防止重複綁定
                 topScrollbar.removeEventListener('scroll', syncTopToBottom);
                 bottomScrollDiv.removeEventListener('scroll', syncBottomToTop);
 
-                // 定義同步函數
                 function syncTopToBottom() {
                     bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft;
                 }
@@ -933,11 +929,9 @@
                     topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
                 }
 
-                // 添加事件監聽器
                 topScrollbar.addEventListener('scroll', syncTopToBottom);
                 bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
 
-                // 初始化同步
                 topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
             }
 
@@ -970,7 +964,6 @@
                     trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
                 } else if (field === 'openDate') {
                     trades[index].openDate = value;
-                    // 驗證平倉日是否早於開倉日
                     const closeDate = trades[index].closeDate;
                     if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
                         alert('平倉日不能早於開倉日。');
@@ -979,24 +972,22 @@
                     }
                 } else if (field === 'closeDate') {
                     trades[index].closeDate = value;
-                    // 驗證平倉日是否早於開倉日
                     const openDate = trades[index].openDate;
                     if (openDate !== '' && new Date(value) < new Date(openDate)) {
                         alert('平倉日不能早於開倉日。');
                         trades[index].closeDate = '';
                         document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
                     }
-                } else if (field === 'description') { // 新增處理文字說明
+                } else if (field === 'description') {
                     trades[index].description = value.trim();
-                } else if (field === 'imageUrl') { // 新增處理圖片URL
+                } else if (field === 'imageUrl') {
                     trades[index].imageUrl = value.trim();
                 } else if (field === 'position') {
                     trades[index].position = value.trim();
                 }
                 
-                // 計算統計數據和保存
                 calculateStats();
-                saveData(); // 保存數據
+                saveData();
             }
 
             // 開啟圖片連結
@@ -1015,7 +1006,6 @@
                     return;
                 }
 
-                // 創建新交易並分配唯一的 ID
                 const newTrade = { 
                     id: nextTradeId++, 
                     returnRate: '', 
@@ -1025,21 +1015,19 @@
                     externalConditionId: null, 
                     openDate: '', 
                     closeDate: '',
-                    description: '', // 新增文字說明欄位
-                    imageUrl: '' // 新增圖片URL欄位
+                    description: '',
+                    imageUrl: ''
                 };
-                trades.unshift(newTrade); // 將新交易插入到陣列的最前端
+                trades.unshift(newTrade);
                 
-                // 渲染交易記錄、計算統計數據並保存
                 renderTrades();
                 calculateStats();
-                saveData(); // 保存數據
+                saveData();
 
-                // 聚焦到新添加的交易的報酬率輸入框
                 setTimeout(() => {
                     const newInput = document.querySelector(`input[data-trade-id="${newTrade.id}"][data-field="returnRate"]`);
                     if (newInput) {
-                        newInput.focus(); // 聚焦到新交易的報酬率欄位
+                        newInput.focus();
                     }
                 }, 100);
             }
@@ -1052,7 +1040,7 @@
                 }
                 renderTrades();
                 calculateStats();
-                saveData(); // 保存數據
+                saveData();
             }
 
             // 開啟新增策略模態框
@@ -1077,22 +1065,18 @@
                     return;
                 }
 
-                // 檢查策略名稱是否已存在
                 const existingStrategy = strategies.find(strategy => strategy.name === name);
                 if (existingStrategy) {
                     alert('策略名稱已存在，請選擇其他名稱。');
                     return;
                 }
 
-                // 生成新的策略 ID
                 const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
-
-                // 新增策略
                 strategies.push({ id: newId, name, description });
                 saveStrategies();
                 renderStrategies();
-                renderTrades(); // 更新交易表格中的策略下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
                 closeAddStrategyModal();
             }
 
@@ -1123,7 +1107,6 @@
                     return;
                 }
 
-                // 檢查策略名稱是否已存在（排除當前策略）
                 const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
                 if (existingStrategy) {
                     alert('策略名稱已存在，請選擇其他名稱。');
@@ -1133,19 +1116,17 @@
                 const strategyIndex = strategies.findIndex(s => s.id === id);
                 if (strategyIndex === -1) return;
 
-                // 更新策略
                 strategies[strategyIndex].name = name;
                 strategies[strategyIndex].description = description;
                 saveStrategies();
                 renderStrategies();
-                renderTrades(); // 更新交易表格中的策略下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
                 closeEditStrategyModal();
             }
 
             // 刪除策略
             function deleteStrategy(strategyId) {
-                // 檢查是否有交易使用該策略
                 const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
                 if (tradesUsingStrategy.length > 0) {
                     alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
@@ -1159,8 +1140,8 @@
                 strategies = strategies.filter(strategy => strategy.id !== strategyId);
                 saveStrategies();
                 renderStrategies();
-                renderTrades(); // 更新交易表格中的策略下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
             }
 
             // 開啟新增外部條件模態框
@@ -1185,22 +1166,18 @@
                     return;
                 }
 
-                // 檢查外部條件名稱是否已存在
                 const existingCondition = externalConditions.find(condition => condition.name === name);
                 if (existingCondition) {
                     alert('外部條件名稱已存在，請選擇其他名稱。');
                     return;
                 }
 
-                // 生成新的外部條件 ID
                 const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
-
-                // 新增外部條件
                 externalConditions.push({ id: newId, name, description });
                 saveExternalConditions();
                 renderExternalConditions();
-                renderTrades(); // 更新交易表格中的外部條件下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
                 closeAddExternalConditionModal();
             }
 
@@ -1231,7 +1208,6 @@
                     return;
                 }
 
-                // 檢查外部條件名稱是否已存在（排除當前外部條件）
                 const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
                 if (existingCondition) {
                     alert('外部條件名稱已存在，請選擇其他名稱。');
@@ -1241,19 +1217,17 @@
                 const conditionIndex = externalConditions.findIndex(c => c.id === id);
                 if (conditionIndex === -1) return;
 
-                // 更新外部條件
                 externalConditions[conditionIndex].name = name;
                 externalConditions[conditionIndex].description = description;
                 saveExternalConditions();
                 renderExternalConditions();
-                renderTrades(); // 更新交易表格中的外部條件下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
                 closeEditExternalConditionModal();
             }
 
             // 刪除外部條件
             function deleteExternalCondition(conditionId) {
-                // 檢查是否有交易使用該外部條件
                 const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
                 if (tradesUsingCondition.length > 0) {
                     alert('有交易紀錄正在使用此外部條件，請先移除或更改相關交易紀錄。');
@@ -1267,8 +1241,8 @@
                 externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
                 saveExternalConditions();
                 renderExternalConditions();
-                renderTrades(); // 更新交易表格中的外部條件下拉選單
-                calculateStats(); // 更新統計數據
+                renderTrades();
+                calculateStats();
             }
 
             // 策略、外部條件和日期篩選功能
@@ -1339,7 +1313,6 @@
                 }
 
                 if (validTrades.length === 0) {
-                    // 重置統計數據
                     document.getElementById('totalTrades').textContent = '0';
                     document.getElementById('winRate').textContent = '0% (0勝0敗)';
                     document.getElementById('riskRewardRatio').textContent = '0';
@@ -1349,9 +1322,7 @@
                     document.getElementById('maxLoss').textContent = '-0 (-0.00%)';
                     document.getElementById('expectedValue').textContent = '0.0%';
                     document.getElementById('totalReturn').textContent = '0%';
-                    
                     removeColorClasses(['expectedValue', 'totalReturn']);
-                    
                     return;
                 }
 
@@ -1365,15 +1336,13 @@
                 const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
                 const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
-                const expectedReturnRate = (winRate / 100 * avgWinRate) - ((100 - winRate) / 100 * Math.abs(avgLossRate));
                 const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
 
-                // 根據交易中各自的部位金額計算實際獲利/虧損數值
+                // 以部位金額加權計算
                 const tradesWithPosition = trades.filter(trade =>
                     trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
                     trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
                 );
-
                 if (tradesWithPosition.length > 0) {
                     const totalInvested = tradesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0);
                     const totalReturnAmount = tradesWithPosition.reduce((sum, trade) => {
@@ -1394,33 +1363,34 @@
                     const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
 
                     const averagePositionWeighted = totalInvested / tradesWithPosition.length;
-                    const expectedValueAmount = (expectedReturnRate / 100) * averagePositionWeighted;
+                    // 以部位金額加權後，每筆交易的平均獲利（或虧損）
+                    const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
+                    const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
 
                     document.getElementById('avgWin').textContent = `${formatNumber(avgWinAmount, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)`;
                     document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
                     document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
                     document.getElementById('maxLoss').textContent = `${formatNumber(maxLossAmount, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)`;
-                    document.getElementById('expectedValue').textContent = `${formatNumber(expectedValueAmount.toFixed(1), true, 1)} (${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    document.getElementById('expectedValue').textContent = `${formatNumber(expectedValueAmount, true, 0)} (${formatNumber(expectedValuePercentage, false, 2)}%)`;
                     document.getElementById('totalReturn').textContent = `${formatNumber(totalReturnAmount, true, 0)} (${formatNumber(totalReturnPercentage, false, 2)}%)`;
                 } else {
                     document.getElementById('avgWin').textContent = `(${formatNumber(avgWinRate, false, 2)}%)`;
                     document.getElementById('avgLoss').textContent = `(${formatNumber(avgLossRate, false, 2)}%)`;
                     document.getElementById('maxWin').textContent = `(${formatNumber(maxWinRate, false, 2)}%)`;
                     document.getElementById('maxLoss').textContent = `(${formatNumber(maxLossRate, false, 2)}%)`;
-                    document.getElementById('expectedValue').textContent = `(${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    document.getElementById('expectedValue').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
                     document.getElementById('totalReturn').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
                 }
 
                 document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
                 document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
                 document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
-
-                // 更新顏色
+                
                 const expectedValueElem = document.getElementById('expectedValue');
-                if (expectedReturnRate > 0) {
+                if (expectedValueElem.textContent.indexOf('+') !== -1) {
                     expectedValueElem.classList.add('text-red-500');
                     expectedValueElem.classList.remove('text-green-500');
-                } else if (expectedReturnRate < 0) {
+                } else if (expectedValueElem.textContent.indexOf('-') !== -1) {
                     expectedValueElem.classList.add('text-green-500');
                     expectedValueElem.classList.remove('text-red-500');
                 } else {
@@ -1428,10 +1398,10 @@
                 }
 
                 const totalReturnElem = document.getElementById('totalReturn');
-                if (totalReturnRate > 0) {
+                if (totalReturnElem.textContent.indexOf('+') !== -1) {
                     totalReturnElem.classList.add('text-red-500');
                     totalReturnElem.classList.remove('text-green-500');
-                } else if (totalReturnRate < 0) {
+                } else if (totalReturnElem.textContent.indexOf('-') !== -1) {
                     totalReturnElem.classList.add('text-green-500');
                     totalReturnElem.classList.remove('text-red-500');
                 } else {
@@ -1450,7 +1420,7 @@
             // 初始化
             loadStrategies();
             loadExternalConditions();
-            loadData(); // 載入數據
+            loadData();
 
             // 收合/展開 策略管理區塊
             function toggleStrategyManagement() {
@@ -1468,8 +1438,8 @@
                     toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
                 }
 
-                lucide.createIcons(); // 重新初始化 Lucide 圖標
-                saveCollapseState(); // 保存收合狀態
+                lucide.createIcons();
+                saveCollapseState();
             }
 
             // 收合/展開 外部條件管理區塊
@@ -1488,8 +1458,8 @@
                     toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
                 }
 
-                lucide.createIcons(); // 重新初始化 Lucide 圖標
-                saveCollapseState(); // 保存收合狀態
+                lucide.createIcons();
+                saveCollapseState();
             }
 
             // 開啟模態框
@@ -1501,7 +1471,6 @@
             function closeModal(modalId) {
                 const modal = document.getElementById(modalId);
                 modal.classList.add('hidden');
-                // 清空輸入欄位
                 const inputs = modal.querySelectorAll('input, textarea, select');
                 inputs.forEach(input => {
                     if (input.type !== 'hidden') {
@@ -1523,7 +1492,7 @@
             }
 
             /**
-             * 新增功能：將交易紀錄匯出為Excel
+             * 將交易紀錄匯出為Excel
              */
             function exportToExcel() {
                 if (trades.length === 0) {
@@ -1531,7 +1500,6 @@
                     return;
                 }
 
-                // 準備要匯出的數據
                 const exportData = trades.map(trade => ({
                     "交易ID": trade.id,
                     "報酬率 (%)": trade.returnRate,
@@ -1546,18 +1514,11 @@
                     "圖片URL": trade.imageUrl
                 }));
 
-                // 使用 SheetJS 將JSON轉換為工作表
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-                // 創建一個新的工作簿並將工作表添加到其中
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "交易紀錄");
-
-                // 生成Excel文件並觸發下載
                 const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-                // 生成下載鏈接
                 const link = document.createElement('a');
                 const today = new Date().toISOString().split('T')[0];
                 link.href = URL.createObjectURL(blob);
@@ -1579,7 +1540,7 @@
             }
 
             /**
-             * 新增功能：將Excel匯入至交易紀錄
+             * 將Excel匯入至交易紀錄
              */
             function importFromExcel(event) {
                 const file = event.target.files[0];
@@ -1607,23 +1568,18 @@
                         return;
                     }
 
-                    // 定義必要的欄位
                     const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
 
-                    // 檢查是否包含所有必要欄位
                     const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
                     if (missingFields.length > 0) {
                         alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
                         return;
                     }
 
-                    // 轉換JSON數據為交易紀錄
                     const importedTrades = jsonData.map(item => {
-                        // 轉換策略名稱和外部條件名稱為ID
                         const strategy = strategies.find(s => s.name === item["策略名稱"]);
                         const externalCondition = externalConditions.find(c => c.name === item["外部條件"]);
 
-                        // 如果策略或外部條件不存在，提示並跳過此條目
                         if (!strategy) {
                             alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
                             return null;
@@ -1633,10 +1589,7 @@
                             return null;
                         }
 
-                        // 生成新的交易ID，確保唯一
                         const newTradeId = nextTradeId++;
-
-                        // 計算持倉天數（可選）
                         let holdingDays = item["持倉天數"];
                         if (holdingDays === '' || holdingDays === '未平倉') {
                             holdingDays = '未平倉';
@@ -1661,17 +1614,13 @@
                         return;
                     }
 
-                    // 將匯入的交易紀錄添加到現有的交易紀錄中
                     trades = trades.concat(importedTrades);
-
-                    // 渲染交易紀錄、計算統計數據並保存
                     renderTrades();
                     calculateStats();
                     saveData();
 
                     alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
 
-                    // 重置文件輸入元素
                     document.getElementById('importExcelInput').value = '';
                 };
 
@@ -1683,7 +1632,7 @@
             }
 
             /**
-             * 新增功能：將策略匯出為Excel
+             * 將策略匯出為Excel
              */
             function exportStrategiesToExcel() {
                 if (strategies.length === 0) {
@@ -1691,25 +1640,17 @@
                     return;
                 }
 
-                // 準備要匯出的數據
                 const exportData = strategies.map(strategy => ({
                     "策略ID": strategy.id,
                     "策略名稱": strategy.name,
                     "描述": strategy.description
                 }));
 
-                // 使用 SheetJS 將JSON轉換為工作表
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-                // 創建一個新的工作簿並將工作表添加到其中
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
-
-                // 生成Excel文件並觸發下載
                 const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-                // 生成下載鏈接
                 const link = document.createElement('a');
                 const today = new Date().toISOString().split('T')[0];
                 link.href = URL.createObjectURL(blob);
@@ -1720,7 +1661,7 @@
             }
 
             /**
-             * 新增功能：將策略匯入自Excel
+             * 將策略匯入自Excel
              */
             function importStrategiesFromExcel(event) {
                 const file = event.target.files[0];
@@ -1748,31 +1689,24 @@
                         return;
                     }
 
-                    // 定義必要的欄位
                     const requiredFields = ["策略ID", "策略名稱", "描述"];
-
-                    // 檢查是否包含所有必要欄位
                     const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
                     if (missingFields.length > 0) {
                         alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
                         return;
                     }
 
-                    // 轉換JSON數據為策略紀錄
                     const importedStrategies = jsonData.map(item => {
                         const name = item["策略名稱"].trim();
                         const description = item["描述"].trim();
 
-                        // 檢查策略名稱是否已存在
                         const existingStrategy = strategies.find(s => s.name === name);
                         if (existingStrategy) {
                             alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
                             return null;
                         }
 
-                        // 生成新的策略ID，確保唯一
                         const newStrategyId = nextTradeId++;
-
                         return {
                             id: newStrategyId,
                             name: name,
@@ -1785,19 +1719,15 @@
                         return;
                     }
 
-                    // 將匯入的策略紀錄添加到現有的策略中
                     strategies = strategies.concat(importedStrategies);
-
-                    // 渲染策略列表、更新篩選選單並保存
                     renderStrategies();
-                    renderTrades(); // 更新交易表格中的策略下拉選單
+                    renderTrades();
                     calculateStats();
                     saveStrategies();
                     saveData();
 
                     alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
 
-                    // 重置文件輸入元素
                     document.getElementById('importStrategiesInput').value = '';
                 };
 
@@ -1809,7 +1739,7 @@
             }
 
             /**
-             * 新增功能：將外部條件匯出為Excel
+             * 將外部條件匯出為Excel
              */
             function exportExternalConditionsToExcel() {
                 if (externalConditions.length === 0) {
@@ -1817,25 +1747,17 @@
                     return;
                 }
 
-                // 準備要匯出的數據
                 const exportData = externalConditions.map(condition => ({
                     "外部條件ID": condition.id,
                     "外部條件名稱": condition.name,
                     "描述": condition.description
                 }));
 
-                // 使用 SheetJS 將JSON轉換為工作表
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-                // 創建一個新的工作簿並將工作表添加到其中
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "外部條件管理");
-
-                // 生成Excel文件並觸發下載
                 const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-                // 生成下載鏈接
                 const link = document.createElement('a');
                 const today = new Date().toISOString().split('T')[0];
                 link.href = URL.createObjectURL(blob);
@@ -1846,7 +1768,7 @@
             }
 
             /**
-             * 新增功能：將外部條件匯入自Excel
+             * 將外部條件匯入自Excel
              */
             function importExternalConditionsFromExcel(event) {
                 const file = event.target.files[0];
@@ -1874,31 +1796,24 @@
                         return;
                     }
 
-                    // 定義必要的欄位
                     const requiredFields = ["外部條件ID", "外部條件名稱", "描述"];
-
-                    // 檢查是否包含所有必要欄位
                     const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
                     if (missingFields.length > 0) {
                         alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
                         return;
                     }
 
-                    // 轉換JSON數據為外部條件紀錄
                     const importedExternalConditions = jsonData.map(item => {
                         const name = item["外部條件名稱"].trim();
                         const description = item["描述"].trim();
 
-                        // 檢查外部條件名稱是否已存在
                         const existingCondition = externalConditions.find(c => c.name === name);
                         if (existingCondition) {
                             alert(`外部條件名稱 "${name}" 已存在。請避免重複新增。`);
                             return null;
                         }
 
-                        // 生成新的外部條件ID，確保唯一
                         const newConditionId = nextTradeId++;
-
                         return {
                             id: newConditionId,
                             name: name,
@@ -1911,19 +1826,15 @@
                         return;
                     }
 
-                    // 將匯入的外部條件紀錄添加到現有的外部條件中
                     externalConditions = externalConditions.concat(importedExternalConditions);
-
-                    // 渲染外部條件列表、更新篩選選單並保存
                     renderExternalConditions();
-                    renderTrades(); // 更新交易表格中的外部條件下拉選單
+                    renderTrades();
                     calculateStats();
                     saveExternalConditions();
                     saveData();
 
                     alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
 
-                    // 重置文件輸入元素
                     document.getElementById('importExternalConditionsInput').value = '';
                 };
 
