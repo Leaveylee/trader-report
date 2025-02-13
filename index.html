@@ -82,10 +82,9 @@
     }
     /* 新增細線樣式 */
     .divider {
-      border-bottom: 1px solid #e5e7eb; /* Tailwind 的 gray-200 */
+      border-bottom: 1px solid #e5e7eb;
       margin: 0.5rem 0;
     }
-    /* 表格樣式調整 */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -101,7 +100,6 @@
       background-color: #f9fafb;
       font-weight: 600;
     }
-    /* 模態框樣式 */
     .modal {
       display: flex;
       position: fixed;
@@ -113,7 +111,6 @@
     .hidden {
       display: none;
     }
-    /* 自定義頂部滾動條樣式 */
     .scrollbar-top {
       height: 16px;
       margin-bottom: 8px;
@@ -167,7 +164,7 @@
     <!-- 總操作資金輸入 -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">總操作資金</label>
-      <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入總操作資金" oninput="calculateStats()" onchange="calculateStats()">
+      <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入總操作資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
       <div class="text-sm text-gray-500 mt-1">此數值將用於計算未平倉交易占比。</div>
     </div>
 
@@ -493,6 +490,20 @@
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
       }
 
+      // 新增：保存總操作資金
+      function saveTotalOperatingCapital() {
+        const opCap = document.getElementById('totalOperatingCapital').value;
+        localStorage.setItem('totalOperatingCapital', opCap);
+      }
+
+      // 新增：讀取總操作資金
+      function loadTotalOperatingCapital() {
+        const opCap = localStorage.getItem('totalOperatingCapital');
+        if (opCap !== null) {
+          document.getElementById('totalOperatingCapital').value = opCap;
+        }
+      }
+
       function loadStrategies() {
         const savedStrategies = JSON.parse(localStorage.getItem('strategies'));
         if (savedStrategies && Array.isArray(savedStrategies)) {
@@ -557,6 +568,7 @@
         renderTrades();
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
+        loadTotalOperatingCapital();
       }
 
       function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
