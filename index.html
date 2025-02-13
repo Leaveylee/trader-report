@@ -508,7 +508,7 @@
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
       }
 
-      // 保存總操作資金到 localStorage
+      // 保存總操作資金
       function saveTotalOperatingCapital() {
         const opCap = document.getElementById('totalOperatingCapital').value;
         localStorage.setItem('totalOperatingCapital', opCap);
@@ -584,7 +584,7 @@
         renderStrategies();
         renderExternalConditions();
         renderTrades();
-        loadTotalOperatingCapital();
+        loadTotalOperatingCapital(); // 先載入總操作資金
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
       }
@@ -1084,7 +1084,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 計算統計數據，包括新增「資金績效統計」
+      // 計算統計數據，包括未平倉與資金績效統計
       function calculateStats() {
         let validTrades = trades.filter(trade => 
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
@@ -1127,38 +1127,40 @@
         const wins = results.filter(result => result > 0);
         const losses = results.filter(result => result < 0);
         const winRate = (wins.length / results.length) * 100;
+        // 以下兩行原本用的是百分比，現在保留但風報比將另作計算
         const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
         const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
         const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
         const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
-        const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
-        const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
-
-        // 以部位金額加權計算
+        // 改為以「平均獲利金額」與「平均虧損金額」計算風報比
+        let avgWinAmount = 0, avgLossAmount = 0;
         const tradesWithPosition = trades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
         );
         let totalReturnAmount = 0;
         if (tradesWithPosition.length > 0) {
-          totalReturnAmount = tradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
           const totalInvested = tradesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0);
+          totalReturnAmount = tradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
           const totalReturnPercentage = totalInvested > 0 ? (totalReturnAmount / totalInvested) * 100 : 0;
           const winsWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
+          avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+          avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+          const averagePositionWeighted = totalInvested / tradesWithPosition.length;
+          const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
+          const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
           document.getElementById('avgWin').textContent = `${formatNumber(avgWinAmount, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)`;
           document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
           document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
           document.getElementById('maxLoss').textContent = `${formatNumber(maxLossAmount, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)`;
-          const averagePositionWeighted = totalInvested / tradesWithPosition.length;
-          const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
-          const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
           document.getElementById('expectedValue').textContent = `${formatNumber(expectedValueAmount, true, 0)} (${formatNumber(expectedValuePercentage, false, 2)}%)`;
           document.getElementById('totalReturn').textContent = `${formatNumber(totalReturnAmount, true, 0)} (${formatNumber(totalReturnPercentage, false, 2)}%)`;
+          // 以金額計算風報比：平均獲利金額 / 平均虧損金額 (取絕對值)
+          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
+          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
         } else {
           document.getElementById('avgWin').textContent = `(${formatNumber(avgWinRate, false, 2)}%)`;
           document.getElementById('avgLoss').textContent = `(${formatNumber(avgLossRate, false, 2)}%)`;
@@ -1166,11 +1168,11 @@
           document.getElementById('maxLoss').textContent = `(${formatNumber(maxLossRate, false, 2)}%)`;
           document.getElementById('expectedValue').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
           document.getElementById('totalReturn').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
+          document.getElementById('riskRewardRatio').textContent = '0';
         }
 
         document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
         document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-        document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
 
         // 部位統計
         const winningTrades = trades.filter(trade => 
