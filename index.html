@@ -426,23 +426,6 @@
             </div>
         </div>
 
-        <!-- 平均部位輸入 -->
-        <div class="mb-6">
-            <label for="averagePosition" class="block text-sm font-medium text-gray-700 mb-2">
-                平均部位金額（選填）
-            </label>
-            <input
-                type="number"
-                id="averagePosition"
-                placeholder="輸入平均部位金額"
-                class="w-full p-2 border rounded"
-                onchange="calculateStats()"
-            >
-            <div class="text-sm text-gray-500 mt-1">
-                若填寫此欄位，將會計算實際金額的獲利/虧損和期望值
-            </div>
-        </div>
-
         <!-- 交易記錄區域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
@@ -462,7 +445,7 @@
                 </div>
             </div>
             <div class="text-sm text-gray-600 mb-2">
-                請輸入交易報酬率（例如：+6.66、-2.92）、標的名稱、策略名稱、外部條件、開倉日和平倉日
+                請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、標的名稱、策略名稱、外部條件、開倉日和平倉日
             </div>
             <div class="relative">
                 <!-- 頂部滾動條 -->
@@ -477,13 +460,14 @@
                                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[100px]">持倉天數</th>
                                 <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
+                                <th class="px-4 py-2 min-w-[100px]">部位金額</th>
                                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
                                 <th class="px-4 py-2 min-w-[150px]">外部條件</th>
-                                <th class="px-4 py-2 min-w-[200px]">文字說明</th> <!-- 新增欄位 -->
-                                <th class="px-4 py-2 min-w-[200px]">圖片</th> <!-- 新增欄位 -->
+                                <th class="px-4 py-2 min-w-[200px]">文字說明</th>
+                                <th class="px-4 py-2 min-w-[200px]">圖片</th>
                                 <th class="px-4 py-2 min-w-[80px]">操作</th>
                             </tr>
                         </thead>
@@ -494,11 +478,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 可選：清除數據按鈕 -->
-        <!-- <button class="button mt-4 bg-red-500" onclick="clearData()">
-            清除所有數據
-        </button> -->
 
         <script>
             // 策略列表
@@ -548,8 +527,6 @@
             // 保存數據到 localStorage
             function saveData() {
                 localStorage.setItem('trades', JSON.stringify(trades));
-                const averagePosition = document.getElementById('averagePosition').value;
-                localStorage.setItem('averagePosition', averagePosition);
                 saveStrategies(); // 保存策略數據
                 saveExternalConditions(); // 保存外部條件數據
 
@@ -614,12 +591,11 @@
             // 從 localStorage 加載交易數據和篩選條件
             function loadData() {
                 const savedTrades = JSON.parse(localStorage.getItem('trades'));
-                const savedAveragePosition = localStorage.getItem('averagePosition');
                 const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
                 const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
                 
                 if (savedTrades && Array.isArray(savedTrades)) {
-                    // 確保每個交易都有唯一的 ID 和 imageUrl
+                    // 確保每個交易都有唯一的 ID 及 imageUrl、position
                     trades = savedTrades.map(trade => {
                         if (!trade.id) {
                             trade.id = nextTradeId++;
@@ -628,19 +604,16 @@
                                 nextTradeId = trade.id + 1;
                             }
                         }
-                        // 確保 description 和 imageUrl 存在
+                        // 確保 description, imageUrl, position 存在
                         if (!trade.description) trade.description = '';
                         if (!trade.imageUrl) trade.imageUrl = '';
+                        if (typeof trade.position === 'undefined') trade.position = '';
                         return trade;
                     });
                 }
 
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
-                }
-
-                if (savedAveragePosition !== null) {
-                    document.getElementById('averagePosition').value = savedAveragePosition;
+                    trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
 
                 // 確保篩選器重置為默認狀態
@@ -854,6 +827,17 @@
                                     data-trade-id="${trade.id}"
                                 >
                             </td>
+                            <td class="border px-4 py-2 min-w-[100px]">
+                                <input
+                                    type="number"
+                                    value="${trade.position}"
+                                    oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)"
+                                    class="w-full p-1 border rounded trade-input"
+                                    placeholder="部位金額"
+                                    data-row-index="${trades.indexOf(trade)}"
+                                    data-field="position"
+                                >
+                            </td>
                             <td class="border px-4 py-2 min-w-[150px]">
                                 <input
                                     type="text"
@@ -1006,6 +990,8 @@
                     trades[index].description = value.trim();
                 } else if (field === 'imageUrl') { // 新增處理圖片URL
                     trades[index].imageUrl = value.trim();
+                } else if (field === 'position') {
+                    trades[index].position = value.trim();
                 }
                 
                 // 計算統計數據和保存
@@ -1033,6 +1019,7 @@
                 const newTrade = { 
                     id: nextTradeId++, 
                     returnRate: '', 
+                    position: '',
                     assetName: '', 
                     strategyId: null, 
                     externalConditionId: null, 
@@ -1061,7 +1048,7 @@
             function removeTrade(index) {
                 trades = trades.filter((_, i) => i !== index);
                 if (trades.length === 0) {
-                    trades.push({ id: nextTradeId++, returnRate: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
+                    trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
                 renderTrades();
                 calculateStats();
@@ -1319,8 +1306,6 @@
                     endDate.setDate(endDate.getDate() + days);
                     endDateInput.value = formatDate(endDate);
                 } else {
-                    // 如果結束日期未設置，可以選擇不做任何操作，或者設置為今天
-                    // 這裡我們選擇不做操作
                     alert('請先設定結束日期，再進行調整。');
                 }
 
@@ -1365,7 +1350,6 @@
                     document.getElementById('expectedValue').textContent = '0.0%';
                     document.getElementById('totalReturn').textContent = '0%';
                     
-                    // 移除顏色類別
                     removeColorClasses(['expectedValue', 'totalReturn']);
                     
                     return;
@@ -1377,50 +1361,62 @@
 
                 const winRate = (wins.length / results.length) * 100;
                 const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0; // 保留負號
+                const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
                 const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-                const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0; // 保留負號
+                const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
                 const expectedReturnRate = (winRate / 100 * avgWinRate) - ((100 - winRate) / 100 * Math.abs(avgLossRate));
                 const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
 
-                // 獲取平均部位金額
-                const averagePositionInput = document.getElementById('averagePosition').value;
-                const averagePosition = parseFloat(averagePositionInput);
+                // 根據交易中各自的部位金額計算實際獲利/虧損數值
+                const tradesWithPosition = trades.filter(trade =>
+                    trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
+                    trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
+                );
 
-                // 計算金額
-                const expectedValueAmount = (expectedReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
-                const totalReturnAmount = (totalReturnRate / 100) * (isNaN(averagePosition) ? 0 : averagePosition);
+                if (tradesWithPosition.length > 0) {
+                    const totalInvested = tradesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0);
+                    const totalReturnAmount = tradesWithPosition.reduce((sum, trade) => {
+                        return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
+                    }, 0);
+                    const totalReturnPercentage = totalInvested > 0 ? (totalReturnAmount / totalInvested) * 100 : 0;
 
-                // 更新基本統計數據
-                document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-                document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-                // 使用 formatNumberNoSign 以移除 "+" 符號
-                document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
+                    const winsWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
+                    const lossesWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
 
-                // 更新次級報告欄位
-                document.getElementById('avgWin').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
-                    ? `${formatNumber((avgWinRate / 100) * averagePosition, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)` 
-                    : `(${formatNumber(avgWinRate, false, 2)}%)`;
-                document.getElementById('avgLoss').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
-                    ? `${formatNumber((avgLossRate / 100) * averagePosition, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)` 
-                    : `(${formatNumber(avgLossRate, false, 2)}%)`;
-                document.getElementById('maxWin').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
-                    ? `${formatNumber((maxWinRate / 100) * averagePosition, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)` 
-                    : `(${formatNumber(maxWinRate, false, 2)}%)`;
-                document.getElementById('maxLoss').textContent = (averagePosition && !isNaN(averagePosition) && averagePosition > 0) 
-                    ? `${formatNumber((maxLossRate / 100) * averagePosition, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)` 
-                    : `(${formatNumber(maxLossRate, false, 2)}%)`;
+                    const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => {
+                        return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
+                    }, 0) / winsWithPosition.length : 0;
+                    const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => {
+                        return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
+                    }, 0) / lossesWithPosition.length : 0;
+                    const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+                    const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
 
-                // 更新 "期望值" 顯示及顏色，僅顯示到小數點第一位
-                const expectedValueElem = document.getElementById('expectedValue');
-                if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
-                    expectedValueElem.textContent = `${formatNumber(expectedValueAmount.toFixed(1), true, 1)} (${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    const averagePositionWeighted = totalInvested / tradesWithPosition.length;
+                    const expectedValueAmount = (expectedReturnRate / 100) * averagePositionWeighted;
+
+                    document.getElementById('avgWin').textContent = `${formatNumber(avgWinAmount, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)`;
+                    document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
+                    document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
+                    document.getElementById('maxLoss').textContent = `${formatNumber(maxLossAmount, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)`;
+                    document.getElementById('expectedValue').textContent = `${formatNumber(expectedValueAmount.toFixed(1), true, 1)} (${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    document.getElementById('totalReturn').textContent = `${formatNumber(totalReturnAmount, true, 0)} (${formatNumber(totalReturnPercentage, false, 2)}%)`;
                 } else {
-                    expectedValueElem.textContent = `(${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    document.getElementById('avgWin').textContent = `(${formatNumber(avgWinRate, false, 2)}%)`;
+                    document.getElementById('avgLoss').textContent = `(${formatNumber(avgLossRate, false, 2)}%)`;
+                    document.getElementById('maxWin').textContent = `(${formatNumber(maxWinRate, false, 2)}%)`;
+                    document.getElementById('maxLoss').textContent = `(${formatNumber(maxLossRate, false, 2)}%)`;
+                    document.getElementById('expectedValue').textContent = `(${formatNumber(expectedReturnRate.toFixed(2), false, 2)}%)`;
+                    document.getElementById('totalReturn').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
                 }
 
+                document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
+                document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+                document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
+
                 // 更新顏色
+                const expectedValueElem = document.getElementById('expectedValue');
                 if (expectedReturnRate > 0) {
                     expectedValueElem.classList.add('text-red-500');
                     expectedValueElem.classList.remove('text-green-500');
@@ -1431,15 +1427,7 @@
                     expectedValueElem.classList.remove('text-red-500', 'text-green-500');
                 }
 
-                // 更新 "總報酬" 顯示及顏色，金額無小數點，百分比顯示兩位小數
                 const totalReturnElem = document.getElementById('totalReturn');
-                if (averagePosition && !isNaN(averagePosition) && averagePosition > 0) {
-                    totalReturnElem.textContent = `${formatNumber(totalReturnAmount, true, 0)} (${formatNumber(totalReturnRate, false, 2)}%)`;
-                } else {
-                    totalReturnElem.textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
-                }
-
-                // 更新顏色
                 if (totalReturnRate > 0) {
                     totalReturnElem.classList.add('text-red-500');
                     totalReturnElem.classList.remove('text-green-500');
@@ -1463,12 +1451,6 @@
             loadStrategies();
             loadExternalConditions();
             loadData(); // 載入數據
-
-            // 監聽平均部位金額的變化以保存數據
-            document.getElementById('averagePosition').addEventListener('change', function() {
-                calculateStats();
-                saveData(); // 保存數據
-            });
 
             // 收合/展開 策略管理區塊
             function toggleStrategyManagement() {
@@ -1553,6 +1535,7 @@
                 const exportData = trades.map(trade => ({
                     "交易ID": trade.id,
                     "報酬率 (%)": trade.returnRate,
+                    "部位金額": trade.position,
                     "標的名稱": trade.assetName,
                     "策略名稱": getStrategyName(trade.strategyId),
                     "外部條件": getExternalConditionName(trade.externalConditionId),
@@ -1625,7 +1608,7 @@
                     }
 
                     // 定義必要的欄位
-                    const requiredFields = ["交易ID", "報酬率 (%)", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+                    const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
 
                     // 檢查是否包含所有必要欄位
                     const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
@@ -1662,6 +1645,7 @@
                         return {
                             id: newTradeId,
                             returnRate: item["報酬率 (%)"],
+                            position: item["部位金額"],
                             assetName: item["標的名稱"],
                             strategyId: strategy.id,
                             externalConditionId: externalCondition.id,
@@ -1670,7 +1654,7 @@
                             description: item["文字說明"],
                             imageUrl: item["圖片URL"]
                         };
-                    }).filter(trade => trade !== null); // 移除無效的交易紀錄
+                    }).filter(trade => trade !== null);
 
                     if (importedTrades.length === 0) {
                         alert('沒有有效的交易紀錄被匯入。');
@@ -1683,7 +1667,7 @@
                     // 渲染交易紀錄、計算統計數據並保存
                     renderTrades();
                     calculateStats();
-                    saveData(); // 保存數據
+                    saveData();
 
                     alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
 
@@ -1794,7 +1778,7 @@
                             name: name,
                             description: description
                         };
-                    }).filter(strategy => strategy !== null); // 移除無效的策略紀錄
+                    }).filter(strategy => strategy !== null);
 
                     if (importedStrategies.length === 0) {
                         alert('沒有有效的策略紀錄被匯入。');
@@ -1807,9 +1791,9 @@
                     // 渲染策略列表、更新篩選選單並保存
                     renderStrategies();
                     renderTrades(); // 更新交易表格中的策略下拉選單
-                    calculateStats(); // 更新統計數據
+                    calculateStats();
                     saveStrategies();
-                    saveData(); // 保存數據
+                    saveData();
 
                     alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
 
@@ -1920,7 +1904,7 @@
                             name: name,
                             description: description
                         };
-                    }).filter(condition => condition !== null); // 移除無效的外部條件紀錄
+                    }).filter(condition => condition !== null);
 
                     if (importedExternalConditions.length === 0) {
                         alert('沒有有效的外部條件紀錄被匯入。');
@@ -1933,9 +1917,9 @@
                     // 渲染外部條件列表、更新篩選選單並保存
                     renderExternalConditions();
                     renderTrades(); // 更新交易表格中的外部條件下拉選單
-                    calculateStats(); // 更新統計數據
+                    calculateStats();
                     saveExternalConditions();
-                    saveData(); // 保存數據
+                    saveData();
 
                     alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
 
