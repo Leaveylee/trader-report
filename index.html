@@ -38,7 +38,7 @@
       border-radius: 24px;
       padding: 2rem;
       width: 90%;
-      max-width: 1200px; /* 調整寬度以適應新增區塊 */
+      max-width: 1200px;
       margin: 0 auto;
       box-shadow: 0 8px 32px rgba(184, 134, 113, 0.1);
     }
@@ -80,7 +80,6 @@
     .delete-button:hover {
       color: #b91c1c;
     }
-    /* 新增細線樣式 */
     .divider {
       border-bottom: 1px solid #e5e7eb;
       margin: 0.5rem 0;
@@ -490,13 +489,13 @@
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
       }
 
-      // 新增：保存總操作資金
+      // 新增：保存總操作資金到 localStorage
       function saveTotalOperatingCapital() {
         const opCap = document.getElementById('totalOperatingCapital').value;
         localStorage.setItem('totalOperatingCapital', opCap);
       }
 
-      // 新增：讀取總操作資金
+      // 新增：從 localStorage 載入總操作資金
       function loadTotalOperatingCapital() {
         const opCap = localStorage.getItem('totalOperatingCapital');
         if (opCap !== null) {
@@ -566,9 +565,10 @@
         renderStrategies();
         renderExternalConditions();
         renderTrades();
+        // 將總操作資金先載入，確保 calculateStats() 可以讀取到正確數值
+        loadTotalOperatingCapital();
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
-        loadTotalOperatingCapital();
       }
 
       function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
