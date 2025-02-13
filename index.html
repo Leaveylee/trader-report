@@ -164,7 +164,7 @@
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">總操作資金</label>
       <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入總操作資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
-      <div class="text-sm text-gray-500 mt-1">此數值將用於計算未平倉交易占比。</div>
+      <div class="text-sm text-gray-500 mt-1">此數值將用於計算資金績效與未平倉占比。</div>
     </div>
 
     <!-- 分析結果區塊 -->
@@ -249,6 +249,25 @@
         <div class="flex justify-between">
           <span class="text-gray-600">未平倉部位總額：</span>
           <span id="unclosedPositionTotal" class="font-medium">$0 (0%)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 資金績效統計區塊 -->
+    <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
+      <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex justify-between">
+          <span class="text-gray-600">總資金回報率 (ROI)：</span>
+          <span id="roi" class="font-medium">0%</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">自由資金：</span>
+          <span id="freeCapital" class="font-medium">$0 (0%)</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">占用資金：</span>
+          <span id="capitalUsed" class="font-medium">$0 (0%)</span>
         </div>
       </div>
     </div>
@@ -459,7 +478,7 @@
         return number.toLocaleString();
       }
 
-      // 新增：格式化金額，使用 $ 符號
+      // 格式化金額 (使用 $ 符號)
       function formatMoney(value, decimalPlaces = 0) {
         const number = parseFloat(value);
         if (isNaN(number)) return '$0';
@@ -489,13 +508,13 @@
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
       }
 
-      // 新增：保存總操作資金到 localStorage
+      // 保存總操作資金到 localStorage
       function saveTotalOperatingCapital() {
         const opCap = document.getElementById('totalOperatingCapital').value;
         localStorage.setItem('totalOperatingCapital', opCap);
       }
 
-      // 新增：從 localStorage 載入總操作資金
+      // 載入總操作資金
       function loadTotalOperatingCapital() {
         const opCap = localStorage.getItem('totalOperatingCapital');
         if (opCap !== null) {
@@ -565,7 +584,6 @@
         renderStrategies();
         renderExternalConditions();
         renderTrades();
-        // 將總操作資金先載入，確保 calculateStats() 可以讀取到正確數值
         loadTotalOperatingCapital();
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
@@ -1066,7 +1084,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 計算統計數據，包括未平倉統計
+      // 計算統計數據，包括新增「資金績效統計」
       function calculateStats() {
         let validTrades = trades.filter(trade => 
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
@@ -1100,6 +1118,9 @@
           document.getElementById('avgLosingPosition').textContent = '$0';
           document.getElementById('unclosedTradeCount').textContent = '0';
           document.getElementById('unclosedPositionTotal').textContent = '$0 (0%)';
+          document.getElementById('roi').textContent = '0%';
+          document.getElementById('freeCapital').textContent = '$0 (0%)';
+          document.getElementById('capitalUsed').textContent = '$0 (0%)';
           return;
         }
         const results = validTrades.map(trade => parseFloat(trade.returnRate));
@@ -1118,29 +1139,24 @@
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
         );
+        let totalReturnAmount = 0;
         if (tradesWithPosition.length > 0) {
+          totalReturnAmount = tradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
           const totalInvested = tradesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0);
-          const totalReturnAmount = tradesWithPosition.reduce((sum, trade) => {
-            return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
-          }, 0);
           const totalReturnPercentage = totalInvested > 0 ? (totalReturnAmount / totalInvested) * 100 : 0;
           const winsWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => {
-            return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
-          }, 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => {
-            return sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position));
-          }, 0) / lossesWithPosition.length : 0;
+          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const averagePositionWeighted = totalInvested / tradesWithPosition.length;
-          const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
-          const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
           document.getElementById('avgWin').textContent = `${formatNumber(avgWinAmount, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)`;
           document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
           document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
           document.getElementById('maxLoss').textContent = `${formatNumber(maxLossAmount, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)`;
+          const averagePositionWeighted = totalInvested / tradesWithPosition.length;
+          const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
+          const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
           document.getElementById('expectedValue').textContent = `${formatNumber(expectedValueAmount, true, 0)} (${formatNumber(expectedValuePercentage, false, 2)}%)`;
           document.getElementById('totalReturn').textContent = `${formatNumber(totalReturnAmount, true, 0)} (${formatNumber(totalReturnPercentage, false, 2)}%)`;
         } else {
@@ -1176,12 +1192,23 @@
         const unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         const totalOpCapInput = document.getElementById('totalOperatingCapital').value;
-        const totalOpCap = parseFloat(totalOpCapInput);
+        const opCap = parseFloat(totalOpCapInput);
         let unclosedPercentage = 0;
-        if (!isNaN(totalOpCap) && totalOpCap > 0) {
-          unclosedPercentage = (unclosedPositionSum / totalOpCap) * 100;
+        if (!isNaN(opCap) && opCap > 0) {
+          unclosedPercentage = (unclosedPositionSum / opCap) * 100;
         }
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
+
+        // 資金績效統計
+        let roi = 0;
+        if (!isNaN(opCap) && opCap > 0) {
+          roi = (totalReturnAmount / opCap) * 100;
+        }
+        let freeCapital = opCap - unclosedPositionSum;
+        let freePercentage = opCap > 0 ? (freeCapital / opCap) * 100 : 0;
+        document.getElementById('roi').textContent = formatNumberNoSign(roi, 2) + "%";
+        document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0) + " (" + formatNumberNoSign(freePercentage, 2) + "%)";
+        document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
 
         const expectedValueElem = document.getElementById('expectedValue');
         if (expectedValueElem.textContent.indexOf('+') !== -1) {
