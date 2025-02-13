@@ -301,15 +301,12 @@
                     <button class="button" onclick="openAddStrategyModal()">
                         新增
                     </button>
-                    <!-- 匯出策略按鈕 -->
                     <button class="button" onclick="exportStrategiesToExcel()">
                         匯出
                     </button>
-                    <!-- 匯入策略按鈕 -->
                     <button class="button" onclick="document.getElementById('importStrategiesInput').click()">
                         匯入
                     </button>
-                    <!-- 隱藏的文件輸入元素 -->
                     <input type="file" id="importStrategiesInput" accept=".xlsx, .xls" class="hidden" onchange="importStrategiesFromExcel(event)">
                 </div>
             </div>
@@ -341,15 +338,12 @@
                     <button class="button" onclick="openAddExternalConditionModal()">
                         新增
                     </button>
-                    <!-- 匯出外部條件按鈕 -->
                     <button class="button" onclick="exportExternalConditionsToExcel()">
                         匯出
                     </button>
-                    <!-- 匯入外部條件按鈕 -->
                     <button class="button" onclick="document.getElementById('importExternalConditionsInput').click()">
                         匯入
                     </button>
-                    <!-- 隱藏的文件輸入元素 -->
                     <input type="file" id="importExternalConditionsInput" accept=".xlsx, .xls" class="hidden" onchange="importExternalConditionsFromExcel(event)">
                 </div>
             </div>
@@ -375,10 +369,8 @@
                 <h3 class="text-lg font-medium mb-4">新增</h3>
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyName">策略名稱</label>
                 <input type="text" id="newStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyDescription">描述</label>
                 <textarea id="newStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
-                
                 <div class="flex justify-end">
                     <button class="button mr-2" onclick="closeAddStrategyModal()">取消</button>
                     <button class="button" onclick="addStrategy()">新增</button>
@@ -391,13 +383,10 @@
             <div class="bg-white p-6 rounded-lg w-96">
                 <h3 class="text-lg font-medium mb-4">編輯策略</h3>
                 <input type="hidden" id="editStrategyId">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyName">策略名稱</label>
                 <input type="text" id="editStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyDescription">描述</label>
                 <textarea id="editStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
-                
                 <div class="flex justify-end">
                     <button class="button mr-2" onclick="closeEditStrategyModal()">取消</button>
                     <button class="button" onclick="updateStrategy()">更新</button>
@@ -411,10 +400,8 @@
                 <h3 class="text-lg font-medium mb-4">新增</h3>
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">外部條件名稱</label>
                 <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionDescription">描述</label>
                 <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
-                
                 <div class="flex justify-end">
                     <button class="button mr-2" onclick="closeAddExternalConditionModal()">取消</button>
                     <button class="button" onclick="addExternalCondition()">新增</button>
@@ -427,13 +414,10 @@
             <div class="bg-white p-6 rounded-lg w-96">
                 <h3 class="text-lg font-medium mb-4">編輯外部條件</h3>
                 <input type="hidden" id="editExternalConditionId">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">外部條件名稱</label>
                 <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
-                
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionDescription">描述</label>
                 <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
-                
                 <div class="flex justify-end">
                     <button class="button mr-2" onclick="closeEditExternalConditionModal()">取消</button>
                     <button class="button" onclick="updateExternalCondition()">更新</button>
@@ -441,21 +425,14 @@
             </div>
         </div>
 
-        <!-- 交易記錄區域 -->
+        <!-- 交易記錄區塊 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
                 <div class="flex space-x-2">
-                    <button class="button" onclick="addTrade()">
-                        添加交易
-                    </button>
-                    <button class="button" onclick="exportToExcel()">
-                        匯出
-                    </button>
-                    <button class="button" onclick="document.getElementById('importExcelInput').click()">
-                        匯入
-                    </button>
-                    <!-- 隱藏的文件輸入元素 -->
+                    <button class="button" onclick="addTrade()">添加交易</button>
+                    <button class="button" onclick="exportToExcel()">匯出</button>
+                    <button class="button" onclick="document.getElementById('importExcelInput').click()">匯入</button>
                     <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
                 </div>
             </div>
@@ -510,14 +487,16 @@
             // 全局變數：下一個交易ID
             let nextTradeId = 1;
 
-            // 格式化數字函式
+            // 格式化數字
             function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
                 const number = parseFloat(value);
                 if (isNaN(number)) return '0';
                 if (isMoneyAmount) {
-                    return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
+                    return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+                                      : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
                 }
-                return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
+                return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+                                  : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
             }
 
             function formatNumberNoSign(value, decimalPlaces = 2) {
@@ -532,7 +511,15 @@
                 return number.toLocaleString();
             }
 
-            // 保存數據到 localStorage
+            // 新增：格式化金額函式，使用 $ 符號
+            function formatMoney(value, decimalPlaces = 0) {
+                const number = parseFloat(value);
+                if (isNaN(number)) return '$0';
+                return number >= 0 ? `$${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+                                   : `-$${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
+            }
+
+            // 保存數據
             function saveData() {
                 localStorage.setItem('trades', JSON.stringify(trades));
                 saveStrategies();
@@ -604,11 +591,9 @@
                         return trade;
                     });
                 }
-
                 if (trades.length === 0) {
                     trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
                 }
-
                 selectedStrategyFilter = null;
                 selectedExternalConditionFilter = null;
                 selectedStartDateFilter = null;
@@ -617,12 +602,10 @@
                 document.getElementById('externalConditionFilter').value = '';
                 document.getElementById('startDateFilter').value = '';
                 document.getElementById('endDateFilter').value = '';
-
                 renderStrategies();
                 renderExternalConditions();
                 renderTrades();
                 calculateStats();
-
                 applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
             }
 
@@ -705,7 +688,6 @@
             function renderTrades() {
                 const tradesList = document.getElementById('tradesList');
                 tradesList.innerHTML = '';
-
                 let filteredTrades = trades;
                 if (selectedStrategyFilter !== null) {
                     filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -721,21 +703,18 @@
                     const endDate = new Date(selectedEndDateFilter);
                     filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
                 }
-
                 const tradesWithOpenDate = filteredTrades.filter(trade => trade.openDate !== '');
                 const sortedAscending = [...tradesWithOpenDate].sort((a, b) => new Date(a.openDate) - new Date(b.openDate));
                 const transactionNumbers = new Map();
                 sortedAscending.forEach((trade, index) => {
                     transactionNumbers.set(trade.id, index + 1);
                 });
-
                 filteredTrades.sort((a, b) => {
                     if (a.openDate === '' && b.openDate === '') return 0;
                     if (a.openDate === '') return -1;
                     if (b.openDate === '') return 1;
                     return new Date(b.openDate) - new Date(a.openDate);
                 });
-
                 tradesList.innerHTML = filteredTrades.map((trade, index) => {
                     const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
                     let holdingDays = '';
@@ -1125,7 +1104,7 @@
                 return date.toISOString().split('T')[0];
             }
 
-            // 計算統計數據，包括新增「部位統計」
+            // 計算統計數據，包含部位統計
             function calculateStats() {
                 let validTrades = trades.filter(trade => 
                     trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
@@ -1155,9 +1134,8 @@
                     document.getElementById('expectedValue').textContent = '0.0%';
                     document.getElementById('totalReturn').textContent = '0%';
                     removeColorClasses(['expectedValue', 'totalReturn']);
-                    // 同時清空部位統計
-                    document.getElementById('avgWinningPosition').textContent = '0';
-                    document.getElementById('avgLosingPosition').textContent = '0';
+                    document.getElementById('avgWinningPosition').textContent = '$0';
+                    document.getElementById('avgLosingPosition').textContent = '$0';
                     return;
                 }
                 const results = validTrades.map(trade => parseFloat(trade.returnRate));
@@ -1170,7 +1148,6 @@
                 const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
                 const riskRewardRatio = avgLossRate !== 0 ? (avgWinRate / Math.abs(avgLossRate)) : 0;
                 const totalReturnRate = results.reduce((sum, rate) => sum + rate, 0);
-
                 // 以部位金額加權計算
                 const tradesWithPosition = trades.filter(trade =>
                     trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
@@ -1193,10 +1170,8 @@
                     const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
                     const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
                     const averagePositionWeighted = totalInvested / tradesWithPosition.length;
-                    // 計算每筆交易加權後的平均獲利/虧損金額
                     const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
                     const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
-
                     document.getElementById('avgWin').textContent = `${formatNumber(avgWinAmount, true, 0)} (${formatNumber(avgWinRate, false, 2)}%)`;
                     document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
                     document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
@@ -1211,12 +1186,10 @@
                     document.getElementById('expectedValue').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
                     document.getElementById('totalReturn').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
                 }
-
                 document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
                 document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
                 document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio.toFixed(2));
-
-                // 新增部位統計：獲利交易與虧損交易的平均部位
+                // 新增部位統計：計算獲利交易與虧損交易的平均部位金額
                 const winningTrades = trades.filter(trade => 
                     trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
                     trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1227,9 +1200,8 @@
                 );
                 const avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
                 const avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
-                document.getElementById('avgWinningPosition').textContent = formatNumber(avgWinningPosition, true, 0);
-                document.getElementById('avgLosingPosition').textContent = formatNumber(avgLosingPosition, true, 0);
-
+                document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
+                document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
                 const expectedValueElem = document.getElementById('expectedValue');
                 if (expectedValueElem.textContent.indexOf('+') !== -1) {
                     expectedValueElem.classList.add('text-red-500');
@@ -1240,7 +1212,6 @@
                 } else {
                     expectedValueElem.classList.remove('text-red-500', 'text-green-500');
                 }
-
                 const totalReturnElem = document.getElementById('totalReturn');
                 if (totalReturnElem.textContent.indexOf('+') !== -1) {
                     totalReturnElem.classList.add('text-red-500');
