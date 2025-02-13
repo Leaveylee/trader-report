@@ -17,6 +17,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- 引入 Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- 引入 Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入 SheetJS (xlsx) CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
@@ -270,6 +272,10 @@
           <span id="capitalUsed" class="font-medium">$0 (0%)</span>
         </div>
       </div>
+      <!-- 新增圓餅圖 -->
+      <div class="mt-4">
+        <canvas id="capitalPieChart"></canvas>
+      </div>
     </div>
 
     <!-- 策略管理區塊 -->
@@ -454,6 +460,9 @@
       let selectedEndDateFilter = null;
       // 全局變數：下一個交易ID
       let nextTradeId = 1;
+      
+      // 全局變數：圓餅圖物件
+      let capitalPieChart = null;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
         const number = parseFloat(value);
@@ -508,7 +517,7 @@
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
       }
 
-      // 保存總操作資金到 localStorage
+      // 保存總操作資金
       function saveTotalOperatingCapital() {
         const opCap = document.getElementById('totalOperatingCapital').value;
         localStorage.setItem('totalOperatingCapital', opCap);
@@ -1084,7 +1093,31 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 計算統計數據，包括新增「資金績效統計」
+      // 更新資金績效圓餅圖
+      function updateCapitalPieChart(freeCapital, capitalUsed) {
+        const ctx = document.getElementById('capitalPieChart').getContext('2d');
+        if (capitalPieChart) {
+          capitalPieChart.data.datasets[0].data = [freeCapital, capitalUsed];
+          capitalPieChart.update();
+        } else {
+          capitalPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: ['自由資金', '占用資金'],
+              datasets: [{
+                data: [freeCapital, capitalUsed],
+                backgroundColor: ['#34D399', '#F87171'] // 自由資金綠色，占用資金紅色
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          });
+        }
+      }
+
+      // 計算統計數據，包括未平倉統計與資金績效統計
       function calculateStats() {
         let validTrades = trades.filter(trade => 
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
@@ -1121,6 +1154,7 @@
           document.getElementById('roi').textContent = '0%';
           document.getElementById('freeCapital').textContent = '$0 (0%)';
           document.getElementById('capitalUsed').textContent = '$0 (0%)';
+          updateCapitalPieChart(0, 0);
           return;
         }
         const results = validTrades.map(trade => parseFloat(trade.returnRate));
@@ -1154,6 +1188,7 @@
           document.getElementById('avgLoss').textContent = `${formatNumber(avgLossAmount, true, 0)} (${formatNumber(avgLossRate, false, 2)}%)`;
           document.getElementById('maxWin').textContent = `${formatNumber(maxWinAmount, true, 0)} (${formatNumber(maxWinRate, false, 2)}%)`;
           document.getElementById('maxLoss').textContent = `${formatNumber(maxLossAmount, true, 0)} (${formatNumber(maxLossRate, false, 2)}%)`;
+          const totalInvested = tradesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0);
           const averagePositionWeighted = totalInvested / tradesWithPosition.length;
           const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
           const expectedValuePercentage = averagePositionWeighted > 0 ? (expectedValueAmount / averagePositionWeighted) * 100 : 0;
@@ -1209,6 +1244,9 @@
         document.getElementById('roi').textContent = formatNumberNoSign(roi, 2) + "%";
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0) + " (" + formatNumberNoSign(freePercentage, 2) + "%)";
         document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
+
+        // 更新圓餅圖
+        updateCapitalPieChart(freeCapital, unclosedPositionSum);
 
         const expectedValueElem = document.getElementById('expectedValue');
         if (expectedValueElem.textContent.indexOf('+') !== -1) {
