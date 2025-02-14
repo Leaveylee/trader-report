@@ -459,10 +459,10 @@
         const number = parseFloat(value);
         if (isNaN(number)) return '0';
         if (isMoneyAmount) {
-          return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+          return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
                             : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
         }
-        return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+        return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
                           : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
       }
 
@@ -482,7 +482,7 @@
       function formatMoney(value, decimalPlaces = 0) {
         const number = parseFloat(value);
         if (isNaN(number)) return '$0';
-        return number >= 0 ? `$${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}` 
+        return number >= 0 ? `$${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
                            : `-$${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
       }
 
@@ -1084,9 +1084,12 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 計算統計數據：閉倉交易（有 returnRate）與未平倉交易分開計算
+      // 計算統計數據：分閉倉與未平倉分別計算
       function calculateStats() {
-        // 依照篩選條件計算閉倉交易（有 returnRate 的）
+        // 先取得總操作資金，確保後續均可使用
+        const opCap = parseFloat(document.getElementById('totalOperatingCapital').value);
+
+        // 閉倉交易：有 returnRate 的交易
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
         if (selectedStrategyFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -1103,7 +1106,6 @@
           closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
         
-        // 若無閉倉交易則重置部分顯示（但仍保留未平倉統計）
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1119,18 +1121,16 @@
           const wins = results.filter(result => result > 0);
           const losses = results.filter(result => result < 0);
           const winRate = (wins.length / results.length) * 100;
-          // 這裡的 avgWinRate、avgLossRate、maxWinRate、maxLossRate 為參考百分比，不作顯示
           const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
           const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 將閉倉交易中有部位資料的部分進一步篩選（依篩選條件）
+          // 從閉倉交易中篩選出有部位資料的交易
           let closedTradesWithPosition = closedTrades.filter(trade =>
             trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
           );
           let totalReturnAmount = 0;
-          const opCap = parseFloat(document.getElementById('totalOperatingCapital').value);
           if (closedTradesWithPosition.length > 0) {
             totalReturnAmount = closedTradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
             let totalReturnPercentage = opCap > 0 ? (totalReturnAmount / opCap) * 100 : 0;
@@ -1157,7 +1157,7 @@
           }
         }
 
-        // 未平倉統計：使用所有交易中符合篩選條件（不檢查 returnRate）的未平倉交易
+        // 未平倉統計：從所有交易中過濾符合條件的未平倉交易（openDate 有值且 closeDate 為空或僅空白）
         let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
         if (selectedStrategyFilter !== null) {
           unclosedTrades = unclosedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -1185,7 +1185,10 @@
         // 資金績效統計
         let roi = 0;
         if (!isNaN(opCap) && opCap > 0) {
-          roi = (totalReturnAmount / opCap) * 100;
+          // ROI 以閉倉交易總回報計算
+          roi = (closedTrades.length > 0 ? (closedTrades.reduce((sum, trade) => {
+            return sum + (trade.position !== '' && !isNaN(parseFloat(trade.position)) ? parseFloat(trade.returnRate) / 100 * parseFloat(trade.position) : 0);
+          }, 0)) : 0) / opCap * 100;
         }
         let freeCapital = opCap - unclosedPositionSum;
         let freePercentage = opCap > 0 ? (freeCapital / opCap) * 100 : 0;
