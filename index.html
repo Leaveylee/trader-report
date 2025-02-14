@@ -251,7 +251,7 @@
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">未平倉部位總額：</span>
-          <span id="unclosedPositionTotal" class="font-medium">$0 (0%)</span>
+          <span id="unclosedPositionTotal" class="font-medium">$0</span>
         </div>
       </div>
     </div>
@@ -262,15 +262,15 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="flex justify-between">
           <span class="text-gray-600">總資金回報率 (ROI)：</span>
-          <span id="roi" class="font-medium">0%</span>
+          <span id="roi" class="font-medium">0</span>
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">自由資金：</span>
-          <span id="freeCapital" class="font-medium">$0 (0%)</span>
+          <span id="freeCapital" class="font-medium">$0</span>
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">占用資金：</span>
-          <span id="capitalUsed" class="font-medium">$0 (0%)</span>
+          <span id="capitalUsed" class="font-medium">$0</span>
         </div>
       </div>
     </div>
@@ -1089,8 +1089,8 @@
 
       // 計算統計數據：
       // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
-      // 2. 以 currentCapital 作為百分比基礎計算期望值、總報酬、損益統計、部位統計、未平倉統計
-      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算
+      // 2. 各項績效數值僅顯示絕對金額，不再附百分比
+      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算，但僅顯示數值（不附 % 符號）
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1130,12 +1130,12 @@
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
           document.getElementById('riskRewardRatio').textContent = '0';
-          document.getElementById('avgWin').textContent = '+0';
-          document.getElementById('avgLoss').textContent = '-0';
-          document.getElementById('maxWin').textContent = '+0';
-          document.getElementById('maxLoss').textContent = '-0';
-          document.getElementById('expectedValue').textContent = '0';
-          document.getElementById('totalReturn').textContent = '0';
+          document.getElementById('avgWin').textContent = formatMoney(0, 0);
+          document.getElementById('avgLoss').textContent = formatMoney(0, 0);
+          document.getElementById('maxWin').textContent = formatMoney(0, 0);
+          document.getElementById('maxLoss').textContent = formatMoney(0, 0);
+          document.getElementById('expectedValue').textContent = formatMoney(0, 0);
+          document.getElementById('totalReturn').textContent = formatMoney(0, 0);
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1146,7 +1146,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 以有部位資料的閉倉交易計算百分比數值，以 currentCapital 為基礎
+          // 以有部位資料的閉倉交易計算各項績效
           let totalReturnPercentage = currentCapital > 0 ? (totalReturnAmount / currentCapital) * 100 : 0;
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
@@ -1157,42 +1157,18 @@
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-          let expectedValuePercentage = currentCapital > 0 ? (expectedValueAmount / currentCapital) * 100 : 0;
 
-          document.getElementById('expectedValue').textContent = `${formatMoney(expectedValueAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign(expectedValuePercentage, 2) : '0.00'}%)`;
-          document.getElementById('totalReturn').textContent = `${formatMoney(totalReturnAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign(totalReturnPercentage, 2) : '0.00'}%)`;
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          document.getElementById('avgWin').textContent = `${formatMoney(avgWinAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign((avgWinAmount / currentCapital) * 100, 2) : '0.00'}%)`;
-          document.getElementById('avgLoss').textContent = `${formatMoney(avgLossAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign((Math.abs(avgLossAmount) / currentCapital) * 100, 2) : '0.00'}%)`;
-          document.getElementById('maxWin').textContent = `${formatMoney(maxWinAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign((maxWinAmount / currentCapital) * 100, 2) : '0.00'}%)`;
-          document.getElementById('maxLoss').textContent = `${formatMoney(maxLossAmount, 0)} (${currentCapital > 0 ? formatNumberNoSign((Math.abs(maxLossAmount) / currentCapital) * 100, 2) : '0.00'}%)`;
+          // 更新各項數值，僅顯示金額，不再附百分比
+          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
+          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
+          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio = (avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0), 2);
+          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
+          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
+          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
 
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-
-          // 依據期望值與總報酬金額正負設定顏色：正數用紅色，負數用綠色
-          const expectedValueElem = document.getElementById('expectedValue');
-          if (expectedValueAmount > 0) {
-            expectedValueElem.classList.add('text-red-500');
-            expectedValueElem.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElem.classList.add('text-green-500');
-            expectedValueElem.classList.remove('text-red-500');
-          } else {
-            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-          }
-
-          const totalReturnElem = document.getElementById('totalReturn');
-          if (totalReturnAmount > 0) {
-            totalReturnElem.classList.add('text-red-500');
-            totalReturnElem.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElem.classList.add('text-green-500');
-            totalReturnElem.classList.remove('text-red-500');
-          } else {
-            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-          }
         }
 
         // 部位統計：以閉倉交易中有部位資料的部分計算
@@ -1228,22 +1204,17 @@
         const unclosedTradeCount = unclosedTrades.length;
         const unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
-        let unclosedPercentage = 0;
-        if (!isNaN(currentCapital) && currentCapital > 0) {
-          unclosedPercentage = (unclosedPositionSum / currentCapital) * 100;
-        }
-        document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
+        document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionSum, 0);
         
-        // 資金績效統計
+        // 資金績效統計：ROI以 (currentCapital - 初始資金)/初始資金 計算；其他僅顯示金額
         let roi = 0;
         if (!isNaN(initialCapital) && initialCapital > 0) {
           roi = ((currentCapital - initialCapital) / initialCapital) * 100;
         }
         let freeCapital = currentCapital - unclosedPositionSum;
-        let freePercentage = currentCapital > 0 ? (freeCapital / currentCapital) * 100 : 0;
-        document.getElementById('roi').textContent = formatNumberNoSign(roi, 2) + "%";
-        document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0) + " (" + formatNumberNoSign(freePercentage, 2) + "%)";
-        document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
+        document.getElementById('roi').textContent = formatNumberNoSign(roi, 2);
+        document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
+        document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0);
       }
 
       function removeColorClasses(elementIds) {
