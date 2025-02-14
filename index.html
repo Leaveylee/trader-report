@@ -1154,11 +1154,33 @@
 
             document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
             document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+
+            // 新增：依據期望值與總報酬金額正負，分別加上紅色(正)或綠色(負)
+            const expectedValueElem = document.getElementById('expectedValue');
+            if (expectedValueAmount > 0) {
+              expectedValueElem.classList.add('text-red-500');
+              expectedValueElem.classList.remove('text-green-500');
+            } else if (expectedValueAmount < 0) {
+              expectedValueElem.classList.add('text-green-500');
+              expectedValueElem.classList.remove('text-red-500');
+            } else {
+              expectedValueElem.classList.remove('text-red-500', 'text-green-500');
+            }
+
+            const totalReturnElem = document.getElementById('totalReturn');
+            if (totalReturnAmount > 0) {
+              totalReturnElem.classList.add('text-red-500');
+              totalReturnElem.classList.remove('text-green-500');
+            } else if (totalReturnAmount < 0) {
+              totalReturnElem.classList.add('text-green-500');
+              totalReturnElem.classList.remove('text-red-500');
+            } else {
+              totalReturnElem.classList.remove('text-red-500', 'text-green-500');
+            }
           }
         }
 
-        // 部位統計：針對閉倉交易中有部位資料的部分進行統計
-        // 改為使用 closedTrades（而非未定義的 validTrades）
+        // 部位統計：針對閉倉交易中有部位資料的部分
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1172,7 +1194,7 @@
         document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
         document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
 
-        // 未平倉統計：從所有交易中過濾符合條件的未平倉交易（openDate 有值且 closeDate 為空或僅空白）
+        // 未平倉統計：從所有交易中過濾符合條件的未平倉交易
         let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
         if (selectedStrategyFilter !== null) {
           unclosedTrades = unclosedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -1209,27 +1231,6 @@
         document.getElementById('roi').textContent = formatNumberNoSign(roi, 2) + "%";
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0) + " (" + formatNumberNoSign(freePercentage, 2) + "%)";
         document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0) + " (" + formatNumberNoSign(unclosedPercentage, 2) + "%)";
-        
-        const expectedValueElem = document.getElementById('expectedValue');
-        if (expectedValueElem.textContent.indexOf('+') !== -1) {
-          expectedValueElem.classList.add('text-red-500');
-          expectedValueElem.classList.remove('text-green-500');
-        } else if (expectedValueElem.textContent.indexOf('-') !== -1) {
-          expectedValueElem.classList.add('text-green-500');
-          expectedValueElem.classList.remove('text-red-500');
-        } else {
-          expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-        }
-        const totalReturnElem = document.getElementById('totalReturn');
-        if (totalReturnElem.textContent.indexOf('+') !== -1) {
-          totalReturnElem.classList.add('text-red-500');
-          totalReturnElem.classList.remove('text-green-500');
-        } else if (totalReturnElem.textContent.indexOf('-') !== -1) {
-          totalReturnElem.classList.add('text-green-500');
-          totalReturnElem.classList.remove('text-red-500');
-        } else {
-          totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-        }
       }
 
       function removeColorClasses(elementIds) {
