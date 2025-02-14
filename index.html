@@ -1086,7 +1086,7 @@
 
       // 計算統計數據：分閉倉與未平倉分別計算
       function calculateStats() {
-        // 先取得總操作資金，確保後續均可使用
+        // 先取得總操作資金
         const opCap = parseFloat(document.getElementById('totalOperatingCapital').value);
 
         // 閉倉交易：有 returnRate 的交易
@@ -1157,6 +1157,21 @@
           }
         }
 
+        // 部位統計：針對閉倉交易中有部位資料的部分進行統計
+        // 改為使用 closedTrades（而非未定義的 validTrades）
+        const winningTrades = closedTrades.filter(trade => 
+          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
+          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
+        );
+        const losingTrades = closedTrades.filter(trade => 
+          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
+          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
+        );
+        const avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
+        const avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
+        document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
+        document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
+
         // 未平倉統計：從所有交易中過濾符合條件的未平倉交易（openDate 有值且 closeDate 為空或僅空白）
         let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
         if (selectedStrategyFilter !== null) {
@@ -1185,7 +1200,6 @@
         // 資金績效統計
         let roi = 0;
         if (!isNaN(opCap) && opCap > 0) {
-          // ROI 以閉倉交易總回報計算
           roi = (closedTrades.length > 0 ? (closedTrades.reduce((sum, trade) => {
             return sum + (trade.position !== '' && !isNaN(parseFloat(trade.position)) ? parseFloat(trade.returnRate) / 100 * parseFloat(trade.position) : 0);
           }, 0)) : 0) / opCap * 100;
