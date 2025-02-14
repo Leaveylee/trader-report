@@ -188,14 +188,12 @@
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
             <span class="text-gray-700">期望值：</span>
-            <!-- 顯示期望值的金額及佔總操作資金百分比 -->
             <span id="expectedValue" class="font-bold text-lg">0</span>
           </div>
         </div>
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
             <span class="text-gray-700">總報酬：</span>
-            <!-- 顯示總報酬的金額及佔總操作資金百分比 -->
             <span id="totalReturn" class="font-bold text-lg">0</span>
           </div>
         </div>
@@ -205,23 +203,19 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
-            <!-- 顯示平均獲利金額及佔總操作資金百分比 -->
             <span id="avgWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損：</span>
-            <!-- 顯示平均虧損金額及佔總操作資金百分比 -->
             <span id="avgLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大獲利：</span>
-            <!-- 顯示最大獲利金額及佔總操作資金百分比 -->
             <span id="maxWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大虧損：</span>
-            <!-- 顯示最大虧損金額及佔總操作資金百分比 -->
             <span id="maxLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
@@ -1090,28 +1084,27 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 計算統計數據，所有計算均基於目前的篩選條件 validTrades
+      // 計算統計數據：閉倉交易（有 returnRate）與未平倉交易分開計算
       function calculateStats() {
-        // 依據篩選條件計算有效交易
-        let validTrades = trades.filter(trade => 
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
-        );
+        // 依照篩選條件計算閉倉交易（有 returnRate 的）
+        let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
         if (selectedStrategyFilter !== null) {
-          validTrades = validTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
         if (selectedExternalConditionFilter !== null) {
-          validTrades = validTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+          closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
         }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
-          validTrades = validTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
         }
         if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
           const endDate = new Date(selectedEndDateFilter);
-          validTrades = validTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
-        // 若無有效交易則重置顯示
-        if (validTrades.length === 0) {
+        
+        // 若無閉倉交易則重置部分顯示（但仍保留未平倉統計）
+        if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
           document.getElementById('riskRewardRatio').textContent = '0';
@@ -1121,90 +1114,65 @@
           document.getElementById('maxLoss').textContent = '-0';
           document.getElementById('expectedValue').textContent = '0';
           document.getElementById('totalReturn').textContent = '0';
-          removeColorClasses(['expectedValue', 'totalReturn']);
-          document.getElementById('avgWinningPosition').textContent = '$0';
-          document.getElementById('avgLosingPosition').textContent = '$0';
-          document.getElementById('unclosedTradeCount').textContent = '0';
-          document.getElementById('unclosedPositionTotal').textContent = '$0 (0%)';
-          document.getElementById('roi').textContent = '0%';
-          document.getElementById('freeCapital').textContent = '$0 (0%)';
-          document.getElementById('capitalUsed').textContent = '$0 (0%)';
-          return;
-        }
-        const results = validTrades.map(trade => parseFloat(trade.returnRate));
-        const wins = results.filter(result => result > 0);
-        const losses = results.filter(result => result < 0);
-        const winRate = (wins.length / results.length) * 100;
-        // 這裡的 avgWinRate、avgLossRate、maxWinRate、maxLossRate 為百分比參考，不作後續顯示
-        const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-        const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
-        const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-        const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
-
-        // 使用 validTrades（已過濾）計算有部位資料的交易
-        const tradesWithPosition = validTrades.filter(trade =>
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate))
-        );
-        let totalReturnAmount = 0;
-        // 從總操作資金中取得值
-        const totalOpCapInput = document.getElementById('totalOperatingCapital').value;
-        const opCap = parseFloat(totalOpCapInput);
-        if (tradesWithPosition.length > 0) {
-          totalReturnAmount = tradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
-          // 總報酬以總操作資金的百分比
-          let totalReturnPercentage = opCap > 0 ? (totalReturnAmount / opCap) * 100 : 0;
-          // 平均獲利與平均虧損金額
-          const winsWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
-          const lossesWithPosition = tradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
-          const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          // 期望值：平均每筆交易的回報金額
-          const expectedValueAmount = totalReturnAmount / tradesWithPosition.length;
-          let expectedValuePercentage = opCap > 0 ? (expectedValueAmount / opCap) * 100 : 0;
-          
-          // 更新「分析結果」區塊
-          document.getElementById('expectedValue').textContent = `${formatMoney(expectedValueAmount, 0)} (${opCap > 0 ? formatNumberNoSign(expectedValuePercentage, 2) : '0.00'}%)`;
-          document.getElementById('totalReturn').textContent = `${formatMoney(totalReturnAmount, 0)} (${opCap > 0 ? formatNumberNoSign(totalReturnPercentage, 2) : '0.00'}%)`;
-          // 風報比以平均獲利金額 / 平均虧損金額（取絕對值）
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          // 顯示平均獲利、平均虧損、最大獲利、最大虧損：金額及其佔總操作資金百分比
-          document.getElementById('avgWin').textContent = `${formatMoney(avgWinAmount, 0)} (${opCap > 0 ? formatNumberNoSign((avgWinAmount / opCap) * 100, 2) : '0.00'}%)`;
-          document.getElementById('avgLoss').textContent = `${formatMoney(avgLossAmount, 0)} (${opCap > 0 ? formatNumberNoSign((Math.abs(avgLossAmount) / opCap) * 100, 2) : '0.00'}%)`;
-          document.getElementById('maxWin').textContent = `${formatMoney(maxWinAmount, 0)} (${opCap > 0 ? formatNumberNoSign((maxWinAmount / opCap) * 100, 2) : '0.00'}%)`;
-          document.getElementById('maxLoss').textContent = `${formatMoney(maxLossAmount, 0)} (${opCap > 0 ? formatNumberNoSign((Math.abs(maxLossAmount) / opCap) * 100, 2) : '0.00'}%)`;
         } else {
-          document.getElementById('avgWin').textContent = `(${formatNumber(avgWinRate, false, 2)}%)`;
-          document.getElementById('avgLoss').textContent = `(${formatNumber(avgLossRate, false, 2)}%)`;
-          document.getElementById('maxWin').textContent = `(${formatNumber(maxWinRate, false, 2)}%)`;
-          document.getElementById('maxLoss').textContent = `(${formatNumber(maxLossRate, false, 2)}%)`;
-          document.getElementById('expectedValue').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
-          document.getElementById('totalReturn').textContent = `(${formatNumber(totalReturnRate, false, 2)}%)`;
-          document.getElementById('riskRewardRatio').textContent = '0';
+          const results = closedTrades.map(trade => parseFloat(trade.returnRate));
+          const wins = results.filter(result => result > 0);
+          const losses = results.filter(result => result < 0);
+          const winRate = (wins.length / results.length) * 100;
+          // 這裡的 avgWinRate、avgLossRate、maxWinRate、maxLossRate 為參考百分比，不作顯示
+          const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
+          const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
+          const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
+          const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
+
+          // 將閉倉交易中有部位資料的部分進一步篩選（依篩選條件）
+          let closedTradesWithPosition = closedTrades.filter(trade =>
+            trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
+          );
+          let totalReturnAmount = 0;
+          const opCap = parseFloat(document.getElementById('totalOperatingCapital').value);
+          if (closedTradesWithPosition.length > 0) {
+            totalReturnAmount = closedTradesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
+            let totalReturnPercentage = opCap > 0 ? (totalReturnAmount / opCap) * 100 : 0;
+            const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
+            const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
+            const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+            const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
+            const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+            const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+            const expectedValueAmount = totalReturnAmount / closedTradesWithPosition.length;
+            let expectedValuePercentage = opCap > 0 ? (expectedValueAmount / opCap) * 100 : 0;
+
+            document.getElementById('expectedValue').textContent = `${formatMoney(expectedValueAmount, 0)} (${opCap > 0 ? formatNumberNoSign(expectedValuePercentage, 2) : '0.00'}%)`;
+            document.getElementById('totalReturn').textContent = `${formatMoney(totalReturnAmount, 0)} (${opCap > 0 ? formatNumberNoSign(totalReturnPercentage, 2) : '0.00'}%)`;
+            var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
+            document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
+            document.getElementById('avgWin').textContent = `${formatMoney(avgWinAmount, 0)} (${opCap > 0 ? formatNumberNoSign((avgWinAmount / opCap) * 100, 2) : '0.00'}%)`;
+            document.getElementById('avgLoss').textContent = `${formatMoney(avgLossAmount, 0)} (${opCap > 0 ? formatNumberNoSign((Math.abs(avgLossAmount) / opCap) * 100, 2) : '0.00'}%)`;
+            document.getElementById('maxWin').textContent = `${formatMoney(maxWinAmount, 0)} (${opCap > 0 ? formatNumberNoSign((maxWinAmount / opCap) * 100, 2) : '0.00'}%)`;
+            document.getElementById('maxLoss').textContent = `${formatMoney(maxLossAmount, 0)} (${opCap > 0 ? formatNumberNoSign((Math.abs(maxLossAmount) / opCap) * 100, 2) : '0.00'}%)`;
+
+            document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
+            document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+          }
         }
 
-        document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-        document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-
-        // 部位統計，使用 validTrades
-        const winningTrades = validTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
-        );
-        const losingTrades = validTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
-        );
-        const avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
-        const avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
-        document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
-        document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
-
-        // 未平倉統計（依然以全體有效交易 validTrades 計算）
-        const unclosedTrades = validTrades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
+        // 未平倉統計：使用所有交易中符合篩選條件（不檢查 returnRate）的未平倉交易
+        let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
+        if (selectedStrategyFilter !== null) {
+          unclosedTrades = unclosedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+        }
+        if (selectedExternalConditionFilter !== null) {
+          unclosedTrades = unclosedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+        }
+        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+          const startDate = new Date(selectedStartDateFilter);
+          unclosedTrades = unclosedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+        }
+        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+          const endDate = new Date(selectedEndDateFilter);
+          unclosedTrades = unclosedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+        }
         const unclosedTradeCount = unclosedTrades.length;
         const unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
