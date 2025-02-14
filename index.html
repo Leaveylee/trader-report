@@ -1093,11 +1093,53 @@
         return date.toISOString().split('T')[0];
       }
 
+      // 新增 MDD 計算函式：以閉倉且有部位資料的交易，依照平倉日期分組，
+      // 對同一天的交易採最佳排序（先計算正向交易，再扣除負向交易），模擬日累進權益曲線，
+      // 計算權益最高值與當天結束權益的差值，取其最大值，再以該段最高權益作分母計算百分比。
+      function calculateMDD(initialCapital, tradesWithPosition) {
+        // 只考慮有平倉日期的交易
+        let groups = {};
+        tradesWithPosition.forEach(trade => {
+          if (trade.closeDate && trade.closeDate.trim() !== '') {
+            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
+            groups[trade.closeDate].push(trade);
+          }
+        });
+        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+        let equity = initialCapital;
+        let peakEquity = initialCapital;
+        let maxDrawdown = 0;
+        dates.forEach(date => {
+          let groupTrades = groups[date];
+          let profitSum = 0, lossSum = 0;
+          groupTrades.forEach(trade => {
+            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
+            if (p > 0) profitSum += p;
+            else lossSum += p; // p為負值
+          });
+          let dayPeak = equity + profitSum;  // 最佳情境：先拿到所有盈利
+          if (dayPeak > peakEquity) {
+            peakEquity = dayPeak;
+          }
+          let dayEnd = equity + profitSum + lossSum;
+          equity = dayEnd;  // 更新隔日的起始權益
+          let drawdown = peakEquity - equity;
+          if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
+        });
+        let mddPercent = 0;
+        if (peakEquity > 0) {
+          mddPercent = (maxDrawdown / peakEquity) * 100;
+        }
+        return mddPercent;
+      }
+
       // 計算統計數據：
       // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
       // 2. 各項績效數值僅顯示絕對金額（不附百分比），但期望值與總報酬根據正負分別顯示紅/綠色
       // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算（僅顯示數值，不附 % 符號）
-      // 4. 新增最大交易回落 (MDD)：依據閉倉交易中有部位資料的權益曲線，計算最大回落百分比
+      // 4. MDD 以百分比方式顯示，計算方式依據上述 calculateMDD()
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1133,27 +1175,8 @@
         // 更新「最新資金水位」顯示欄位
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算最大交易回落 (MDD) 以百分比表示：
-        // 根據所有閉倉且有部位資料的交易（依平倉日排序），模擬權益曲線，計算峰值與當前權益差值，再求其比例
-        let sortedTradesForMDD = closedTradesWithPosition.filter(trade => trade.closeDate && trade.closeDate.trim() !== '').sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
-        let peakEquity = initialCapital;
-        let currentEquity = initialCapital;
-        let maxDrawdown = 0;
-        for (let trade of sortedTradesForMDD) {
-          let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-          currentEquity += profit;
-          if (currentEquity > peakEquity) {
-            peakEquity = currentEquity;
-          }
-          let drawdown = peakEquity - currentEquity;
-          if (drawdown > maxDrawdown) {
-            maxDrawdown = drawdown;
-          }
-        }
-        let mddPercent = 0;
-        if (peakEquity > 0) {
-          mddPercent = (maxDrawdown / peakEquity) * 100;
-        }
+        // 使用 calculateMDD() 計算 MDD%（以百分比表示）
+        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition);
         
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
@@ -1220,7 +1243,7 @@
           } else {
             totalReturnElem.classList.remove('text-red-500', 'text-green-500');
           }
-          // 更新最大交易回落 (MDD) 顯示為百分比，若 MDD% > 0 則以綠色顯示
+          // 更新最大交易回落 (MDD) 顯示為百分比
           const maxDrawdownElem = document.getElementById('maxDrawdown');
           maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
           if (mddPercent > 0) {
