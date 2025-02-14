@@ -1089,8 +1089,8 @@
 
       // 計算統計數據：
       // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
-      // 2. 各項績效數值僅顯示絕對金額，不再附百分比
-      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算，但僅顯示數值（不附 % 符號）
+      // 2. 各項績效數值僅顯示絕對金額（不附百分比），但對於期望值和總報酬，根據數值正負分別套用顏色：正數紅色、負數綠色
+      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算，僅顯示數值（不附 % 符號）
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1146,7 +1146,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 以有部位資料的閉倉交易計算各項績效
+          // 以有部位資料的閉倉交易計算各項績效（僅顯示金額，不附百分比）
           let totalReturnPercentage = currentCapital > 0 ? (totalReturnAmount / currentCapital) * 100 : 0;
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
@@ -1158,10 +1158,10 @@
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
 
-          // 更新各項數值，僅顯示金額，不再附百分比
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio = (avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0), 2);
+          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
+          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
@@ -1169,6 +1169,29 @@
 
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+
+          // 加入顏色效果：數值正的以紅色，負的以綠色
+          const expectedValueElem = document.getElementById('expectedValue');
+          if (expectedValueAmount > 0) {
+            expectedValueElem.classList.add('text-red-500');
+            expectedValueElem.classList.remove('text-green-500');
+          } else if (expectedValueAmount < 0) {
+            expectedValueElem.classList.add('text-green-500');
+            expectedValueElem.classList.remove('text-red-500');
+          } else {
+            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
+          }
+
+          const totalReturnElem = document.getElementById('totalReturn');
+          if (totalReturnAmount > 0) {
+            totalReturnElem.classList.add('text-red-500');
+            totalReturnElem.classList.remove('text-green-500');
+          } else if (totalReturnAmount < 0) {
+            totalReturnElem.classList.add('text-green-500');
+            totalReturnElem.classList.remove('text-red-500');
+          } else {
+            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
+          }
         }
 
         // 部位統計：以閉倉交易中有部位資料的部分計算
