@@ -203,7 +203,7 @@
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
             <span class="text-gray-700">最大交易回落 (MDD)：</span>
-            <span id="maxDrawdown" class="font-bold text-lg">0</span>
+            <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
       </div>
@@ -1097,7 +1097,7 @@
       // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
       // 2. 各項績效數值僅顯示絕對金額（不附百分比），但期望值與總報酬根據正負分別顯示紅/綠色
       // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算（僅顯示數值，不附 % 符號）
-      // 4. 新增最大交易回落 (MDD)：根據閉倉交易依平倉時間排序後計算資金曲線的最大下跌幅度，顯示為金額（若大於0則以綠色顯示）
+      // 4. 新增最大交易回落 (MDD)：依據閉倉交易中有部位資料的權益曲線，計算最大回落百分比
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1133,7 +1133,8 @@
         // 更新「最新資金水位」顯示欄位
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算最大交易回落 (MDD)
+        // 計算最大交易回落 (MDD) 以百分比表示：
+        // 根據所有閉倉且有部位資料的交易（依平倉日排序），模擬權益曲線，計算峰值與當前權益差值，再求其比例
         let sortedTradesForMDD = closedTradesWithPosition.filter(trade => trade.closeDate && trade.closeDate.trim() !== '').sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
         let peakEquity = initialCapital;
         let currentEquity = initialCapital;
@@ -1149,8 +1150,11 @@
             maxDrawdown = drawdown;
           }
         }
+        let mddPercent = 0;
+        if (peakEquity > 0) {
+          mddPercent = (maxDrawdown / peakEquity) * 100;
+        }
         
-        // 若無閉倉交易則重置各項顯示
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1161,7 +1165,7 @@
           document.getElementById('maxLoss').textContent = formatMoney(0, 0);
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
-          document.getElementById('maxDrawdown').textContent = formatMoney(0, 0);
+          document.getElementById('maxDrawdown').textContent = "0%";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1195,7 +1199,7 @@
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
 
-          // 依據期望值與總報酬正負套用顏色：正值紅色，負值綠色
+          // 期望值與總報酬顯示顏色：正數紅色，負數綠色
           const expectedValueElem = document.getElementById('expectedValue');
           if (expectedValueAmount > 0) {
             expectedValueElem.classList.add('text-red-500');
@@ -1206,7 +1210,6 @@
           } else {
             expectedValueElem.classList.remove('text-red-500', 'text-green-500');
           }
-
           const totalReturnElem = document.getElementById('totalReturn');
           if (totalReturnAmount > 0) {
             totalReturnElem.classList.add('text-red-500');
@@ -1217,11 +1220,10 @@
           } else {
             totalReturnElem.classList.remove('text-red-500', 'text-green-500');
           }
-
-          // 更新最大交易回落 (MDD) 顯示與顏色（因回落為損失，若有回落則以綠色顯示）
+          // 更新最大交易回落 (MDD) 顯示為百分比，若 MDD% > 0 則以綠色顯示
           const maxDrawdownElem = document.getElementById('maxDrawdown');
-          maxDrawdownElem.textContent = formatMoney(maxDrawdown, 0);
-          if (maxDrawdown > 0) {
+          maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
+          if (mddPercent > 0) {
             maxDrawdownElem.classList.add('text-green-500');
             maxDrawdownElem.classList.remove('text-red-500');
           } else {
