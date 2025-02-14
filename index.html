@@ -200,6 +200,12 @@
             <span id="totalReturn" class="font-bold text-lg">0</span>
           </div>
         </div>
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">最大交易回落 (MDD)：</span>
+            <span id="maxDrawdown" class="font-bold text-lg">0</span>
+          </div>
+        </div>
       </div>
       <div class="mt-6">
         <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
@@ -1089,8 +1095,9 @@
 
       // 計算統計數據：
       // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
-      // 2. 各項績效數值僅顯示絕對金額（不附百分比），但對於期望值和總報酬，根據數值正負分別套用顏色：正數紅色、負數綠色
-      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算，僅顯示數值（不附 % 符號）
+      // 2. 各項績效數值僅顯示絕對金額（不附百分比），但期望值與總報酬根據正負分別顯示紅/綠色
+      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算（僅顯示數值，不附 % 符號）
+      // 4. 新增最大交易回落 (MDD)：根據閉倉交易依平倉時間排序後計算資金曲線的最大下跌幅度，顯示為金額（若大於0則以綠色顯示）
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1126,6 +1133,24 @@
         // 更新「最新資金水位」顯示欄位
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
+        // 計算最大交易回落 (MDD)
+        let sortedTradesForMDD = closedTradesWithPosition.filter(trade => trade.closeDate && trade.closeDate.trim() !== '').sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
+        let peakEquity = initialCapital;
+        let currentEquity = initialCapital;
+        let maxDrawdown = 0;
+        for (let trade of sortedTradesForMDD) {
+          let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
+          currentEquity += profit;
+          if (currentEquity > peakEquity) {
+            peakEquity = currentEquity;
+          }
+          let drawdown = peakEquity - currentEquity;
+          if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
+        }
+        
+        // 若無閉倉交易則重置各項顯示
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1136,6 +1161,7 @@
           document.getElementById('maxLoss').textContent = formatMoney(0, 0);
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
+          document.getElementById('maxDrawdown').textContent = formatMoney(0, 0);
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1146,7 +1172,6 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 以有部位資料的閉倉交易計算各項績效（僅顯示金額，不附百分比）
           let totalReturnPercentage = currentCapital > 0 ? (totalReturnAmount / currentCapital) * 100 : 0;
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
@@ -1170,7 +1195,7 @@
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
 
-          // 加入顏色效果：數值正的以紅色，負的以綠色
+          // 依據期望值與總報酬正負套用顏色：正值紅色，負值綠色
           const expectedValueElem = document.getElementById('expectedValue');
           if (expectedValueAmount > 0) {
             expectedValueElem.classList.add('text-red-500');
@@ -1191,6 +1216,16 @@
             totalReturnElem.classList.remove('text-red-500');
           } else {
             totalReturnElem.classList.remove('text-red-500', 'text-green-500');
+          }
+
+          // 更新最大交易回落 (MDD) 顯示與顏色（因回落為損失，若有回落則以綠色顯示）
+          const maxDrawdownElem = document.getElementById('maxDrawdown');
+          maxDrawdownElem.textContent = formatMoney(maxDrawdown, 0);
+          if (maxDrawdown > 0) {
+            maxDrawdownElem.classList.add('text-green-500');
+            maxDrawdownElem.classList.remove('text-red-500');
+          } else {
+            maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
         }
 
