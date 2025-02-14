@@ -160,11 +160,14 @@
       </div>
     </div>
 
-    <!-- 初始資金輸入 -->
+    <!-- 初始資金及最新資金水位 -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">初始資金</label>
-      <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
-      <div class="text-sm text-gray-500 mt-1">此數值作為期初資金，後續每筆閉倉交易盈虧會累計至最新資金水位。</div>
+      <div class="flex items-center space-x-4">
+        <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
+        <span id="currentCapitalDisplay" class="font-bold text-lg text-blue-500">最新資金水位：$0</span>
+      </div>
+      <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
     </div>
 
     <!-- 分析結果區塊 -->
@@ -584,7 +587,7 @@
         renderStrategies();
         renderExternalConditions();
         renderTrades();
-        loadTotalOperatingCapital(); // 先載入初始資金
+        loadTotalOperatingCapital(); // 載入初始資金
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
       }
@@ -1085,9 +1088,9 @@
       }
 
       // 計算統計數據：
-      // 1. 首先以初始資金與閉倉交易累計盈虧計算出最新資金水位（currentCapital）
-      // 2. 各項績效（期望值、總報酬、損益統計、部位統計、未平倉統計）均以 currentCapital 作為百分比基礎，
-      //    ROI 則以 (currentCapital - 初始資金)/初始資金 來計算
+      // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
+      // 2. 以 currentCapital 作為百分比基礎計算期望值、總報酬、損益統計、部位統計、未平倉統計
+      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算
       function calculateStats() {
         // 取得初始資金
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1109,7 +1112,7 @@
           closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
         
-        // 累計盈虧（僅以有部位資料的閉倉交易計算）
+        // 以有部位資料的閉倉交易計算累計盈虧
         let closedTradesWithPosition = closedTrades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
         );
@@ -1120,8 +1123,9 @@
         }
         // 最新資金水位 = 初始資金 + 累計盈虧
         const currentCapital = initialCapital + totalReturnAmount;
+        // 更新「最新資金水位」顯示欄位
+        document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 若無閉倉交易則重置部分顯示
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1142,8 +1146,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 以有部位資料的閉倉交易計算：
-          // totalReturnAmount 已計算完畢
+          // 以有部位資料的閉倉交易計算百分比數值，以 currentCapital 為基礎
           let totalReturnPercentage = currentCapital > 0 ? (totalReturnAmount / currentCapital) * 100 : 0;
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
@@ -1168,7 +1171,7 @@
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
 
-          // 依據期望值與總報酬金額正負，分別設定顏色：正數用紅色，負數用綠色
+          // 依據期望值與總報酬金額正負設定顏色：正數用紅色，負數用綠色
           const expectedValueElem = document.getElementById('expectedValue');
           if (expectedValueAmount > 0) {
             expectedValueElem.classList.add('text-red-500');
