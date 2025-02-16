@@ -1205,7 +1205,8 @@
       }
       // ------------------------------------------------------------------------------------------------
 
-      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示，包括新增 MFE 與 MAE 統計（以%數表示）
+      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示，
+      // 包括新增 MFE 與 MAE 統計（以百分比表示），以及其標準差
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1324,11 +1325,12 @@
           }
         }
 
-        // 新增：以百分比計算平均 MFE 與平均 MAE（相對於進場價格）
+        // 新增：以百分比計算平均 MFE 與平均 MAE（相對於進場價格），並計算其標準差
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
         let totalMFE = 0, totalMAE = 0;
+        let mfeValues = [], maeValues = [];
         if (tradesWithPrices.length > 0) {
           tradesWithPrices.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
@@ -1344,15 +1346,27 @@
             }
             totalMFE += mfe;
             totalMAE += mae;
+            mfeValues.push(mfe);
+            maeValues.push(mae);
           });
           var avgMFE = totalMFE / tradesWithPrices.length;
           var avgMAE = totalMAE / tradesWithPrices.length;
+          // 計算標準差
+          let sumSqMFE = 0, sumSqMAE = 0;
+          mfeValues.forEach(val => {
+            sumSqMFE += Math.pow(val - avgMFE, 2);
+          });
+          maeValues.forEach(val => {
+            sumSqMAE += Math.pow(val - avgMAE, 2);
+          });
+          var stdMFE = Math.sqrt(sumSqMFE / tradesWithPrices.length);
+          var stdMAE = Math.sqrt(sumSqMAE / tradesWithPrices.length);
         } else {
-          var avgMFE = 0;
-          var avgMAE = 0;
+          var avgMFE = 0, avgMAE = 0;
+          var stdMFE = 0, stdMAE = 0;
         }
-        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
-        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
+        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "% (" + formatNumberNoSign(stdMFE, 2) + "%)";
+        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "% (" + formatNumberNoSign(stdMAE, 2) + "%)";
 
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
