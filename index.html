@@ -178,7 +178,7 @@
       <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
     </div>
 
-    <!-- 分析結果區塊 -->
+    <!-- 分析結果區塊 (不涉及交易方向) -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
       <div class="space-y-4">
@@ -214,43 +214,40 @@
             <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- MFE 與 MAE 統計區塊 -->
-        <div class="mt-6">
-          <div class="grid grid-cols-2 gap-4">
-            <!-- 左側：獲利百分比 -->
-            <div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">平均獲利%：</span>
-                <span id="avgWinPercent" class="font-medium">0%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">獲利% SD：</span>
-                <span id="sdWinPercent" class="font-medium">0%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">獲利% CV：</span>
-                <span id="cvWinPercent" class="font-medium">0</span>
-              </div>
-            </div>
-            <!-- 右側：虧損百分比 -->
-            <div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">平均虧損%：</span>
-                <span id="avgLossPercentDisplay" class="font-medium">0%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">虧損% SD：</span>
-                <span id="sdLossPercent" class="font-medium">0%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">虧損% CV：</span>
-                <span id="cvLossPercent" class="font-medium">0</span>
-              </div>
-            </div>
+        <!-- MFE 統計 -->
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">平均 MFE：</span>
+            <span id="avgMFE" class="font-bold text-lg">0%</span>
+          </div>
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MFE SD：</span>
+            <span id="sdMFE" class="font-bold text-lg">0%</span>
+          </div>
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MFE CV：</span>
+            <span id="cvMFE" class="font-bold text-lg">0</span>
           </div>
         </div>
-        <!-- 損益金額統計 -->
-        <div class="grid grid-cols-2 gap-4 mt-6">
+        <!-- MAE 統計 -->
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">平均 MAE：</span>
+            <span id="avgMAE" class="font-bold text-lg">0%</span>
+          </div>
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MAE SD：</span>
+            <span id="sdMAE" class="font-bold text-lg">0%</span>
+          </div>
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MAE CV：</span>
+            <span id="cvMAE" class="font-bold text-lg">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6">
+        <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
+        <div class="grid grid-cols-2 gap-4">
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
             <span id="avgWin" class="font-medium">0</span>
@@ -258,6 +255,33 @@
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損：</span>
             <span id="avgLoss" class="font-medium">0</span>
+          </div>
+          <div class="col-span-2 divider"></div>
+          <!-- 新增獲利百分比統計 -->
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利%：</span>
+            <span id="avgWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% SD：</span>
+            <span id="sdWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% CV：</span>
+            <span id="cvWinPercent" class="font-medium">0</span>
+          </div>
+          <!-- 新增虧損百分比統計 -->
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損%：</span>
+            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% SD：</span>
+            <span id="sdLossPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% CV：</span>
+            <span id="cvLossPercent" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
           <div class="flex justify-between">
@@ -1252,7 +1276,7 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // MDD%
+        // 計算 MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1266,6 +1290,18 @@
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('maxDrawdown').textContent = "0%";
+          document.getElementById('avgMFE').textContent = "0%";
+          document.getElementById('sdMFE').textContent = "0%";
+          document.getElementById('cvMFE').textContent = "0";
+          document.getElementById('avgMAE').textContent = "0%";
+          document.getElementById('sdMAE').textContent = "0%";
+          document.getElementById('cvMAE').textContent = "0";
+          document.getElementById('avgWinPercent').textContent = "0%";
+          document.getElementById('sdWinPercent').textContent = "0%";
+          document.getElementById('cvWinPercent').textContent = "0";
+          document.getElementById('avgLossPercentDisplay').textContent = "0%";
+          document.getElementById('sdLossPercent').textContent = "0%";
+          document.getElementById('cvLossPercent').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1289,7 +1325,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 更新金額顯示，不附括號
+          // 更新損益統計顯示（不附括號）：
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
@@ -1326,7 +1362,7 @@
           }
         }
 
-        // MFE 與 MAE：以百分比計算平均、標準差、變異係數
+        // 針對 MFE 與 MAE：以百分比計算平均值、標準差與變異係數
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1341,7 +1377,7 @@
             if (trade.direction === "多") {
               mfe = (high - entry) / entry * 100;
               mae = (entry - low) / entry * 100;
-            } else {
+            } else { // 空單：反轉
               mfe = (entry - low) / entry * 100;
               mae = (high - entry) / entry * 100;
             }
@@ -1352,6 +1388,7 @@
           });
           var avgMFE = totalMFE / tradesWithPrices.length;
           var avgMAE = totalMAE / tradesWithPrices.length;
+          // 計算標準差
           let sumSqMFE = 0, sumSqMAE = 0;
           mfeValues.forEach(val => {
             sumSqMFE += Math.pow(val - avgMFE, 2);
@@ -1375,7 +1412,7 @@
         document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
         document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
 
-        // 獲利與虧損百分比：根據閉倉交易的 returnRate
+        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 平均來計算
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
