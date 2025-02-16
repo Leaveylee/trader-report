@@ -129,7 +129,7 @@
   <div class="card">
     <h1 class="text-2xl font-bold text-center mb-8 text-[#B86E52]">交易員報告書</h1>
 
-    <!-- 篩選條件 -->
+    <!-- 篩選條件 (暫不新增交易方向篩選) -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">篩選條件</label>
       <div class="flex space-x-4">
@@ -170,7 +170,7 @@
       <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
     </div>
 
-    <!-- 分析結果區塊 -->
+    <!-- 分析結果區塊 (不涉及交易方向) -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
       <div class="space-y-4">
@@ -212,23 +212,19 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
-            <!-- 這裡會顯示金額與平均獲利% -->
             <span id="avgWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損：</span>
-            <!-- 這裡會顯示金額與平均虧損% -->
             <span id="avgLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大獲利：</span>
-            <!-- 最大獲利後方也會附上百分比 -->
             <span id="maxWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大虧損：</span>
-            <!-- 最大虧損後方也會附上百分比 -->
             <span id="maxLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
@@ -409,7 +405,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 -->
+    <!-- 交易記錄區塊 (新增「交易方向」欄位) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -421,7 +417,7 @@
         </div>
       </div>
       <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、標的名稱、策略名稱、外部條件、開倉日和平倉日
+        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、標的名稱、策略名稱、外部條件、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
       <div class="relative">
         <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
@@ -437,6 +433,7 @@
                 <th class="px-4 py-2 min-w-[100px]">持倉天數</th>
                 <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
                 <th class="px-4 py-2 min-w-[100px]">部位金額</th>
+                <th class="px-4 py-2 min-w-[100px]">交易方向</th>
                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
                 <th class="px-4 py-2 min-w-[150px]">外部條件</th>
@@ -446,7 +443,7 @@
               </tr>
             </thead>
             <tbody id="tradesList">
-              <!-- 交易記錄 -->
+              <!-- 交易記錄將在此動態生成 -->
             </tbody>
           </table>
         </div>
@@ -458,7 +455,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表
+      // 交易記錄列表，新增 "direction" 屬性（預設為 "多"）
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -580,11 +577,25 @@
             if (!trade.description) trade.description = '';
             if (!trade.imageUrl) trade.imageUrl = '';
             if (typeof trade.position === 'undefined') trade.position = '';
+            // 若交易方向未定義，預設為 "多"
+            if (typeof trade.direction === 'undefined') trade.direction = "多";
             return trade;
           });
         }
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
+          trades.push({ 
+            id: nextTradeId++, 
+            returnRate: '', 
+            position: '', 
+            assetName: '', 
+            strategyId: null, 
+            externalConditionId: null, 
+            openDate: '', 
+            closeDate: '', 
+            description: '', 
+            imageUrl: '', 
+            direction: "多" 
+          });
         }
         selectedStrategyFilter = null;
         selectedExternalConditionFilter = null;
@@ -748,6 +759,13 @@
               <td class="border px-4 py-2 min-w-[100px]">
                 <input type="number" value="${trade.position}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${trades.indexOf(trade)}" data-field="position">
               </td>
+              <!-- 新增交易方向欄位 -->
+              <td class="border px-4 py-2 min-w-[100px]">
+                <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="direction">
+                  <option value="多" ${trade.direction === "多" ? "selected" : ""}>多</option>
+                  <option value="空" ${trade.direction === "空" ? "selected" : ""}>空</option>
+                </select>
+              </td>
               <td class="border px-4 py-2 min-w-[150px]">
                 <input type="text" value="${escapeHtml(trade.assetName)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入標的名稱" data-row-index="${trades.indexOf(trade)}" data-field="assetName">
               </td>
@@ -840,6 +858,8 @@
           trades[index].imageUrl = value.trim();
         } else if (field === 'position') {
           trades[index].position = value.trim();
+        } else if (field === 'direction') {
+          trades[index].direction = value;
         }
         calculateStats();
         saveData();
@@ -868,7 +888,8 @@
           openDate: '', 
           closeDate: '',
           description: '', 
-          imageUrl: '' 
+          imageUrl: '',
+          direction: "多"  // 新增預設方向
         };
         trades.unshift(newTrade);
         renderTrades();
@@ -885,7 +906,7 @@
       function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '' });
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
         }
         renderTrades();
         calculateStats();
@@ -1200,7 +1221,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 使用「虧損交易的平均部位」作為分母來計算百分比
+          // 以下部分均以「虧損交易的平均部位」作分母計算百分比
           let losingTradesForPercent = closedTrades.filter(trade => 
             trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
             trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
@@ -1250,7 +1271,7 @@
           }
         }
 
-        // 部位統計
+        // 部位統計：以閉倉交易中有部位資料的部分計算
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1377,6 +1398,7 @@
           "交易ID": trade.id,
           "報酬率 (%)": trade.returnRate,
           "部位金額": trade.position,
+          "交易方向": trade.direction,
           "標的名稱": trade.assetName,
           "策略名稱": getStrategyName(trade.strategyId),
           "外部條件": getExternalConditionName(trade.externalConditionId),
@@ -1432,7 +1454,7 @@
             alert('Excel文件中沒有任何數據。');
             return;
           }
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "交易方向", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
           if (missingFields.length > 0) {
             alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
@@ -1458,6 +1480,7 @@
               id: newTradeId,
               returnRate: item["報酬率 (%)"],
               position: item["部位金額"],
+              direction: item["交易方向"] || "多",
               assetName: item["標的名稱"],
               strategyId: strategy.id,
               externalConditionId: externalCondition.id,
@@ -1902,6 +1925,7 @@
           "交易ID": trade.id,
           "報酬率 (%)": trade.returnRate,
           "部位金額": trade.position,
+          "交易方向": trade.direction,
           "標的名稱": trade.assetName,
           "策略名稱": getStrategyName(trade.strategyId),
           "外部條件": getExternalConditionName(trade.externalConditionId),
