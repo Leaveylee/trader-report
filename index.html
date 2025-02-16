@@ -217,11 +217,11 @@
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
             <span class="text-gray-700">平均 MFE：</span>
-            <span id="avgMFE" class="font-bold text-lg">0</span>
+            <span id="avgMFE" class="font-bold text-lg">0%</span>
           </div>
           <div class="flex-1 text-center">
             <span class="text-gray-700">平均 MAE：</span>
-            <span id="avgMAE" class="font-bold text-lg">0</span>
+            <span id="avgMAE" class="font-bold text-lg">0%</span>
           </div>
         </div>
       </div>
@@ -1205,7 +1205,7 @@
       }
       // ------------------------------------------------------------------------------------------------
 
-      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示，包括新增 MFE 與 MAE 統計
+      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示，包括新增 MFE 與 MAE 統計（以%數表示）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1324,8 +1324,10 @@
           }
         }
 
-        // 新增：計算平均 MFE 與平均 MAE
-        let tradesWithPrices = closedTrades.filter(trade => trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
+        // 新增：以百分比計算平均 MFE 與平均 MAE（相對於進場價格）
+        let tradesWithPrices = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+        );
         let totalMFE = 0, totalMAE = 0;
         if (tradesWithPrices.length > 0) {
           tradesWithPrices.forEach(trade => {
@@ -1334,11 +1336,11 @@
             let low = parseFloat(trade.lowestPrice);
             let mfe = 0, mae = 0;
             if (trade.direction === "多") {
-              mfe = high - entry;
-              mae = entry - low;
-            } else { // 空單
-              mfe = entry - low;
-              mae = high - entry;
+              mfe = (high - entry) / entry * 100;
+              mae = (entry - low) / entry * 100;
+            } else { // 空單：方向反轉
+              mfe = (entry - low) / entry * 100;
+              mae = (high - entry) / entry * 100;
             }
             totalMFE += mfe;
             totalMAE += mae;
@@ -1349,8 +1351,8 @@
           var avgMFE = 0;
           var avgMAE = 0;
         }
-        document.getElementById('avgMFE').textContent = formatMoney(avgMFE, 2);
-        document.getElementById('avgMAE').textContent = formatMoney(avgMAE, 2);
+        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
+        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
 
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
