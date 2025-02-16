@@ -214,6 +214,16 @@
             <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">平均 MFE：</span>
+            <span id="avgMFE" class="font-bold text-lg">0</span>
+          </div>
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">平均 MAE：</span>
+            <span id="avgMAE" class="font-bold text-lg">0</span>
+          </div>
+        </div>
       </div>
       <div class="mt-6">
         <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
@@ -1195,7 +1205,7 @@
       }
       // ------------------------------------------------------------------------------------------------
 
-      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示
+      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示，包括新增 MFE 與 MAE 統計
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1265,7 +1275,6 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 以下部分均以「虧損交易的平均部位」作分母計算百分比
           let losingTradesForPercent = closedTrades.filter(trade => 
             trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
             trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
@@ -1314,6 +1323,34 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
         }
+
+        // 新增：計算平均 MFE 與平均 MAE
+        let tradesWithPrices = closedTrades.filter(trade => trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
+        let totalMFE = 0, totalMAE = 0;
+        if (tradesWithPrices.length > 0) {
+          tradesWithPrices.forEach(trade => {
+            let entry = parseFloat(trade.entryPrice);
+            let high = parseFloat(trade.highestPrice);
+            let low = parseFloat(trade.lowestPrice);
+            let mfe = 0, mae = 0;
+            if (trade.direction === "多") {
+              mfe = high - entry;
+              mae = entry - low;
+            } else { // 空單
+              mfe = entry - low;
+              mae = high - entry;
+            }
+            totalMFE += mfe;
+            totalMAE += mae;
+          });
+          var avgMFE = totalMFE / tradesWithPrices.length;
+          var avgMAE = totalMAE / tradesWithPrices.length;
+        } else {
+          var avgMFE = 0;
+          var avgMAE = 0;
+        }
+        document.getElementById('avgMFE').textContent = formatMoney(avgMFE, 2);
+        document.getElementById('avgMAE').textContent = formatMoney(avgMAE, 2);
 
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
