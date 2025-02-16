@@ -212,21 +212,23 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
-            <!-- 平均獲利後方將增加(平均獲利%) -->
+            <!-- 這裡會顯示金額與平均獲利% -->
             <span id="avgWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損：</span>
-            <!-- 平均虧損後方將增加(平均虧損%) -->
+            <!-- 這裡會顯示金額與平均虧損% -->
             <span id="avgLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大獲利：</span>
+            <!-- 最大獲利後方也會附上百分比 -->
             <span id="maxWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">最大虧損：</span>
+            <!-- 最大虧損後方也會附上百分比 -->
             <span id="maxLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
@@ -1096,9 +1098,9 @@
       }
 
       // ------------------------------------------------------------------------------------------------
-      // calculateMDD() 函式：依據閉倉且有部位資料的交易，
+      // calculateMDD() 函式依據閉倉且有部位資料的交易，
       // 按平倉日分組，同一天內先加總盈利，再扣除虧損，
-      // 模擬當天權益曲線，計算每組的回落百分比，取歷史上最大百分比作為 MDD
+      // 模擬當天權益曲線，並計算每組的回落百分比，取歷史上最大百分比作為 MDD%
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1185,13 +1187,10 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 計算獲利與虧損金額 (以部位金額計算)
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
+          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
@@ -1201,7 +1200,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 新增：以「虧損交易的平均部位」作分母計算平均獲利%和平均虧損%
+          // 使用「虧損交易的平均部位」作為分母來計算百分比
           let losingTradesForPercent = closedTrades.filter(trade => 
             trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
             trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
@@ -1210,12 +1209,14 @@
             losingTradesForPercent.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTradesForPercent.length : 0;
           let avgWinPercent = avgLosingPositionForPercent > 0 ? (avgWinAmount / avgLosingPositionForPercent * 100) : 0;
           let avgLossPercent = avgLosingPositionForPercent > 0 ? (avgLossAmount / avgLosingPositionForPercent * 100) : 0;
+          let maxWinPercent = avgLosingPositionForPercent > 0 ? (maxWinAmount / avgLosingPositionForPercent * 100) : 0;
+          let maxLossPercent = avgLosingPositionForPercent > 0 ? (maxLossAmount / avgLosingPositionForPercent * 100) : 0;
           
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0) + " (" + formatNumberNoSign(avgWinPercent, 2) + "%)";
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0) + " (" + formatNumberNoSign(avgLossPercent, 2) + "%)";
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
-
+          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0) + " (" + formatNumberNoSign(maxWinPercent, 2) + "%)";
+          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0) + " (" + formatNumberNoSign(maxLossPercent, 2) + "%)";
+          
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
 
@@ -1249,7 +1250,7 @@
           }
         }
 
-        // 部位統計：以閉倉交易中有部位資料的部分計算
+        // 部位統計
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1656,12 +1657,6 @@
       }
       
       // ------------------------------------------------------------------------------------------------
-      // 說明：calculateMDD() 函式依據閉倉且有部位資料的交易，
-      // 按平倉日分組，同一天內先加總盈利，再扣除虧損，模擬當天權益曲線，
-      // 並計算每組的回落百分比，取歷史上最大百分比作為 MDD%
-      // ------------------------------------------------------------------------------------------------
-      
-      // ------------------------------------------------------------------------------------------------
       // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1730,7 +1725,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 新增：計算「平均獲利%」和「平均虧損%」，以「虧損交易的平均部位」作為分母
+          // 以「虧損交易的平均部位」作分母計算百分比
           let losingTradesForPercent = closedTrades.filter(trade => 
             trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
             trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
@@ -1739,12 +1734,14 @@
             losingTradesForPercent.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTradesForPercent.length : 0;
           let avgWinPercent = avgLosingPositionForPercent > 0 ? (avgWinAmount / avgLosingPositionForPercent * 100) : 0;
           let avgLossPercent = avgLosingPositionForPercent > 0 ? (avgLossAmount / avgLosingPositionForPercent * 100) : 0;
+          let maxWinPercent = avgLosingPositionForPercent > 0 ? (maxWinAmount / avgLosingPositionForPercent * 100) : 0;
+          let maxLossPercent = avgLosingPositionForPercent > 0 ? (maxLossAmount / avgLosingPositionForPercent * 100) : 0;
           
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0) + " (" + formatNumberNoSign(avgWinPercent, 2) + "%)";
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0) + " (" + formatNumberNoSign(avgLossPercent, 2) + "%)";
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
-
+          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0) + " (" + formatNumberNoSign(maxWinPercent, 2) + "%)";
+          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0) + " (" + formatNumberNoSign(maxLossPercent, 2) + "%)";
+          
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
 
@@ -1778,7 +1775,7 @@
           }
         }
 
-        // 部位統計：以閉倉交易中有部位資料的部分計算
+        // 部位統計
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
