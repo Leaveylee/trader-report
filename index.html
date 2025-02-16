@@ -212,10 +212,12 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
+            <!-- 平均獲利後方將增加(平均獲利%) -->
             <span id="avgWin" class="font-medium">0</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損：</span>
+            <!-- 平均虧損後方將增加(平均虧損%) -->
             <span id="avgLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
@@ -1093,8 +1095,10 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 新增 calculateMDD() 函式，依據平倉日分組，同一天內採最佳排序（先盈利，再扣除虧損），
-      // 模擬日累進權益曲線，並計算每組的回落百分比，取其最大值作為 MDD%
+      // ------------------------------------------------------------------------------------------------
+      // calculateMDD() 函式：依據閉倉且有部位資料的交易，
+      // 按平倉日分組，同一天內先加總盈利，再扣除虧損，
+      // 模擬當天權益曲線，計算每組的回落百分比，取歷史上最大百分比作為 MDD
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1105,7 +1109,6 @@
         });
         let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
         let equity = initialCapital;
-        let historicalPeak = initialCapital;
         let maxDrawdownPercent = 0;
         dates.forEach(date => {
           let groupTrades = groups[date];
@@ -1117,542 +1120,17 @@
           });
           let dayPeak = equity + profitSum;
           let dayEnd = dayPeak + lossSum;
-          // 當天的回落百分比，以當天最高權益作分母
           let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
           if (dayDrawdownPercent > maxDrawdownPercent) {
             maxDrawdownPercent = dayDrawdownPercent;
           }
-          // 更新 equity 為當天結束後的權益
           equity = dayEnd;
-          // 更新歷史最高權益，如果當天最高權益超過過往
-          if (dayPeak > historicalPeak) {
-            historicalPeak = dayPeak;
-          }
         });
-        return maxDrawdownPercent * 100;
+        return maxDrawdownPercent;
       }
+      // ------------------------------------------------------------------------------------------------
 
-      // 計算統計數據：
-      // 1. 以初始資金與閉倉交易累計盈虧計算出最新資金水位 (currentCapital)
-      // 2. 各項績效數值僅顯示絕對金額（不附百分比），但期望值與總報酬根據正負分別顯示紅/綠色
-      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算（僅顯示數值，不附 % 符號）
-      // 4. MDD 以百分比方式顯示，採用 calculateMDD() 的結果
-      function calculateStats() {
-        const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
-        
-        let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
-        if (selectedStrategyFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-        }
-        if (selectedExternalConditionFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
-          const startDate = new Date(selectedStartDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
-        }
-        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
-          const endDate = new Date(selectedEndDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
-        }
-        
-        let closedTradesWithPosition = closedTrades.filter(trade =>
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
-        );
-        let totalReturnAmount = 0;
-        if (closedTradesWithPosition.length > 0) {
-          totalReturnAmount = closedTradesWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
-        }
-        const currentCapital = initialCapital + totalReturnAmount;
-        document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
-        
-        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition);
-        
-        if (closedTrades.length === 0) {
-          document.getElementById('totalTrades').textContent = '0';
-          document.getElementById('winRate').textContent = '0% (0勝0敗)';
-          document.getElementById('riskRewardRatio').textContent = '0';
-          document.getElementById('avgWin').textContent = formatMoney(0, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(0, 0);
-          document.getElementById('maxWin').textContent = formatMoney(0, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(0, 0);
-          document.getElementById('expectedValue').textContent = formatMoney(0, 0);
-          document.getElementById('totalReturn').textContent = formatMoney(0, 0);
-          document.getElementById('maxDrawdown').textContent = "0%";
-        } else {
-          const results = closedTrades.map(trade => parseFloat(trade.returnRate));
-          const wins = results.filter(result => result > 0);
-          const losses = results.filter(result => result < 0);
-          const winRate = (wins.length / results.length) * 100;
-          const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-          const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
-          const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-          const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
-
-          const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
-          const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
-          const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-
-          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
-          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
-
-          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-
-          const expectedValueElem = document.getElementById('expectedValue');
-          if (expectedValueAmount > 0) {
-            expectedValueElem.classList.add('text-red-500');
-            expectedValueElem.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElem.classList.add('text-green-500');
-            expectedValueElem.classList.remove('text-red-500');
-          } else {
-            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const totalReturnElem = document.getElementById('totalReturn');
-          if (totalReturnAmount > 0) {
-            totalReturnElem.classList.add('text-red-500');
-            totalReturnElem.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElem.classList.add('text-green-500');
-            totalReturnElem.classList.remove('text-red-500');
-          } else {
-            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const maxDrawdownElem = document.getElementById('maxDrawdown');
-          maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
-          if (mddPercent > 0) {
-            maxDrawdownElem.classList.add('text-green-500');
-            maxDrawdownElem.classList.remove('text-red-500');
-          } else {
-            maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
-          }
-        }
-
-        // 部位統計
-        const winningTrades = closedTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
-        );
-        const losingTrades = closedTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
-        );
-        const avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
-        const avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
-        document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
-        document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
-
-        // 未平倉統計
-        let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
-        if (selectedStrategyFilter !== null) {
-          unclosedTrades = unclosedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-        }
-        if (selectedExternalConditionFilter !== null) {
-          unclosedTrades = unclosedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
-          const startDate = new Date(selectedStartDateFilter);
-          unclosedTrades = unclosedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
-        }
-        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
-          const endDate = new Date(selectedEndDateFilter);
-          unclosedTrades = unclosedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
-        }
-        const unclosedTradeCount = unclosedTrades.length;
-        const unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
-        document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
-        document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionSum, 0);
-        
-        // 資金績效統計
-        let roi = 0;
-        if (!isNaN(initialCapital) && initialCapital > 0) {
-          roi = ((currentCapital - initialCapital) / initialCapital) * 100;
-        }
-        let freeCapital = currentCapital - unclosedPositionSum;
-        document.getElementById('roi').textContent = formatNumberNoSign(roi, 2);
-        document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
-        document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0);
-      }
-
-      function removeColorClasses(elementIds) {
-        elementIds.forEach(id => {
-          const elem = document.getElementById(id);
-          elem.classList.remove('text-red-500', 'text-green-500');
-        });
-      }
-
-      // 初始化
-      loadStrategies();
-      loadExternalConditions();
-      loadData();
-
-      function toggleStrategyManagement() {
-        const content = document.getElementById('strategyManagementContent');
-        const toggleIcon = document.getElementById('strategyToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function toggleExternalConditionManagement() {
-        const content = document.getElementById('externalConditionManagementContent');
-        const toggleIcon = document.getElementById('externalConditionToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function openModal(modalId) {
-        document.getElementById(modalId).classList.remove('hidden');
-      }
-
-      function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        const inputs = modal.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-          if (input.type !== 'hidden') {
-            input.value = '';
-          }
-        });
-      }
-
-      function escapeHtml(text) {
-        const map = {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-      }
-
-      function exportToExcel() {
-        if (trades.length === 0) {
-          alert('目前沒有交易紀錄可供匯出。');
-          return;
-        }
-        const exportData = trades.map(trade => ({
-          "交易ID": trade.id,
-          "報酬率 (%)": trade.returnRate,
-          "部位金額": trade.position,
-          "標的名稱": trade.assetName,
-          "策略名稱": getStrategyName(trade.strategyId),
-          "外部條件": getExternalConditionName(trade.externalConditionId),
-          "開倉日": trade.openDate,
-          "平倉日": trade.closeDate,
-          "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
-          "文字說明": trade.description,
-          "圖片URL": trade.imageUrl
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "交易紀錄");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `交易紀錄_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function calculateHoldingDays(openDate, closeDate) {
-        if (openDate === '' && closeDate === '') return '';
-        if (openDate === '' || closeDate === '') return '未平倉';
-        const open = new Date(openDate);
-        const close = new Date(closeDate);
-        const diffTime = close - open;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 ? diffDays : '';
-      }
-
-      function importFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedTrades = jsonData.map(item => {
-            const strategy = strategies.find(s => s.name === item["策略名稱"]);
-            const externalCondition = externalConditions.find(c => c.name === item["外部條件"]);
-            if (!strategy) {
-              alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
-              return null;
-            }
-            if (!externalCondition) {
-              alert(`外部條件名稱 "${item["外部條件"]}" 不存在。請先新增該外部條件後再匯入。`);
-              return null;
-            }
-            const newTradeId = nextTradeId++;
-            let holdingDays = item["持倉天數"];
-            if (holdingDays === '' || holdingDays === '未平倉') {
-              holdingDays = '未平倉';
-            }
-            return {
-              id: newTradeId,
-              returnRate: item["報酬率 (%)"],
-              position: item["部位金額"],
-              assetName: item["標的名稱"],
-              strategyId: strategy.id,
-              externalConditionId: externalCondition.id,
-              openDate: item["開倉日"],
-              closeDate: item["平倉日"],
-              description: item["文字說明"],
-              imageUrl: item["圖片URL"]
-            };
-          }).filter(trade => trade !== null);
-          if (importedTrades.length === 0) {
-            alert('沒有有效的交易紀錄被匯入。');
-            return;
-          }
-          trades = trades.concat(importedTrades);
-          renderTrades();
-          calculateStats();
-          saveData();
-          alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
-          document.getElementById('importExcelInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-
-      function exportStrategiesToExcel() {
-        if (strategies.length === 0) {
-          alert('目前沒有策略資料可供匯出。');
-          return;
-        }
-        const exportData = strategies.map(strategy => ({
-          "策略ID": strategy.id,
-          "策略名稱": strategy.name,
-          "描述": strategy.description
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `策略管理_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function importStrategiesFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const requiredFields = ["策略ID", "策略名稱", "描述"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedStrategies = jsonData.map(item => {
-            const name = item["策略名稱"].trim();
-            const description = item["描述"].trim();
-            const existingStrategy = strategies.find(s => s.name === name);
-            if (existingStrategy) {
-              alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
-              return null;
-            }
-            const newStrategyId = nextTradeId++;
-            return {
-              id: newStrategyId,
-              name: name,
-              description: description
-            };
-          }).filter(strategy => strategy !== null);
-          if (importedStrategies.length === 0) {
-            alert('沒有有效的策略紀錄被匯入。');
-            return;
-          }
-          strategies = strategies.concat(importedStrategies);
-          renderStrategies();
-          renderTrades();
-          calculateStats();
-          saveStrategies();
-          saveData();
-          alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
-          document.getElementById('importStrategiesInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-
-      function exportExternalConditionsToExcel() {
-        if (externalConditions.length === 0) {
-          alert('目前沒有外部條件資料可供匯出。');
-          return;
-        }
-        const exportData = externalConditions.map(condition => ({
-          "外部條件ID": condition.id,
-          "外部條件名稱": condition.name,
-          "描述": condition.description
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "外部條件管理");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `外部條件管理_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function importExternalConditionsFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const requiredFields = ["外部條件ID", "外部條件名稱", "描述"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedExternalConditions = jsonData.map(item => {
-            const name = item["外部條件名稱"].trim();
-            const description = item["描述"].trim();
-            const existingCondition = externalConditions.find(c => c.name === name);
-            if (existingCondition) {
-              alert(`外部條件名稱 "${name}" 已存在。請避免重複新增。`);
-              return null;
-            }
-            const newConditionId = nextTradeId++;
-            return {
-              id: newConditionId,
-              name: name,
-              description: description
-            };
-          }).filter(condition => condition !== null);
-          if (importedExternalConditions.length === 0) {
-            alert('沒有有效的外部條件紀錄被匯入。');
-            return;
-          }
-          externalConditions = externalConditions.concat(importedExternalConditions);
-          renderExternalConditions();
-          renderTrades();
-          calculateStats();
-          saveExternalConditions();
-          saveData();
-          alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
-          document.getElementById('importExternalConditionsInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-
-      // 計算統計數據：
-      // 1. 以初始資金與閉倉交易累計盈虧計算最新資金水位 (currentCapital)
-      // 2. 其他績效數值僅顯示絕對金額（不附百分比），但期望值與總報酬依正負顯示紅/綠色
-      // 3. ROI 以 (currentCapital - 初始資金)/初始資金 計算（僅顯示數值，不附 % 符號）
-      // 4. MDD 以百分比表示，採用 calculateMDD() 計算結果（不因後續權益回升而抹平歷史最大回落）
+      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1684,7 +1162,7 @@
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
         // 計算 MDD%
-        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition);
+        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
@@ -1707,6 +1185,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
+          // 計算獲利與虧損金額 (以部位金額計算)
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => 
@@ -1721,8 +1200,19 @@
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+          
+          // 新增：以「虧損交易的平均部位」作分母計算平均獲利%和平均虧損%
+          let losingTradesForPercent = closedTrades.filter(trade => 
+            trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
+            trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
+          );
+          let avgLosingPositionForPercent = losingTradesForPercent.length > 0 ? 
+            losingTradesForPercent.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTradesForPercent.length : 0;
+          let avgWinPercent = avgLosingPositionForPercent > 0 ? (avgWinAmount / avgLosingPositionForPercent * 100) : 0;
+          let avgLossPercent = avgLosingPositionForPercent > 0 ? (avgLossAmount / avgLosingPositionForPercent * 100) : 0;
+          
+          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0) + " (" + formatNumberNoSign(avgWinPercent, 2) + "%)";
+          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0) + " (" + formatNumberNoSign(avgLossPercent, 2) + "%)";
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
           document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
 
@@ -1759,7 +1249,7 @@
           }
         }
 
-        // 部位統計
+        // 部位統計：以閉倉交易中有部位資料的部分計算
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1909,50 +1399,270 @@
         document.body.removeChild(link);
       }
       
-      // ------------------------------------------------------------------------------------------------
-      // 說明：calculateMDD() 將有部位資料且平倉的交易依 closeDate 分組，同一天內先將所有正向交易加總，再扣除負向交易，
-      // 模擬當天的權益曲線，計算該天的最大回落百分比，然後取歷史上最大的百分比作為 MDD%
-      // ------------------------------------------------------------------------------------------------
-      function calculateMDD(initialCapital, tradesWithPosition) {
-        let groups = {};
-        tradesWithPosition.forEach(trade => {
-          if (trade.closeDate && trade.closeDate.trim() !== '') {
-            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
-            groups[trade.closeDate].push(trade);
-          }
-        });
-        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
-        let equity = initialCapital;
-        let historicalPeak = initialCapital;
-        let maxDrawdownPercent = 0;
-        dates.forEach(date => {
-          let groupTrades = groups[date];
-          let profitSum = 0, lossSum = 0;
-          groupTrades.forEach(trade => {
-            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-            if (p > 0) profitSum += p;
-            else lossSum += p;
-          });
-          let dayPeak = equity + profitSum;
-          let dayEnd = dayPeak + lossSum;
-          let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
-          if (dayDrawdownPercent > maxDrawdownPercent) {
-            maxDrawdownPercent = dayDrawdownPercent;
-          }
-          equity = dayEnd;
-          if (dayPeak > historicalPeak) {
-            historicalPeak = dayPeak;
-          }
-        });
-        return maxDrawdownPercent;
+      function calculateHoldingDays(openDate, closeDate) {
+        if (openDate === '' && closeDate === '') return '';
+        if (openDate === '' || closeDate === '') return '未平倉';
+        const open = new Date(openDate);
+        const close = new Date(closeDate);
+        const diffTime = close - open;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 ? diffDays : '';
       }
+      
+      function importFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedTrades = jsonData.map(item => {
+            const strategy = strategies.find(s => s.name === item["策略名稱"]);
+            const externalCondition = externalConditions.find(c => c.name === item["外部條件"]);
+            if (!strategy) {
+              alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
+              return null;
+            }
+            if (!externalCondition) {
+              alert(`外部條件名稱 "${item["外部條件"]}" 不存在。請先新增該外部條件後再匯入。`);
+              return null;
+            }
+            const newTradeId = nextTradeId++;
+            let holdingDays = item["持倉天數"];
+            if (holdingDays === '' || holdingDays === '未平倉') {
+              holdingDays = '未平倉';
+            }
+            return {
+              id: newTradeId,
+              returnRate: item["報酬率 (%)"],
+              position: item["部位金額"],
+              assetName: item["標的名稱"],
+              strategyId: strategy.id,
+              externalConditionId: externalCondition.id,
+              openDate: item["開倉日"],
+              closeDate: item["平倉日"],
+              description: item["文字說明"],
+              imageUrl: item["圖片URL"]
+            };
+          }).filter(trade => trade !== null);
+          if (importedTrades.length === 0) {
+            alert('沒有有效的交易紀錄被匯入。');
+            return;
+          }
+          trades = trades.concat(importedTrades);
+          renderTrades();
+          calculateStats();
+          saveData();
+          alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
+          document.getElementById('importExcelInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
+      
+      function exportStrategiesToExcel() {
+        if (strategies.length === 0) {
+          alert('目前沒有策略資料可供匯出。');
+          return;
+        }
+        const exportData = strategies.map(strategy => ({
+          "策略ID": strategy.id,
+          "策略名稱": strategy.name,
+          "描述": strategy.description
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `策略管理_${today}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      function importStrategiesFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const requiredFields = ["策略ID", "策略名稱", "描述"];
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedStrategies = jsonData.map(item => {
+            const name = item["策略名稱"].trim();
+            const description = item["描述"].trim();
+            const existingStrategy = strategies.find(s => s.name === name);
+            if (existingStrategy) {
+              alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
+            const newStrategyId = nextTradeId++;
+            return {
+              id: newStrategyId,
+              name: name,
+              description: description
+            };
+          }).filter(strategy => strategy !== null);
+          if (importedStrategies.length === 0) {
+            alert('沒有有效的策略紀錄被匯入。');
+            return;
+          }
+          strategies = strategies.concat(importedStrategies);
+          renderStrategies();
+          renderTrades();
+          calculateStats();
+          saveStrategies();
+          saveData();
+          alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
+          document.getElementById('importStrategiesInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
+      
+      function exportExternalConditionsToExcel() {
+        if (externalConditions.length === 0) {
+          alert('目前沒有外部條件資料可供匯出。');
+          return;
+        }
+        const exportData = externalConditions.map(condition => ({
+          "外部條件ID": condition.id,
+          "外部條件名稱": condition.name,
+          "描述": condition.description
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "外部條件管理");
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `外部條件管理_${today}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      function importExternalConditionsFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const requiredFields = ["外部條件ID", "外部條件名稱", "描述"];
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedExternalConditions = jsonData.map(item => {
+            const name = item["外部條件名稱"].trim();
+            const description = item["描述"].trim();
+            const existingCondition = externalConditions.find(c => c.name === name);
+            if (existingCondition) {
+              alert(`外部條件名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
+            const newConditionId = nextTradeId++;
+            return {
+              id: newConditionId,
+              name: name,
+              description: description
+            };
+          }).filter(condition => condition !== null);
+          if (importedExternalConditions.length === 0) {
+            alert('沒有有效的外部條件紀錄被匯入。');
+            return;
+          }
+          externalConditions = externalConditions.concat(importedExternalConditions);
+          renderExternalConditions();
+          renderTrades();
+          calculateStats();
+          saveExternalConditions();
+          saveData();
+          alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
+          document.getElementById('importExternalConditionsInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
+      
       // ------------------------------------------------------------------------------------------------
-
-      // 計算統計數據：
-      // 1. 最新資金水位(currentCapital)=初始資金+閉倉累計盈虧
-      // 2. 各績效數值顯示絕對金額；期望值與總報酬依正負分別以紅/綠色顯示
-      // 3. ROI=(currentCapital-初始資金)/初始資金 (僅顯示數值)
-      // 4. MDD 以百分比表示（採用 calculateMDD()）
+      // 說明：calculateMDD() 函式依據閉倉且有部位資料的交易，
+      // 按平倉日分組，同一天內先加總盈利，再扣除虧損，模擬當天權益曲線，
+      // 並計算每組的回落百分比，取歷史上最大百分比作為 MDD%
+      // ------------------------------------------------------------------------------------------------
+      
+      // ------------------------------------------------------------------------------------------------
+      // calculateStats() 函式：計算各項統計數據並更新 DOM 顯示
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1983,7 +1693,8 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100; // 轉為百分比
+        // 計算 MDD%
+        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
@@ -2008,10 +1719,8 @@
 
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
+          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
@@ -2020,8 +1729,19 @@
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+          
+          // 新增：計算「平均獲利%」和「平均虧損%」，以「虧損交易的平均部位」作為分母
+          let losingTradesForPercent = closedTrades.filter(trade => 
+            trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
+            trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
+          );
+          let avgLosingPositionForPercent = losingTradesForPercent.length > 0 ? 
+            losingTradesForPercent.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTradesForPercent.length : 0;
+          let avgWinPercent = avgLosingPositionForPercent > 0 ? (avgWinAmount / avgLosingPositionForPercent * 100) : 0;
+          let avgLossPercent = avgLosingPositionForPercent > 0 ? (avgLossAmount / avgLosingPositionForPercent * 100) : 0;
+          
+          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0) + " (" + formatNumberNoSign(avgWinPercent, 2) + "%)";
+          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0) + " (" + formatNumberNoSign(avgLossPercent, 2) + "%)";
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
           document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
 
@@ -2058,7 +1778,7 @@
           }
         }
 
-        // 部位統計
+        // 部位統計：以閉倉交易中有部位資料的部分計算
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
