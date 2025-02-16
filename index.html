@@ -413,7 +413,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 (新增「交易方向」與「進場價格」欄位) -->
+    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」與「最高價格」欄位) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -425,7 +425,7 @@
         </div>
       </div>
       <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、標的名稱、策略名稱、外部條件、開倉日、平倉日，以及選擇交易方向（多/空）
+        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、最高價格、標的名稱、策略名稱、外部條件、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
       <div class="relative">
         <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
@@ -442,6 +442,7 @@
                 <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
                 <th class="px-4 py-2 min-w-[100px]">部位金額</th>
                 <th class="px-4 py-2 min-w-[100px]">進場價格</th>
+                <th class="px-4 py-2 min-w-[100px]">最高價格</th>
                 <th class="px-4 py-2 min-w-[100px]">交易方向</th>
                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
@@ -464,7 +465,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表，新增 "direction" 屬性（預設為 "多"），同時新增 "entryPrice" 欄位
+      // 交易記錄列表，新增 "direction"（預設為 "多"）、"entryPrice" 與 "highestPrice" 欄位
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -588,6 +589,7 @@
             if (!trade.imageUrl) trade.imageUrl = '';
             if (typeof trade.position === 'undefined') trade.position = '';
             if (typeof trade.entryPrice === 'undefined') trade.entryPrice = '';
+            if (typeof trade.highestPrice === 'undefined') trade.highestPrice = '';
             // 若交易方向未定義，預設為 "多"
             if (typeof trade.direction === 'undefined') trade.direction = "多";
             return trade;
@@ -599,6 +601,7 @@
             returnRate: '', 
             position: '', 
             entryPrice: '',
+            highestPrice: '',
             assetName: '', 
             strategyId: null, 
             externalConditionId: null, 
@@ -780,6 +783,9 @@
                 <input type="number" value="${trade.entryPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="進場價格" data-row-index="${trades.indexOf(trade)}" data-field="entryPrice">
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
+                <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
+              </td>
+              <td class="border px-4 py-2 min-w-[100px]">
                 <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="direction">
                   <option value="多" ${trade.direction === "多" ? "selected" : ""}>多</option>
                   <option value="空" ${trade.direction === "空" ? "selected" : ""}>空</option>
@@ -881,6 +887,8 @@
           trades[index].direction = value;
         } else if (field === 'entryPrice') {
           trades[index].entryPrice = value.trim();
+        } else if (field === 'highestPrice') {
+          trades[index].highestPrice = value.trim();
         }
         calculateStats();
         saveData();
@@ -904,6 +912,7 @@
           returnRate: '', 
           position: '',
           entryPrice: '',
+          highestPrice: '',
           assetName: '', 
           strategyId: null, 
           externalConditionId: null, 
@@ -928,7 +937,7 @@
       function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', highestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
         }
         renderTrades();
         calculateStats();
@@ -1418,6 +1427,7 @@
           "報酬率 (%)": trade.returnRate,
           "部位金額": trade.position,
           "進場價格": trade.entryPrice,
+          "最高價格": trade.highestPrice,
           "交易方向": trade.direction,
           "標的名稱": trade.assetName,
           "策略名稱": getStrategyName(trade.strategyId),
@@ -1469,12 +1479,13 @@
           }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
+          // 更新必要欄位要求，新增「最高價格」
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "最高價格", "交易方向", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (jsonData.length === 0) {
             alert('Excel文件中沒有任何數據。');
             return;
           }
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "交易方向", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
           if (missingFields.length > 0) {
             alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
@@ -1501,6 +1512,7 @@
               returnRate: item["報酬率 (%)"],
               position: item["部位金額"],
               entryPrice: item["進場價格"],
+              highestPrice: item["最高價格"],
               direction: item["交易方向"] || "多",
               assetName: item["標的名稱"],
               strategyId: strategy.id,
