@@ -140,9 +140,10 @@
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
-          <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選外部條件</label>
+          <!-- 改為篩選大盤多空 -->
+          <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
           <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
-            <option value="">全部外部條件</option>
+            <option value="">全部大盤多空</option>
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
@@ -228,6 +229,11 @@
       <div class="mt-4">
         <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
         <ul id="strategyUsageList" class="list-disc pl-5"></ul>
+      </div>
+      <!-- 新增大盤多空天數區塊（依據篩選日期統計，每日只記錄一次） -->
+      <div class="mt-4">
+        <h3 class="text-md font-medium text-gray-700 mb-2">大盤多空天數</h3>
+        <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
       </div>
       <!-- MFE 與 MAE 統計 -->
       <div class="grid grid-cols-2 gap-4 mt-4">
@@ -441,10 +447,10 @@
       </div>
     </div>
 
-    <!-- 外部條件管理區塊 -->
+    <!-- 大盤多空管理區塊 (原 外部條件管理) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-medium text-gray-700">外部條件管理</h2>
+        <h2 class="text-lg font-medium text-gray-700">大盤多空管理</h2>
         <div class="flex space-x-2">
           <button class="button" onclick="toggleExternalConditionManagement()">
             <i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>
@@ -460,13 +466,13 @@
         <table class="min-w-full bg-white rounded">
           <thead>
             <tr>
-              <th class="px-4 py-2 min-w-[150px]">外部條件名稱</th>
+              <th class="px-4 py-2 min-w-[150px]">大盤多空名稱</th>
               <th class="px-4 py-2 min-w-[200px]">描述</th>
               <th class="px-4 py-2">操作</th>
             </tr>
           </thead>
           <tbody id="externalConditionsList">
-            <!-- 外部條件記錄 -->
+            <!-- 大盤多空記錄 -->
           </tbody>
         </table>
       </div>
@@ -503,14 +509,14 @@
       </div>
     </div>
 
-    <!-- 新增外部條件模態框 -->
+    <!-- 新增大盤多空模態框 (原 新增外部條件模態框) -->
     <div id="addExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-medium mb-4">新增</h3>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">外部條件名稱</label>
-        <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+        <h3 class="text-lg font-medium mb-4">新增大盤多空</h3>
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">大盤多空名稱</label>
+        <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空名稱">
         <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionDescription">描述</label>
-        <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+        <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空描述"></textarea>
         <div class="flex justify-end">
           <button class="button mr-2" onclick="closeAddExternalConditionModal()">取消</button>
           <button class="button" onclick="addExternalCondition()">新增</button>
@@ -518,15 +524,15 @@
       </div>
     </div>
 
-    <!-- 編輯外部條件模態框 -->
+    <!-- 編輯大盤多空模態框 (原 編輯外部條件模態框) -->
     <div id="editExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-medium mb-4">編輯外部條件</h3>
+        <h3 class="text-lg font-medium mb-4">編輯大盤多空</h3>
         <input type="hidden" id="editExternalConditionId">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">外部條件名稱</label>
-        <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件名稱">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">大盤多空名稱</label>
+        <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空名稱">
         <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionDescription">描述</label>
-        <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入外部條件描述"></textarea>
+        <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空描述"></textarea>
         <div class="flex justify-end">
           <button class="button mr-2" onclick="closeEditExternalConditionModal()">取消</button>
           <button class="button" onclick="updateExternalCondition()">更新</button>
@@ -546,7 +552,7 @@
         </div>
       </div>
       <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、最高價格、最低價格、標的名稱、策略名稱、外部條件、開倉日、平倉日，以及選擇交易方向（多/空）
+        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
       <div class="relative">
         <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
@@ -568,7 +574,8 @@
                 <th class="px-4 py-2 min-w-[100px]">交易方向</th>
                 <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
                 <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
-                <th class="px-4 py-2 min-w-[150px]">外部條件</th>
+                <!-- 將原 外部條件 改為 大盤多空 -->
+                <th class="px-4 py-2 min-w-[150px]">大盤多空</th>
                 <th class="px-4 py-2 min-w-[200px]">文字說明</th>
                 <th class="px-4 py-2 min-w-[200px]">圖片</th>
                 <th class="px-4 py-2 min-w-[80px]">操作</th>
@@ -585,8 +592,8 @@
     <script>
       // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-      // 外部條件列表
-      let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
+      // 大盤多空列表（原外部條件）
+      let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
       // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
       // 當前篩選條件
@@ -681,7 +688,7 @@
         if (savedExternalConditions && Array.isArray(savedExternalConditions)) {
           externalConditions = savedExternalConditions;
         } else {
-          externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
+          externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
           saveExternalConditions();
         }
         const maxConditionId = externalConditions.reduce((max, condition) => condition.id > max ? condition.id : max, 0);
@@ -819,7 +826,7 @@
       function renderExternalConditionFilter() {
         const externalConditionFilter = document.getElementById('externalConditionFilter');
         externalConditionFilter.innerHTML = `
-          <option value="">全部外部條件</option>
+          <option value="">全部大盤多空</option>
           ${externalConditions.map(condition => `
             <option value="${condition.id}">${escapeHtml(condition.name)}</option>
           `).join('')}
@@ -925,7 +932,7 @@
               </td>
               <td class="border px-4 py-2 min-w-[150px]">
                 <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
-                  <option value="">選擇外部條件</option>
+                  <option value="">選擇大盤多空</option>
                   ${externalConditionOptions}
                 </select>
               </td>
@@ -969,6 +976,7 @@
         return strategy ? strategy.name : '';
       }
 
+      // 依然使用 externalConditions，但顯示上會呼叫 getExternalConditionName()，此處不做變更
       function getExternalConditionName(conditionId) {
         const condition = externalConditions.find(c => c.id === conditionId);
         return condition ? condition.name : '';
@@ -1029,7 +1037,7 @@
           return;
         }
         if (externalConditions.length === 0) {
-          alert('請先新增至少一個外部條件。');
+          alert('請先新增至少一個大盤多空。');
           return;
         }
         const newTrade = { 
@@ -1154,6 +1162,7 @@
         calculateStats();
       }
 
+      // 以下均為大盤多空管理（原外部條件管理），名稱皆做更改
       function openAddExternalConditionModal() {
         openModal('addExternalConditionModal');
       }
@@ -1168,12 +1177,12 @@
         const name = nameInput.value.trim();
         const description = descriptionInput.value.trim();
         if (name === '') {
-          alert('外部條件名稱不能為空。');
+          alert('大盤多空名稱不能為空。');
           return;
         }
         const existingCondition = externalConditions.find(condition => condition.name === name);
         if (existingCondition) {
-          alert('外部條件名稱已存在，請選擇其他名稱。');
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
           return;
         }
         const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
@@ -1203,12 +1212,12 @@
         const name = document.getElementById('editExternalConditionName').value.trim();
         const description = document.getElementById('editExternalConditionDescription').value.trim();
         if (name === '') {
-          alert('外部條件名稱不能為空。');
+          alert('大盤多空名稱不能為空。');
           return;
         }
         const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
         if (existingCondition) {
-          alert('外部條件名稱已存在，請選擇其他名稱。');
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
           return;
         }
         const conditionIndex = externalConditions.findIndex(c => c.id === id);
@@ -1225,10 +1234,10 @@
       function deleteExternalCondition(conditionId) {
         const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
         if (tradesUsingCondition.length > 0) {
-          alert('有交易紀錄正在使用此外部條件，請先移除或更改相關交易紀錄。');
+          alert('有交易紀錄正在使用此大盤多空，請先移除或更改相關交易紀錄。');
           return;
         }
-        if (!confirm('您確定要刪除此外部條件嗎？此操作無法撤銷。')) {
+        if (!confirm('您確定要刪除此大盤多空嗎？此操作無法撤銷。')) {
           return;
         }
         externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
@@ -1308,10 +1317,9 @@
         return maxDrawdownPercent;
       }
 
-      // updateStrategyUsage()：依據篩選日期範圍計算各策略使用次數
+      // updateStrategyUsage()：依據篩選日期範圍統計各策略使用次數
       function updateStrategyUsage() {
         let usage = {};
-        // 先僅以日期篩選：若有設定開始與結束日期
         let filteredTrades = trades;
         if (selectedStartDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
@@ -1332,6 +1340,45 @@
             let count = usage[s.id] || 0;
             let li = document.createElement("li");
             li.textContent = `${s.name}：${count} 次`;
+            list.appendChild(li);
+          });
+        }
+      }
+
+      // updateMarketStatusUsage()：依據篩選日期範圍統計大盤多空天數
+      function updateMarketStatusUsage() {
+        let usage = {};
+        // 過濾符合日期範圍的交易（依 openDate）
+        let filteredTrades = trades;
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
+        // 利用日期作為 key，每天只記錄一次大盤多空狀態
+        let dayStatus = {};
+        filteredTrades.forEach(t => {
+          let day = new Date(t.openDate).toISOString().split("T")[0];
+          if (!dayStatus[day]) {
+            dayStatus[day] = t.externalConditionId;
+          }
+        });
+        // 統計各大盤多空的天數
+        for (let day in dayStatus) {
+          let statusId = dayStatus[day];
+          if (statusId != null) {
+            if (!usage[statusId]) usage[statusId] = 0;
+            usage[statusId]++;
+          }
+        }
+        let list = document.getElementById("marketStatusUsageList");
+        if(list) {
+          list.innerHTML = "";
+          externalConditions.forEach(s => {
+            let count = usage[s.id] || 0;
+            let li = document.createElement("li");
+            li.textContent = `${s.name}：${count} 天`;
             list.appendChild(li);
           });
         }
@@ -1632,11 +1679,12 @@
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
         document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0);
 
-        // 更新各策略使用次數（依據篩選日期範圍）
+        // 更新各策略使用次數與大盤多空天數（依據篩選日期範圍）
         updateStrategyUsage();
+        updateMarketStatusUsage();
       }
 
-      // 更新各種策略使用次數的函式（僅根據 openDate 篩選）
+      // 更新各種策略使用次數的函式
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1659,6 +1707,44 @@
             let count = usage[s.id] || 0;
             let li = document.createElement("li");
             li.textContent = `${s.name}：${count} 次`;
+            list.appendChild(li);
+          });
+        }
+      }
+
+      // 更新大盤多空天數統計：依據篩選日期，每天只計一次
+      function updateMarketStatusUsage() {
+        let usage = {};
+        let filteredTrades = trades;
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
+        // 以日期為 key，每天只記錄一次大盤多空狀態
+        let dayStatus = {};
+        filteredTrades.forEach(t => {
+          let day = new Date(t.openDate).toISOString().split("T")[0];
+          if(!dayStatus[day]){
+            dayStatus[day] = t.externalConditionId;
+          }
+        });
+        // 統計各大盤多空的天數
+        for(let day in dayStatus) {
+          let statusId = dayStatus[day];
+          if(statusId != null){
+            if(!usage[statusId]) usage[statusId] = 0;
+            usage[statusId]++;
+          }
+        }
+        let list = document.getElementById("marketStatusUsageList");
+        if(list) {
+          list.innerHTML = "";
+          externalConditions.forEach(s => {
+            let count = usage[s.id] || 0;
+            let li = document.createElement("li");
+            li.textContent = `${s.name}：${count} 天`;
             list.appendChild(li);
           });
         }
@@ -1744,7 +1830,7 @@
           "交易方向": trade.direction,
           "標的名稱": trade.assetName,
           "策略名稱": getStrategyName(trade.strategyId),
-          "外部條件": getExternalConditionName(trade.externalConditionId),
+          "大盤多空": getExternalConditionName(trade.externalConditionId),
           "開倉日": trade.openDate,
           "平倉日": trade.closeDate,
           "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
@@ -1792,7 +1878,8 @@
           }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "外部條件", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          // 更新必要欄位，將「外部條件」改為「大盤多空」
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (jsonData.length === 0) {
             alert('Excel文件中沒有任何數據。');
@@ -1805,13 +1892,13 @@
           }
           const importedTrades = jsonData.map(item => {
             const strategy = strategies.find(s => s.name === item["策略名稱"]);
-            const externalCondition = externalConditions.find(c => c.name === item["外部條件"]);
+            const externalCondition = externalConditions.find(c => c.name === item["大盤多空"]);
             if (!strategy) {
               alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
               return null;
             }
             if (!externalCondition) {
-              alert(`外部條件名稱 "${item["外部條件"]}" 不存在。請先新增該外部條件後再匯入。`);
+              alert(`大盤多空名稱 "${item["大盤多空"]}" 不存在。請先新增該大盤多空後再匯入。`);
               return null;
             }
             const newTradeId = nextTradeId++;
@@ -1941,23 +2028,23 @@
       
       function exportExternalConditionsToExcel() {
         if (externalConditions.length === 0) {
-          alert('目前沒有外部條件資料可供匯出。');
+          alert('目前沒有大盤多空資料可供匯出。');
           return;
         }
         const exportData = externalConditions.map(condition => ({
-          "外部條件ID": condition.id,
-          "外部條件名稱": condition.name,
+          "大盤多空ID": condition.id,
+          "大盤多空名稱": condition.name,
           "描述": condition.description
         }));
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "外部條件管理");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "大盤多空管理");
         const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbout], { type: 'application/octet-stream' });
         const link = document.createElement('a');
         const today = new Date().toISOString().split('T')[0];
         link.href = URL.createObjectURL(blob);
-        link.download = `外部條件管理_${today}.xlsx`;
+        link.download = `大盤多空管理_${today}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1985,18 +2072,18 @@
             alert('Excel文件中沒有任何數據。');
             return;
           }
-          const requiredFields = ["外部條件ID", "外部條件名稱", "描述"];
+          const requiredFields = ["大盤多空ID", "大盤多空名稱", "描述"];
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
           if (missingFields.length > 0) {
             alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
             return;
           }
           const importedExternalConditions = jsonData.map(item => {
-            const name = item["外部條件名稱"].trim();
+            const name = item["大盤多空名稱"].trim();
             const description = item["描述"].trim();
             const existingCondition = externalConditions.find(c => c.name === name);
             if (existingCondition) {
-              alert(`外部條件名稱 "${name}" 已存在。請避免重複新增。`);
+              alert(`大盤多空名稱 "${name}" 已存在。請避免重複新增。`);
               return null;
             }
             const newConditionId = nextTradeId++;
@@ -2007,7 +2094,7 @@
             };
           }).filter(condition => condition !== null);
           if (importedExternalConditions.length === 0) {
-            alert('沒有有效的外部條件紀錄被匯入。');
+            alert('沒有有效的大盤多空紀錄被匯入。');
             return;
           }
           externalConditions = externalConditions.concat(importedExternalConditions);
@@ -2016,7 +2103,7 @@
           calculateStats();
           saveExternalConditions();
           saveData();
-          alert(`成功匯入 ${importedExternalConditions.length} 筆外部條件紀錄。`);
+          alert(`成功匯入 ${importedExternalConditions.length} 筆大盤多空紀錄。`);
           document.getElementById('importExternalConditionsInput').value = '';
         };
         reader.onerror = function() {
