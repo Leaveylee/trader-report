@@ -264,69 +264,57 @@
           </div>
         </div>
       </div>
+      <!-- 損益統計：將獲利與虧損百分比數據分左右兩欄 -->
       <div class="mt-6">
         <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
         <div class="grid grid-cols-2 gap-4">
-          <!-- 顯示金額部分 -->
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均獲利：</span>
-            <span id="avgWin" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均虧損：</span>
-            <span id="avgLoss" class="font-medium">0</span>
-          </div>
-          <div class="col-span-2 divider"></div>
           <!-- 獲利百分比統計 -->
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均獲利%：</span>
-            <span id="avgWinPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% SD：</span>
-            <span id="sdWinPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% CV：</span>
-            <span id="cvWinPercent" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% 偏度：</span>
-            <span id="skewWinPercent" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% 峰度：</span>
-            <span id="kurtosisWinPercent" class="font-medium">0</span>
+          <div class="border p-4 rounded">
+            <h4 class="text-lg font-medium text-gray-700 mb-2">獲利統計</h4>
+            <div class="flex justify-between">
+              <span class="text-gray-600">平均獲利%：</span>
+              <span id="avgWinPercent" class="font-medium">0%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">獲利% SD：</span>
+              <span id="sdWinPercent" class="font-medium">0%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">獲利% CV：</span>
+              <span id="cvWinPercent" class="font-medium">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">獲利% 偏度：</span>
+              <span id="skewWinPercent" class="font-medium">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">獲利% 峰度：</span>
+              <span id="kurtosisWinPercent" class="font-medium">0</span>
+            </div>
           </div>
           <!-- 虧損百分比統計 -->
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均虧損%：</span>
-            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% SD：</span>
-            <span id="sdLossPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% CV：</span>
-            <span id="cvLossPercent" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% 偏度：</span>
-            <span id="skewLossPercent" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% 峰度：</span>
-            <span id="kurtosisLossPercent" class="font-medium">0</span>
-          </div>
-          <div class="col-span-2 divider"></div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">最大獲利：</span>
-            <span id="maxWin" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">最大虧損：</span>
-            <span id="maxLoss" class="font-medium">0</span>
+          <div class="border p-4 rounded">
+            <h4 class="text-lg font-medium text-gray-700 mb-2">虧損統計</h4>
+            <div class="flex justify-between">
+              <span class="text-gray-600">平均虧損%：</span>
+              <span id="avgLossPercentDisplay" class="font-medium">0%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">虧損% SD：</span>
+              <span id="sdLossPercent" class="font-medium">0%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">虧損% CV：</span>
+              <span id="cvLossPercent" class="font-medium">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">虧損% 偏度：</span>
+              <span id="skewLossPercent" class="font-medium">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">虧損% 峰度：</span>
+              <span id="kurtosisLossPercent" class="font-medium">0</span>
+            </div>
           </div>
         </div>
       </div>
@@ -558,7 +546,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表（新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位）
+      // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -1339,12 +1327,12 @@
           document.getElementById('avgWinPercent').textContent = "0%";
           document.getElementById('sdWinPercent').textContent = "0%";
           document.getElementById('cvWinPercent').textContent = "0";
+          document.getElementById('skewWinPercent').textContent = "0";
+          document.getElementById('kurtosisWinPercent').textContent = "0";
           document.getElementById('avgLossPercentDisplay').textContent = "0%";
           document.getElementById('sdLossPercent').textContent = "0%";
           document.getElementById('cvLossPercent').textContent = "0";
-          document.getElementById('skewWinPercent').textContent = "0";
           document.getElementById('skewLossPercent').textContent = "0";
-          document.getElementById('kurtosisWinPercent').textContent = "0";
           document.getElementById('kurtosisLossPercent').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
@@ -1369,7 +1357,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 更新損益統計（僅金額部分）
+          // 更新金額部分
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
@@ -1406,7 +1394,7 @@
           }
         }
 
-        // 針對 MFE 與 MAE：計算平均值、標準差、變異係數、偏度與峰度
+        // MFE 與 MAE 相關數據計算
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1423,7 +1411,7 @@
             if (trade.direction === "多") {
               mfe = (high - entry) / entry * 100;
               mae = (entry - low) / entry * 100;
-            } else { // 空單：反轉
+            } else {
               mfe = (entry - low) / entry * 100;
               mae = (high - entry) / entry * 100;
             }
@@ -1434,38 +1422,23 @@
           });
           var avgMFE = totalMFE / tradesWithPrices.length;
           var avgMAE = totalMAE / tradesWithPrices.length;
-          // 標準差
           let sumSqMFE = 0, sumSqMAE = 0;
-          mfeValues.forEach(val => {
-            sumSqMFE += Math.pow(val - avgMFE, 2);
-          });
-          maeValues.forEach(val => {
-            sumSqMAE += Math.pow(val - avgMAE, 2);
-          });
+          mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
+          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
           var stdMFE = Math.sqrt(sumSqMFE / tradesWithPrices.length);
           var stdMAE = Math.sqrt(sumSqMAE / tradesWithPrices.length);
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
           var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
-          // 偏度 (skewness)
           let sumCubeMFE = 0, sumCubeMAE = 0;
-          mfeValues.forEach(val => {
-            sumCubeMFE += Math.pow(val - avgMFE, 3);
-          });
-          maeValues.forEach(val => {
-            sumCubeMAE += Math.pow(val - avgMAE, 3);
-          });
+          mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
+          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
           let skewMFEVal = stdMFE !== 0 ? (sumCubeMFE / tradesWithPrices.length) / Math.pow(stdMFE, 3) : 0;
           let skewMAEVal = stdMAE !== 0 ? (sumCubeMAE / tradesWithPrices.length) / Math.pow(stdMAE, 3) : 0;
           skewMFE = skewMFEVal;
           skewMAE = skewMAEVal;
-          // 峰度 (kurtosis)
           let sumFourthMFE = 0, sumFourthMAE = 0;
-          mfeValues.forEach(val => {
-            sumFourthMFE += Math.pow(val - avgMFE, 4);
-          });
-          maeValues.forEach(val => {
-            sumFourthMAE += Math.pow(val - avgMAE, 4);
-          });
+          mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
+          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
           let kurtosisMFEVal = stdMFE !== 0 ? (sumFourthMFE / tradesWithPrices.length) / Math.pow(stdMFE, 4) : 0;
           let kurtosisMAEVal = stdMAE !== 0 ? (sumFourthMAE / tradesWithPrices.length) / Math.pow(stdMAE, 4) : 0;
           kurtosisMFE = kurtosisMFEVal;
@@ -1490,7 +1463,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 當作百分比值
+        // 針對獲利與虧損百分比：收集勝單與虧單 returnRate 當作百分比值
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1509,7 +1482,7 @@
         let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
         let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
         let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        // 偏度計算
+        // 計算偏度與峰度
         let winPercentSkewness = 0, lossPercentSkewness = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
@@ -1519,7 +1492,6 @@
           let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
           lossPercentSkewness = (sumCubeLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 3);
         }
-        // 峰度計算
         let winPercentKurtosis = 0, lossPercentKurtosis = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
