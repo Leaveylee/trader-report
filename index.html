@@ -225,15 +225,16 @@
           </div>
         </div>
       </div>
-      <!-- 將策略使用次數區塊放在 MDD 之後 -->
-      <div class="mt-4">
-        <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
-        <ul id="strategyUsageList" class="list-disc pl-5"></ul>
-      </div>
-      <!-- 新增大盤多空天數區塊（依據篩選日期統計，每日只記錄一次） -->
-      <div class="mt-4">
-        <h3 class="text-md font-medium text-gray-700 mb-2">大盤多空天數</h3>
-        <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
+      <!-- 將「各種策略的使用次數」與「大盤多空天數」排版合併為兩欄 -->
+      <div class="mt-4 grid grid-cols-2 gap-4">
+        <div>
+          <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
+          <ul id="strategyUsageList" class="list-disc pl-5"></ul>
+        </div>
+        <div>
+          <h3 class="text-md font-medium text-gray-700 mb-2">大盤多空天數</h3>
+          <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
+        </div>
       </div>
       <!-- MFE 與 MAE 統計 -->
       <div class="grid grid-cols-2 gap-4 mt-4">
@@ -447,7 +448,7 @@
       </div>
     </div>
 
-    <!-- 大盤多空管理區塊 (原 外部條件管理) -->
+    <!-- 大盤多空管理區塊 (原外部條件管理) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">大盤多空管理</h2>
@@ -509,7 +510,7 @@
       </div>
     </div>
 
-    <!-- 新增大盤多空模態框 (原 新增外部條件模態框) -->
+    <!-- 新增大盤多空模態框 (原新增外部條件模態框) -->
     <div id="addExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">新增大盤多空</h3>
@@ -524,7 +525,7 @@
       </div>
     </div>
 
-    <!-- 編輯大盤多空模態框 (原 編輯外部條件模態框) -->
+    <!-- 編輯大盤多空模態框 (原編輯外部條件模態框) -->
     <div id="editExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">編輯大盤多空</h3>
@@ -927,13 +928,17 @@
               <td class="border px-4 py-2 min-w-[150px]">
                 <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="strategyId">
                   <option value="">選擇策略</option>
-                  ${strategyOptions}
+                  ${strategies.map(strategy => `
+                    <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
+                  `).join('')}
                 </select>
               </td>
               <td class="border px-4 py-2 min-w-[150px]">
                 <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
                   <option value="">選擇大盤多空</option>
-                  ${externalConditionOptions}
+                  ${externalConditions.map(condition => `
+                    <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
+                  `).join('')}
                 </select>
               </td>
               <td class="border px-4 py-2 min-w-[200px]">
@@ -976,7 +981,7 @@
         return strategy ? strategy.name : '';
       }
 
-      // 依然使用 externalConditions，但顯示上會呼叫 getExternalConditionName()，此處不做變更
+      // 依然使用 externalConditions，但顯示上呼叫 getExternalConditionName()，此處不做變更
       function getExternalConditionName(conditionId) {
         const condition = externalConditions.find(c => c.id === conditionId);
         return condition ? condition.name : '';
@@ -1162,7 +1167,7 @@
         calculateStats();
       }
 
-      // 以下均為大盤多空管理（原外部條件管理），名稱皆做更改
+      // 大盤多空管理（原外部條件管理）
       function openAddExternalConditionModal() {
         openModal('addExternalConditionModal');
       }
@@ -1345,10 +1350,9 @@
         }
       }
 
-      // updateMarketStatusUsage()：依據篩選日期範圍統計大盤多空天數
+      // updateMarketStatusUsage()：依據篩選日期統計大盤多空天數（每日僅記一次）
       function updateMarketStatusUsage() {
         let usage = {};
-        // 過濾符合日期範圍的交易（依 openDate）
         let filteredTrades = trades;
         if (selectedStartDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
@@ -1356,19 +1360,19 @@
         if (selectedEndDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
         }
-        // 利用日期作為 key，每天只記錄一次大盤多空狀態
+        // 以日期為 key，每天只記錄一次大盤多空狀態
         let dayStatus = {};
         filteredTrades.forEach(t => {
           let day = new Date(t.openDate).toISOString().split("T")[0];
-          if (!dayStatus[day]) {
+          if(!dayStatus[day]){
             dayStatus[day] = t.externalConditionId;
           }
         });
         // 統計各大盤多空的天數
-        for (let day in dayStatus) {
+        for(let day in dayStatus) {
           let statusId = dayStatus[day];
-          if (statusId != null) {
-            if (!usage[statusId]) usage[statusId] = 0;
+          if(statusId != null){
+            if(!usage[statusId]) usage[statusId] = 0;
             usage[statusId]++;
           }
         }
@@ -1682,72 +1686,6 @@
         // 更新各策略使用次數與大盤多空天數（依據篩選日期範圍）
         updateStrategyUsage();
         updateMarketStatusUsage();
-      }
-
-      // 更新各種策略使用次數的函式
-      function updateStrategyUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => {
-          if(t.strategyId !== null) {
-            usage[t.strategyId]++;
-          }
-        });
-        let list = document.getElementById("strategyUsageList");
-        if(list) {
-          list.innerHTML = "";
-          strategies.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 次`;
-            list.appendChild(li);
-          });
-        }
-      }
-
-      // 更新大盤多空天數統計：依據篩選日期，每天只計一次
-      function updateMarketStatusUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        // 以日期為 key，每天只記錄一次大盤多空狀態
-        let dayStatus = {};
-        filteredTrades.forEach(t => {
-          let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]){
-            dayStatus[day] = t.externalConditionId;
-          }
-        });
-        // 統計各大盤多空的天數
-        for(let day in dayStatus) {
-          let statusId = dayStatus[day];
-          if(statusId != null){
-            if(!usage[statusId]) usage[statusId] = 0;
-            usage[statusId]++;
-          }
-        }
-        let list = document.getElementById("marketStatusUsageList");
-        if(list) {
-          list.innerHTML = "";
-          externalConditions.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 天`;
-            list.appendChild(li);
-          });
-        }
       }
 
       // 初始化
