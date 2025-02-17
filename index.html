@@ -578,7 +578,7 @@
           <table class="min-w-full bg-white rounded">
             <thead>
               <tr>
-                <!-- 將原「交易」欄位改為單純顯示順序編號 -->
+                <!-- 修改「交易」欄位，顯示順序為根據最終排序的逆序 -->
                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
@@ -870,16 +870,16 @@
           const endDate = new Date(selectedEndDateFilter);
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
-        // 將交易依開倉日由新至舊排序
+        // 依開倉日由新至舊排序（保持原排序）
         filteredTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
           if (b.openDate === '') return 1;
           return new Date(b.openDate) - new Date(a.openDate);
         });
+        // 使用反向編號：交易編號 = 總筆數 - index
         tradesList.innerHTML = filteredTrades.map((trade, index) => {
-          // 使用 map 的 index+1 作為交易編號
-          const transactionNumber = index + 1;
+          const transactionNumber = filteredTrades.length - index;
           let holdingDays = '';
           let holdingDaysClass = '';
           if (trade.openDate !== '' && trade.closeDate !== '') {
@@ -986,7 +986,6 @@
         return strategy ? strategy.name : '';
       }
 
-      // 使用 externalConditions 作為大盤多空
       function getExternalConditionName(conditionId) {
         const condition = externalConditions.find(c => c.id === conditionId);
         return condition ? condition.name : '';
@@ -1609,7 +1608,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 損益百分比統計
+        // 損益百分比統計：以勝單與虧單的 returnRate 當作百分比值
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1711,7 +1710,6 @@
         updateMarketStatusUsage();
       }
 
-      // 更新各種策略使用次數的函式
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1739,7 +1737,6 @@
         }
       }
 
-      // 更新大盤多空天數統計：依據篩選日期，每天僅記一次
       function updateMarketStatusUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1775,7 +1772,6 @@
         }
       }
 
-      // 初始化
       loadStrategies();
       loadExternalConditions();
       loadData();
