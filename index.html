@@ -204,7 +204,7 @@
             <span id="profitAchievementRate" class="font-medium">0%</span>
           </div>
         </div>
-        <!-- 期望值、總報酬、MDD -->
+        <!-- 期望值、總報酬、最大交易回落 (MDD) -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">期望值：</span>
@@ -223,62 +223,60 @@
             <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- MFE 與 MAE 統計 -->
-        <div class="grid grid-cols-2 gap-4 mt-4">
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
-            <div class="flex justify-between">
-              <span>平均 MFE:</span>
-              <span id="avgMFE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE SD:</span>
-              <span id="sdMFE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE CV:</span>
-              <span id="cvMFE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE 偏度:</span>
-              <span id="skewMFE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE 峰度:</span>
-              <span id="kurtosisMFE" class="font-bold">0</span>
-            </div>
-          </div>
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
-            <div class="flex justify-between">
-              <span>平均 MAE:</span>
-              <span id="avgMAE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE SD:</span>
-              <span id="sdMAE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE CV:</span>
-              <span id="cvMAE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE 偏度:</span>
-              <span id="skewMAE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE 峰度:</span>
-              <span id="kurtosisMAE" class="font-bold">0</span>
-            </div>
-          </div>
-        </div>
       </div>
-      <!-- 在分析結果下方新增：各種策略的使用次數 -->
+      <!-- 將策略使用次數區塊放在 MDD 之後 -->
       <div class="mt-4">
         <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
-        <ul id="strategyUsageList" class="list-disc pl-5">
-          <!-- 策略使用次數將在此動態生成 -->
-        </ul>
+        <ul id="strategyUsageList" class="list-disc pl-5"></ul>
+      </div>
+      <!-- MFE 與 MAE 統計 -->
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
+          <div class="flex justify-between">
+            <span>平均 MFE:</span>
+            <span id="avgMFE" class="font-bold">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE SD:</span>
+            <span id="sdMFE" class="font-bold">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE CV:</span>
+            <span id="cvMFE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE 偏度:</span>
+            <span id="skewMFE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE 峰度:</span>
+            <span id="kurtosisMFE" class="font-bold">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
+          <div class="flex justify-between">
+            <span>平均 MAE:</span>
+            <span id="avgMAE" class="font-bold">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MAE SD:</span>
+            <span id="sdMAE" class="font-bold">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MAE CV:</span>
+            <span id="cvMAE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MAE 偏度:</span>
+            <span id="skewMAE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MAE 峰度:</span>
+            <span id="kurtosisMAE" class="font-bold">0</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1310,12 +1308,20 @@
         return maxDrawdownPercent;
       }
 
-      // updateStrategyUsage()：計算各策略在所有交易中的使用次數，並更新至畫面上
+      // updateStrategyUsage()：依據篩選日期範圍計算各策略使用次數
       function updateStrategyUsage() {
         let usage = {};
+        // 先僅以日期篩選：若有設定開始與結束日期
+        let filteredTrades = trades;
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
         strategies.forEach(s => { usage[s.id] = 0; });
-        trades.forEach(t => {
-          if (t.strategyId !== null) {
+        filteredTrades.forEach(t => {
+          if(t.strategyId !== null) {
             usage[t.strategyId]++;
           }
         });
@@ -1626,15 +1632,22 @@
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
         document.getElementById('capitalUsed').textContent = formatMoney(unclosedPositionSum, 0);
 
-        // 更新各策略使用次數
+        // 更新各策略使用次數（依據篩選日期範圍）
         updateStrategyUsage();
       }
 
-      // 更新各種策略使用次數的函式
+      // 更新各種策略使用次數的函式（僅根據 openDate 篩選）
       function updateStrategyUsage() {
         let usage = {};
+        let filteredTrades = trades;
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
         strategies.forEach(s => { usage[s.id] = 0; });
-        trades.forEach(t => {
+        filteredTrades.forEach(t => {
           if(t.strategyId !== null) {
             usage[t.strategyId]++;
           }
