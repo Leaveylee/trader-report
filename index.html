@@ -181,165 +181,174 @@
     <!-- 分析結果區塊 (不涉及交易方向) -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
-      <div class="space-y-4">
-        <div class="flex justify-between font-bold text-lg">
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">交易數：</span>
-            <span id="totalTrades" class="font-medium">0</span>
+      <!-- 上半部：交易數、勝率、風報比 -->
+      <div class="flex justify-between font-bold text-lg">
+        <div class="flex-1 text-center">
+          <span class="text-gray-600">交易數：</span>
+          <span id="totalTrades" class="font-medium">0</span>
+        </div>
+        <div class="flex-1 text-center">
+          <span class="text-gray-600">勝率：</span>
+          <span id="winRate" class="font-medium">0% (0勝0敗)</span>
+        </div>
+        <div class="flex-1 text-center">
+          <span class="text-gray-600">風報比：</span>
+          <span id="riskRewardRatio" class="font-medium">0</span>
+        </div>
+      </div>
+      <!-- 新增獲利達成率 -->
+      <div class="flex justify-between font-bold text-lg mt-2">
+        <div class="flex-1 text-center">
+          <span class="text-gray-600">獲利達成率：</span>
+          <span id="profitAchievementRate" class="font-medium">0%</span>
+        </div>
+      </div>
+      <!-- 期望值、總報酬、MDD -->
+      <div class="flex justify-between font-bold text-lg mt-2">
+        <div class="flex-1 text-center">
+          <span class="text-gray-700">期望值：</span>
+          <span id="expectedValue" class="font-bold text-lg">0</span>
+        </div>
+      </div>
+      <div class="flex justify-between font-bold text-lg mt-2">
+        <div class="flex-1 text-center">
+          <span class="text-gray-700">總報酬：</span>
+          <span id="totalReturn" class="font-bold text-lg">0</span>
+        </div>
+      </div>
+      <div class="flex justify-between font-bold text-lg mt-2">
+        <div class="flex-1 text-center">
+          <span class="text-gray-700">最大交易回落 (MDD)：</span>
+          <span id="maxDrawdown" class="font-bold text-lg">0%</span>
+        </div>
+      </div>
+      <!-- MFE 與 MAE 統計 -->
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
+          <div class="flex justify-between">
+            <span>平均 MFE:</span>
+            <span id="avgMFE" class="font-bold">0%</span>
           </div>
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">勝率：</span>
-            <span id="winRate" class="font-medium">0% (0勝0敗)</span>
+          <div class="flex justify-between">
+            <span>MFE SD:</span>
+            <span id="sdMFE" class="font-bold">0%</span>
           </div>
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">風報比：</span>
-            <span id="riskRewardRatio" class="font-medium">0</span>
+          <div class="flex justify-between">
+            <span>MFE CV:</span>
+            <span id="cvMFE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE 偏度:</span>
+            <span id="skewMFE" class="font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MFE 峰度:</span>
+            <span id="kurtosisMFE" class="font-bold">0</span>
           </div>
         </div>
-        <div class="flex justify-between font-bold text-lg">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">期望值：</span>
-            <span id="expectedValue" class="font-bold text-lg">0</span>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
+          <div class="flex justify-between">
+            <span>平均 MAE:</span>
+            <span id="avgMAE" class="font-bold">0%</span>
           </div>
-        </div>
-        <div class="flex justify-between font-bold text-lg">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">總報酬：</span>
-            <span id="totalReturn" class="font-bold text-lg">0</span>
+          <div class="flex justify-between">
+            <span>MAE SD:</span>
+            <span id="sdMAE" class="font-bold">0%</span>
           </div>
-        </div>
-        <div class="flex justify-between font-bold text-lg">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">最大交易回落 (MDD)：</span>
-            <span id="maxDrawdown" class="font-bold text-lg">0%</span>
+          <div class="flex justify-between">
+            <span>MAE CV:</span>
+            <span id="cvMAE" class="font-bold">0</span>
           </div>
-        </div>
-        <!-- MFE 與 MAE 統計 -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
-            <div class="flex justify-between">
-              <span>平均 MFE:</span>
-              <span id="avgMFE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE SD:</span>
-              <span id="sdMFE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE CV:</span>
-              <span id="cvMFE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE 偏度:</span>
-              <span id="skewMFE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MFE 峰度:</span>
-              <span id="kurtosisMFE" class="font-bold">0</span>
-            </div>
+          <div class="flex justify-between">
+            <span>MAE 偏度:</span>
+            <span id="skewMAE" class="font-bold">0</span>
           </div>
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
-            <div class="flex justify-between">
-              <span>平均 MAE:</span>
-              <span id="avgMAE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE SD:</span>
-              <span id="sdMAE" class="font-bold">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE CV:</span>
-              <span id="cvMAE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE 偏度:</span>
-              <span id="skewMAE" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span>MAE 峰度:</span>
-              <span id="kurtosisMAE" class="font-bold">0</span>
-            </div>
+          <div class="flex justify-between">
+            <span>MAE 峰度:</span>
+            <span id="kurtosisMAE" class="font-bold">0</span>
           </div>
         </div>
       </div>
-      <!-- 損益統計：將平均與最大獲利/虧損歸類 -->
-      <div class="mt-6">
-        <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <!-- 獲利項 -->
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">獲利</h4>
-            <div class="flex justify-between">
-              <span class="text-gray-600">平均獲利：</span>
-              <span id="avgWin" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">最大獲利：</span>
-              <span id="maxWin" class="font-medium">0</span>
-            </div>
+    </div>
+
+    <!-- 損益統計區塊 -->
+    <div class="bg-gray-50 p-4 rounded mb-6">
+      <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
+      <!-- 分成兩組：金額與百分比 -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 金額統計 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利：</span>
+            <span id="avgWin" class="font-medium">0</span>
           </div>
-          <!-- 虧損項 -->
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">虧損</h4>
-            <div class="flex justify-between">
-              <span class="text-gray-600">平均虧損：</span>
-              <span id="avgLoss" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">最大虧損：</span>
-              <span id="maxLoss" class="font-medium">0</span>
-            </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大獲利：</span>
+            <span id="maxWin" class="font-medium">0</span>
           </div>
         </div>
-        <div class="col-span-2 divider"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">獲利百分比統計</h4>
-            <div class="flex justify-between">
-              <span class="text-gray-600">平均獲利%：</span>
-              <span id="avgWinPercent" class="font-medium">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">獲利% SD：</span>
-              <span id="sdWinPercent" class="font-medium">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">獲利% CV：</span>
-              <span id="cvWinPercent" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">獲利% 偏度：</span>
-              <span id="skewWinPercent" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">獲利% 峰度：</span>
-              <span id="kurtosisWinPercent" class="font-medium">0</span>
-            </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損：</span>
+            <span id="avgLoss" class="font-medium">0</span>
           </div>
-          <div class="border p-4 rounded">
-            <h4 class="text-lg font-medium text-gray-700 mb-2">虧損百分比統計</h4>
-            <div class="flex justify-between">
-              <span class="text-gray-600">平均虧損%：</span>
-              <span id="avgLossPercentDisplay" class="font-medium">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">虧損% SD：</span>
-              <span id="sdLossPercent" class="font-medium">0%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">虧損% CV：</span>
-              <span id="cvLossPercent" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">虧損% 偏度：</span>
-              <span id="skewLossPercent" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">虧損% 峰度：</span>
-              <span id="kurtosisLossPercent" class="font-medium">0</span>
-            </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大虧損：</span>
+            <span id="maxLoss" class="font-medium">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-2 divider mt-4"></div>
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <!-- 百分比統計 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利%：</span>
+            <span id="avgWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% SD：</span>
+            <span id="sdWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% CV：</span>
+            <span id="cvWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 偏度：</span>
+            <span id="skewWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 峰度：</span>
+            <span id="kurtosisWinPercent" class="font-medium">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損%：</span>
+            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% SD：</span>
+            <span id="sdLossPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% CV：</span>
+            <span id="cvLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 偏度：</span>
+            <span id="skewLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 峰度：</span>
+            <span id="kurtosisLossPercent" class="font-medium">0</span>
           </div>
         </div>
       </div>
@@ -571,7 +580,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表（新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位）
+      // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -1359,6 +1368,8 @@
           document.getElementById('cvLossPercent').textContent = "0";
           document.getElementById('skewLossPercent').textContent = "0";
           document.getElementById('kurtosisLossPercent').textContent = "0";
+          // 獲利達成率
+          document.getElementById('profitAchievementRate').textContent = "0%";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1382,7 +1393,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 更新「獲利」與「虧損」金額統計（分組）
+          // 更新「獲利」與「虧損」金額統計
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
@@ -1419,10 +1430,11 @@
           }
         }
 
-        // MFE 與 MAE 相關數據
+        // MFE 與 MAE 相關數據計算
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
+        let avgMFE = 0, avgMAE = 0;
         let totalMFE = 0, totalMAE = 0;
         let mfeValues = [], maeValues = [];
         let skewMFE = 0, skewMAE = 0;
@@ -1445,8 +1457,8 @@
             mfeValues.push(mfe);
             maeValues.push(mae);
           });
-          var avgMFE = totalMFE / tradesWithPrices.length;
-          var avgMAE = totalMAE / tradesWithPrices.length;
+          avgMFE = totalMFE / tradesWithPrices.length;
+          avgMAE = totalMAE / tradesWithPrices.length;
           let sumSqMFE = 0, sumSqMAE = 0;
           mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
           maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
@@ -1469,7 +1481,7 @@
           kurtosisMFE = kurtosisMFEVal;
           kurtosisMAE = kurtosisMAEVal;
         } else {
-          var avgMFE = 0, avgMAE = 0;
+          avgMFE = 0; avgMAE = 0;
           var stdMFE = 0, stdMAE = 0;
           var cvMFE = 0, cvMAE = 0;
           skewMFE = 0;
@@ -1488,7 +1500,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 損益百分比統計：計算勝單與虧單的 returnRate 當作百分比值
+        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 當作百分比值
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1535,6 +1547,10 @@
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
+
+        // 新增計算「獲利達成率」：平均獲利% / MFE%
+        let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
+        document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
 
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
