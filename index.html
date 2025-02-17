@@ -178,9 +178,10 @@
       <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
     </div>
 
-    <!-- 分析結果區塊 (不涉及交易方向) -->
+    <!-- 分析結果區塊 -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
+      <!-- 原有各項統計數據 -->
       <div class="space-y-4">
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
@@ -245,54 +246,10 @@
           </div>
         </div>
       </div>
+      <!-- 新增損益統計表格 -->
       <div class="mt-6">
-        <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均獲利：</span>
-            <span id="avgWin" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均虧損：</span>
-            <span id="avgLoss" class="font-medium">0</span>
-          </div>
-          <div class="col-span-2 divider"></div>
-          <!-- 新增獲利百分比統計 -->
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均獲利%：</span>
-            <span id="avgWinPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% SD：</span>
-            <span id="sdWinPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">獲利% CV：</span>
-            <span id="cvWinPercent" class="font-medium">0</span>
-          </div>
-          <!-- 新增虧損百分比統計 -->
-          <div class="flex justify-between">
-            <span class="text-gray-600">平均虧損%：</span>
-            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% SD：</span>
-            <span id="sdLossPercent" class="font-medium">0%</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">虧損% CV：</span>
-            <span id="cvLossPercent" class="font-medium">0</span>
-          </div>
-          <div class="col-span-2 divider"></div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">最大獲利：</span>
-            <span id="maxWin" class="font-medium">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">最大虧損：</span>
-            <span id="maxLoss" class="font-medium">0</span>
-          </div>
-        </div>
+        <h3 class="text-md font-medium text-gray-700 mb-3">損益百分比統計</h3>
+        <div id="statisticsTable"></div>
       </div>
     </div>
 
@@ -518,11 +475,29 @@
     </div>
 
     <script>
+      // 輔助函式：計算統計數據
+      function computeStats(values) {
+        if (values.length === 0) {
+          return { mean: 0, sd: 0, cv: 0, skewness: 0, kurtosis: 0 };
+        }
+        let n = values.length;
+        let mean = values.reduce((a, b) => a + b, 0) / n;
+        let variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / n;
+        let sd = Math.sqrt(variance);
+        let cv = mean !== 0 ? sd / mean : 0;
+        let skewness = 0, kurtosis = 0;
+        if (sd !== 0) {
+          skewness = values.reduce((sum, v) => sum + Math.pow(v - mean, 3), 0) / n / Math.pow(sd, 3);
+          kurtosis = values.reduce((sum, v) => sum + Math.pow(v - mean, 4), 0) / n / Math.pow(sd, 4) - 3;
+        }
+        return { mean, sd, cv, skewness, kurtosis };
+      }
+
       // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表，新增 "direction"（預設為 "多"）、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
+      // 交易記錄列表（包含新增欄位）
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -1212,7 +1187,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 不變
+      // calculateMDD()（不變）
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1243,7 +1218,7 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats()：更新所有統計數據
+      // calculateStats()：更新所有統計數據，包括新增損益百分比統計表格
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1276,7 +1251,7 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算 MDD%
+        // MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1290,167 +1265,130 @@
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('maxDrawdown').textContent = "0%";
-          document.getElementById('avgMFE').textContent = "0%";
-          document.getElementById('sdMFE').textContent = "0%";
-          document.getElementById('cvMFE').textContent = "0";
-          document.getElementById('avgMAE').textContent = "0%";
-          document.getElementById('sdMAE').textContent = "0%";
-          document.getElementById('cvMAE').textContent = "0";
-          document.getElementById('avgWinPercent').textContent = "0%";
-          document.getElementById('sdWinPercent').textContent = "0%";
-          document.getElementById('cvWinPercent').textContent = "0";
-          document.getElementById('avgLossPercentDisplay').textContent = "0%";
-          document.getElementById('sdLossPercent').textContent = "0%";
-          document.getElementById('cvLossPercent').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
           const losses = results.filter(result => result < 0);
           const winRate = (wins.length / results.length) * 100;
-          const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-          const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
-          const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-          const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
-
-          const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
-          const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
-          const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-
-          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
-          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          
-          // 更新損益統計顯示（不附括號）：
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          const expectedValueElem = document.getElementById('expectedValue');
-          if (expectedValueAmount > 0) {
-            expectedValueElem.classList.add('text-red-500');
-            expectedValueElem.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElem.classList.add('text-green-500');
-            expectedValueElem.classList.remove('text-red-500');
-          } else {
-            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const totalReturnElem = document.getElementById('totalReturn');
-          if (totalReturnAmount > 0) {
-            totalReturnElem.classList.add('text-red-500');
-            totalReturnElem.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElem.classList.add('text-green-500');
-            totalReturnElem.classList.remove('text-red-500');
-          } else {
-            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const maxDrawdownElem = document.getElementById('maxDrawdown');
-          maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
-          if (mddPercent > 0) {
-            maxDrawdownElem.classList.add('text-green-500');
-            maxDrawdownElem.classList.remove('text-red-500');
-          } else {
-            maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
-          }
         }
+        document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mddPercent, 2) + "%";
 
-        // 針對 MFE 與 MAE：以百分比計算平均值、標準差與變異係數
-        let tradesWithPrices = closedTrades.filter(trade => 
-          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
-        );
-        let totalMFE = 0, totalMAE = 0;
+        // ---- 以下計算各項百分比統計 ----
+        // (1) 平均損益%（所有閉倉交易的 returnRate 平均）
+        let netProfitValues = closedTrades.map(trade => parseFloat(trade.returnRate));
+        let netProfitStats = computeStats(netProfitValues);
+
+        // (2) 平均 MFE% 與 (3) 平均 MAE%（依據有價格資料的交易）
         let mfeValues = [], maeValues = [];
-        if (tradesWithPrices.length > 0) {
-          tradesWithPrices.forEach(trade => {
+        closedTrades.forEach(trade => {
+          if(trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
-            let mfe = 0, mae = 0;
-            if (trade.direction === "多") {
-              mfe = (high - entry) / entry * 100;
-              mae = (entry - low) / entry * 100;
-            } else { // 空單：反轉
-              mfe = (entry - low) / entry * 100;
-              mae = (high - entry) / entry * 100;
-            }
-            totalMFE += mfe;
-            totalMAE += mae;
-            mfeValues.push(mfe);
-            maeValues.push(mae);
-          });
-          var avgMFE = totalMFE / tradesWithPrices.length;
-          var avgMAE = totalMAE / tradesWithPrices.length;
-          // 計算標準差
-          let sumSqMFE = 0, sumSqMAE = 0;
-          mfeValues.forEach(val => {
-            sumSqMFE += Math.pow(val - avgMFE, 2);
-          });
-          maeValues.forEach(val => {
-            sumSqMAE += Math.pow(val - avgMAE, 2);
-          });
-          var stdMFE = Math.sqrt(sumSqMFE / tradesWithPrices.length);
-          var stdMAE = Math.sqrt(sumSqMAE / tradesWithPrices.length);
-          var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
-          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
-        } else {
-          var avgMFE = 0, avgMAE = 0;
-          var stdMFE = 0, stdMAE = 0;
-          var cvMFE = 0, cvMAE = 0;
-        }
-        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
-        document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
-        document.getElementById('cvMFE').textContent = formatNumberNoSign(cvMFE, 2);
-        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
-        document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
-        document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
-
-        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 平均來計算
-        let winPercentValues = [];
-        let lossPercentValues = [];
-        closedTradesWithPosition.forEach(trade => {
-          let ret = parseFloat(trade.returnRate);
-          if (!isNaN(ret)) {
-            if (ret > 0) {
-              winPercentValues.push(ret);
-            } else if (ret < 0) {
-              lossPercentValues.push(Math.abs(ret));
+            if(entry !== 0) {
+              if(trade.direction === "多") {
+                mfeValues.push((high - entry)/entry*100);
+                maeValues.push((entry - low)/entry*100);
+              } else {
+                mfeValues.push((entry - low)/entry*100);
+                maeValues.push((high - entry)/entry*100);
+              }
             }
           }
         });
-        let avgWinPercentValue = winPercentValues.length > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / winPercentValues.length : 0;
-        let sdWinPercent = winPercentValues.length > 0 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / winPercentValues.length) : 0;
-        let cvWinPercent = avgWinPercentValue !== 0 ? sdWinPercent / avgWinPercentValue : 0;
-        let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
-        let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
-        let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
-        document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
-        document.getElementById('cvWinPercent').textContent = formatNumberNoSign(cvWinPercent, 2);
-        document.getElementById('avgLossPercentDisplay').textContent = formatNumberNoSign(avgLossPercentValue, 2) + "%";
-        document.getElementById('sdLossPercent').textContent = formatNumberNoSign(sdLossPercent, 2) + "%";
-        document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
+        let mfeStats = computeStats(mfeValues);
+        let maeStats = computeStats(maeValues);
 
-        const winningTrades = closedTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
-        );
-        const losingTrades = closedTrades.filter(trade => 
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
-          trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
-        );
-        const avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
-        const avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
+        // (4) 平均獲利%：僅針對獲利交易（returnRate > 0）
+        let winValues = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0).map(trade => parseFloat(trade.returnRate));
+        let winStats = computeStats(winValues);
+
+        // (5) 平均虧損%：僅針對虧損交易（取絕對值）
+        let lossValues = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0).map(trade => Math.abs(parseFloat(trade.returnRate)));
+        let lossStats = computeStats(lossValues);
+
+        // 更新損益統計區塊（僅金額部分）
+        // 此部分維持原有設定：
+        let winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
+        let lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
+        let avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
+        let avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
+        let maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+        let maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+        document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
+        document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+        document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
+        document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
+
+        // 更新統計表格（顯示上述5項指標的統計數據）
+        let statsHtml = `
+          <table class="min-w-full bg-white rounded">
+            <thead>
+              <tr>
+                <th class="px-4 py-2">指標</th>
+                <th class="px-4 py-2">平均值</th>
+                <th class="px-4 py-2">SD</th>
+                <th class="px-4 py-2">CV</th>
+                <th class="px-4 py-2">偏度</th>
+                <th class="px-4 py-2">峰度</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="px-4 py-2">平均損益%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(netProfitStats.mean,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(netProfitStats.sd,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(netProfitStats.cv,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(netProfitStats.skewness,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(netProfitStats.kurtosis,2)}</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2">平均 MFE%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(mfeStats.mean,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(mfeStats.sd,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(mfeStats.cv,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(mfeStats.skewness,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(mfeStats.kurtosis,2)}</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2">平均 MAE%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(maeStats.mean,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(maeStats.sd,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(maeStats.cv,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(maeStats.skewness,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(maeStats.kurtosis,2)}</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2">平均獲利%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(winStats.mean,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(winStats.sd,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(winStats.cv,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(winStats.skewness,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(winStats.kurtosis,2)}</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2">平均虧損%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(lossStats.mean,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(lossStats.sd,2)}%</td>
+                <td class="px-4 py-2">${formatNumberNoSign(lossStats.cv,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(lossStats.skewness,2)}</td>
+                <td class="px-4 py-2">${formatNumberNoSign(lossStats.kurtosis,2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        document.getElementById('statisticsTable').innerHTML = statsHtml;
+
+        // 更新部位、未平倉與 ROI
+        let winningTrades = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
+        let losingTrades = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
+        let avgWinningPosition = winningTrades.length > 0 ? winningTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winningTrades.length : 0;
+        let avgLosingPosition = losingTrades.length > 0 ? losingTrades.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / losingTrades.length : 0;
         document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
         document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
-
+        
         let unclosedTrades = trades.filter(trade => trade.openDate !== '' && (!trade.closeDate || trade.closeDate.trim() === ''));
         if (selectedStrategyFilter !== null) {
           unclosedTrades = unclosedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -1469,8 +1407,8 @@
           const endDate = new Date(selectedEndDateFilter);
           unclosedTrades = unclosedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
-        const unclosedTradeCount = unclosedTrades.length;
-        const unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
+        let unclosedTradeCount = unclosedTrades.length;
+        let unclosedPositionSum = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionSum, 0);
         
