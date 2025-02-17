@@ -258,11 +258,25 @@
             <span id="skewMAE" class="font-bold text-lg">0</span>
           </div>
         </div>
+        <!-- 新增 MFE 峰度 -->
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MFE 峰度：</span>
+            <span id="kurtosisMFE" class="font-bold text-lg">0</span>
+          </div>
+        </div>
+        <!-- 新增 MAE 峰度 -->
+        <div class="flex justify-between font-bold text-lg">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">MAE 峰度：</span>
+            <span id="kurtosisMAE" class="font-bold text-lg">0</span>
+          </div>
+        </div>
       </div>
       <div class="mt-6">
         <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
         <div class="grid grid-cols-2 gap-4">
-          <!-- 原有的金額部分，不附括號 -->
+          <!-- 顯示金額部分 -->
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利：</span>
             <span id="avgWin" class="font-medium">0</span>
@@ -1227,7 +1241,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 函式（不變）
+      // calculateMDD() 不變
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1258,7 +1272,7 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats()：更新所有統計數據
+      // calculateStats()：更新所有統計數據，包括 MFE/MAE、偏度與峰度，以及損益百分比統計
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1313,6 +1327,8 @@
           document.getElementById('cvMAE').textContent = "0";
           document.getElementById('skewMFE').textContent = "0";
           document.getElementById('skewMAE').textContent = "0";
+          document.getElementById('kurtosisMFE').textContent = "0";
+          document.getElementById('kurtosisMAE').textContent = "0";
           document.getElementById('avgWinPercent').textContent = "0%";
           document.getElementById('sdWinPercent').textContent = "0%";
           document.getElementById('cvWinPercent').textContent = "0";
@@ -1342,7 +1358,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 更新損益統計顯示（僅顯示金額，不附括號）
+          // 更新損益統計（僅金額部分）
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
           document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
           document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
@@ -1379,13 +1395,14 @@
           }
         }
 
-        // 針對 MFE 與 MAE：以百分比計算平均值、標準差與變異係數
+        // 針對 MFE 與 MAE：計算平均值、標準差、變異係數與偏度、峰度
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
         let totalMFE = 0, totalMAE = 0;
         let mfeValues = [], maeValues = [];
         let skewMFE = 0, skewMAE = 0;
+        let kurtosisMFE = 0, kurtosisMAE = 0;
         if (tradesWithPrices.length > 0) {
           tradesWithPrices.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
@@ -1406,7 +1423,7 @@
           });
           var avgMFE = totalMFE / tradesWithPrices.length;
           var avgMAE = totalMAE / tradesWithPrices.length;
-          // 計算標準差
+          // 標準差
           let sumSqMFE = 0, sumSqMAE = 0;
           mfeValues.forEach(val => {
             sumSqMFE += Math.pow(val - avgMFE, 2);
@@ -1418,7 +1435,7 @@
           var stdMAE = Math.sqrt(sumSqMAE / tradesWithPrices.length);
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
           var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
-          // 計算偏度（skewness）
+          // 偏度 (skewness)
           let sumCubeMFE = 0, sumCubeMAE = 0;
           mfeValues.forEach(val => {
             sumCubeMFE += Math.pow(val - avgMFE, 3);
@@ -1428,12 +1445,24 @@
           });
           skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesWithPrices.length) / Math.pow(stdMFE, 3) : 0;
           skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesWithPrices.length) / Math.pow(stdMAE, 3) : 0;
+          // 峰度 (kurtosis)
+          let sumFourthMFE = 0, sumFourthMAE = 0;
+          mfeValues.forEach(val => {
+            sumFourthMFE += Math.pow(val - avgMFE, 4);
+          });
+          maeValues.forEach(val => {
+            sumFourthMAE += Math.pow(val - avgMAE, 4);
+          });
+          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesWithPrices.length) / Math.pow(stdMFE, 4) : 0;
+          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesWithPrices.length) / Math.pow(stdMAE, 4) : 0;
         } else {
           var avgMFE = 0, avgMAE = 0;
           var stdMFE = 0, stdMAE = 0;
           var cvMFE = 0, cvMAE = 0;
           skewMFE = 0;
           skewMAE = 0;
+          kurtosisMFE = 0;
+          kurtosisMAE = 0;
         }
         document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
         document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
@@ -1443,6 +1472,8 @@
         document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
+        document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
+        document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
         // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 平均來計算
         let winPercentValues = [];
