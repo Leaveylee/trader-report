@@ -236,7 +236,7 @@
           <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
         </div>
       </div>
-      <!-- 新增「持倉天數」區塊，放在 MFE/MAE 統計上方 -->
+      <!-- 新增「持倉天數」區塊，放在 MFE/MAE 統計區塊上方 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利交易平均持倉天數</h4>
@@ -578,6 +578,7 @@
           <table class="min-w-full bg-white rounded">
             <thead>
               <tr>
+                <!-- 將原「交易」欄位改為單純顯示順序編號 -->
                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
@@ -869,12 +870,7 @@
           const endDate = new Date(selectedEndDateFilter);
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
-        const tradesWithOpenDate = filteredTrades.filter(trade => trade.openDate !== '');
-        const sortedAscending = [...tradesWithOpenDate].sort((a, b) => new Date(a.openDate) - new Date(b.openDate));
-        const transactionNumbers = new Map();
-        sortedAscending.forEach((trade, index) => {
-          transactionNumbers.set(trade.id, index + 1);
-        });
+        // 將交易依開倉日由新至舊排序
         filteredTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
@@ -882,7 +878,8 @@
           return new Date(b.openDate) - new Date(a.openDate);
         });
         tradesList.innerHTML = filteredTrades.map((trade, index) => {
-          const transactionNumber = trade.openDate !== '' ? transactionNumbers.get(trade.id) : '';
+          // 使用 map 的 index+1 作為交易編號
+          const transactionNumber = index + 1;
           let holdingDays = '';
           let holdingDaysClass = '';
           if (trade.openDate !== '' && trade.closeDate !== '') {
@@ -897,12 +894,6 @@
             holdingDays = '未平倉';
             holdingDaysClass = 'text-red-500';
           }
-          const strategyOptions = strategies.map(strategy => `
-            <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
-          `).join('');
-          const externalConditionOptions = externalConditions.map(condition => `
-            <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
-          `).join('');
           return `
             <tr>
               <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
@@ -995,7 +986,7 @@
         return strategy ? strategy.name : '';
       }
 
-      // 依然使用 externalConditions，但顯示上呼叫 getExternalConditionName()
+      // 使用 externalConditions 作為大盤多空
       function getExternalConditionName(conditionId) {
         const condition = externalConditions.find(c => c.id === conditionId);
         return condition ? condition.name : '';
@@ -1528,7 +1519,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 計算持倉天數：僅對開倉日與平倉日皆有資料的交易進行
+          // 計算持倉天數：僅針對開倉日與平倉日皆有資料的交易
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1618,7 +1609,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 損益百分比統計：以勝單與虧單的 returnRate 當作百分比值
+        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1784,7 +1775,7 @@
         }
       }
 
-      // 初始化後即更新統計資料
+      // 初始化
       loadStrategies();
       loadExternalConditions();
       loadData();
@@ -1912,7 +1903,6 @@
           }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          // 更新必要欄位，將「外部條件」改為「大盤多空」
           const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (jsonData.length === 0) {
