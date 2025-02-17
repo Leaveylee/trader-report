@@ -214,7 +214,7 @@
             <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- 將 MFE 與 MAE 數據整合成左右兩欄排列 -->
+        <!-- MFE 與 MAE 統計 -->
         <div class="grid grid-cols-2 gap-4">
           <div class="border p-4 rounded">
             <h3 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h3>
@@ -277,7 +277,7 @@
             <span id="avgLoss" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
-          <!-- 新增獲利百分比統計 -->
+          <!-- 獲利百分比統計 -->
           <div class="flex justify-between">
             <span class="text-gray-600">平均獲利%：</span>
             <span id="avgWinPercent" class="font-medium">0%</span>
@@ -294,7 +294,11 @@
             <span class="text-gray-600">獲利% 偏度：</span>
             <span id="skewWinPercent" class="font-medium">0</span>
           </div>
-          <!-- 新增虧損百分比統計 -->
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 峰度：</span>
+            <span id="kurtosisWinPercent" class="font-medium">0</span>
+          </div>
+          <!-- 虧損百分比統計 -->
           <div class="flex justify-between">
             <span class="text-gray-600">平均虧損%：</span>
             <span id="avgLossPercentDisplay" class="font-medium">0%</span>
@@ -310,6 +314,10 @@
           <div class="flex justify-between">
             <span class="text-gray-600">虧損% 偏度：</span>
             <span id="skewLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 峰度：</span>
+            <span id="kurtosisLossPercent" class="font-medium">0</span>
           </div>
           <div class="col-span-2 divider"></div>
           <div class="flex justify-between">
@@ -550,7 +558,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 外部條件列表
       let externalConditions = [{ id: 1, name: '默認外部條件', description: '這是默認外部條件' }];
-      // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
+      // 交易記錄列表（新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位）
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -1271,7 +1279,7 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats()：更新所有統計數據，包括 MFE/MAE 的相關數據與損益百分比統計
+      // calculateStats()：更新所有統計數據，包括 MFE/MAE 相關數據與損益百分比統計
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1336,6 +1344,8 @@
           document.getElementById('cvLossPercent').textContent = "0";
           document.getElementById('skewWinPercent').textContent = "0";
           document.getElementById('skewLossPercent').textContent = "0";
+          document.getElementById('kurtosisWinPercent').textContent = "0";
+          document.getElementById('kurtosisLossPercent').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1480,7 +1490,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate（當作百分比值）計算
+        // 針對獲利與虧損百分比：以勝單與虧單的 returnRate 當作百分比值
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1499,7 +1509,7 @@
         let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
         let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
         let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        // 計算偏度：獲利% 與 虧損%
+        // 偏度計算
         let winPercentSkewness = 0, lossPercentSkewness = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
@@ -1509,15 +1519,26 @@
           let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
           lossPercentSkewness = (sumCubeLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 3);
         }
+        // 峰度計算
+        let winPercentKurtosis = 0, lossPercentKurtosis = 0;
+        if (winPercentValues.length > 0 && sdWinPercent !== 0) {
+          let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
+          winPercentKurtosis = (sumFourthWin / winPercentValues.length) / Math.pow(sdWinPercent, 4);
+        }
+        if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
+          let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
+          lossPercentKurtosis = (sumFourthLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 4);
+        }
         document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
         document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
         document.getElementById('cvWinPercent').textContent = formatNumberNoSign(cvWinPercent, 2);
+        document.getElementById('skewWinPercent').textContent = formatNumberNoSign(winPercentSkewness, 2);
+        document.getElementById('kurtosisWinPercent').textContent = formatNumberNoSign(winPercentKurtosis, 2);
         document.getElementById('avgLossPercentDisplay').textContent = formatNumberNoSign(avgLossPercentValue, 2) + "%";
         document.getElementById('sdLossPercent').textContent = formatNumberNoSign(sdLossPercent, 2) + "%";
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
-        // 新增顯示獲利%與虧損%偏度
-        document.getElementById('skewWinPercent').textContent = formatNumberNoSign(winPercentSkewness, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
+        document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
 
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
