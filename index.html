@@ -326,6 +326,10 @@
             <span class="text-gray-600">最大獲利：</span>
             <span id="maxWin" class="font-medium">0</span>
           </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利交易的平均部位：</span>
+            <span id="avgWinningPosition" class="font-medium">0</span>
+          </div>
         </div>
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">虧損</h4>
@@ -336,6 +340,10 @@
           <div class="flex justify-between">
             <span class="text-gray-600">最大虧損：</span>
             <span id="maxLoss" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損交易的平均部位：</span>
+            <span id="avgLosingPosition" class="font-medium">0</span>
           </div>
         </div>
       </div>
@@ -387,21 +395,6 @@
             <span class="text-gray-600">虧損% 峰度：</span>
             <span id="kurtosisLossPercent" class="font-medium">0</span>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 部位統計區塊 -->
-    <div id="positionStats" class="bg-gray-50 p-4 rounded mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-4">部位統計</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="flex justify-between">
-          <span class="text-gray-600">獲利交易的平均部位：</span>
-          <span id="avgWinningPosition" class="font-medium">0</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">虧損交易的平均部位：</span>
-          <span id="avgLosingPosition" class="font-medium">0</span>
         </div>
       </div>
     </div>
@@ -1625,6 +1618,7 @@
         let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
 
+        // 計算獲利交易平均部位與虧損交易平均部位
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
