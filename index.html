@@ -154,6 +154,14 @@
             <option value="空">空</option>
           </select>
         </div>
+        <div class="flex-1 min-w-[200px]">
+          <label for="closeStatusFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選平倉狀態</label>
+          <select id="closeStatusFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="closed">已平倉</option>
+            <option value="open">未平倉</option>
+          </select>
+        </div>
         <div class="flex-1 min-w-[300px]">
           <label class="block text-sm font-medium text-gray-700 mb-1">篩選日期範圍</label>
           <div class="flex space-x-2">
@@ -618,6 +626,7 @@
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
+      let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
       // 全局變數：下一個交易ID
       let nextTradeId = 1;
 
@@ -749,10 +758,10 @@
             strategyId: null, 
             externalConditionId: null, 
             openDate: '', 
-            closeDate: '', 
+            closeDate: '',
             description: '', 
-            imageUrl: '', 
-            direction: "多" 
+            imageUrl: '',
+            direction: "多"
           });
         }
         selectedStrategyFilter = null;
@@ -760,11 +769,13 @@
         selectedStartDateFilter = null;
         selectedEndDateFilter = null;
         selectedDirectionFilter = null;
+        selectedCloseStatusFilter = null;
         document.getElementById('strategyFilter').value = '';
         document.getElementById('externalConditionFilter').value = '';
+        document.getElementById('directionFilter').value = '';
+        document.getElementById('closeStatusFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
-        document.getElementById('directionFilter').value = '';
         renderStrategies();
         renderExternalConditions();
         renderTrades();
@@ -870,6 +881,13 @@
         if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
           const endDate = new Date(selectedEndDateFilter);
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+        }
+        if (selectedCloseStatusFilter !== null) {
+          if (selectedCloseStatusFilter === "open") {
+            filteredTrades = filteredTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+          } else if (selectedCloseStatusFilter === "closed") {
+            filteredTrades = filteredTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+          }
         }
         // 依開倉日由新至舊排序（保持原排序）
         filteredTrades.sort((a, b) => {
@@ -1261,12 +1279,14 @@
         const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
+        const closeStatus = document.getElementById('closeStatusFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
         // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
         selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
+        selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
         selectedStartDateFilter = startDate === '' ? null : startDate;
         selectedEndDateFilter = endDate === '' ? null : endDate;
         calculateStats();
@@ -1328,77 +1348,6 @@
         return maxDrawdownPercent;
       }
 
-      // 更新各策略使用次數的函式，更新為依據所有篩選條件（除了策略本身）進行
-      function updateStrategyUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        // 過濾依據大盤多空、交易方向、日期範圍
-        if (selectedExternalConditionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => {
-          if(t.strategyId !== null) {
-            usage[t.strategyId]++;
-          }
-        });
-        let list = document.getElementById("strategyUsageList");
-        if(list) {
-          list.innerHTML = "";
-          strategies.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 次`;
-            list.appendChild(li);
-          });
-        }
-      }
-
-      // 更新大盤多空天數統計：依據篩選日期，每天僅記一次
-      function updateMarketStatusUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        let dayStatus = {};
-        filteredTrades.forEach(t => {
-          let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]){
-            dayStatus[day] = t.externalConditionId;
-          }
-        });
-        for(let day in dayStatus) {
-          let statusId = dayStatus[day];
-          if(statusId != null){
-            if(!usage[statusId]) usage[statusId] = 0;
-            usage[statusId]++;
-          }
-        }
-        let list = document.getElementById("marketStatusUsageList");
-        if(list) {
-          list.innerHTML = "";
-          externalConditions.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 天`;
-            list.appendChild(li);
-          });
-        }
-      }
-
       // calculateStats()：更新所有統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
@@ -1420,6 +1369,13 @@
         if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
           const endDate = new Date(selectedEndDateFilter);
           closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+        }
+        if (selectedCloseStatusFilter !== null) {
+          if (selectedCloseStatusFilter === "open") {
+            closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+          } else if (selectedCloseStatusFilter === "closed") {
+            closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+          }
         }
         let closedTradesWithPosition = closedTrades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
