@@ -310,7 +310,96 @@
       </div>
     </div>
 
-    <!-- 未平倉統計區塊（名稱已調整），將自由資金項目加入 -->
+    <!-- 損益統計區塊 -->
+    <div class="bg-gray-50 p-4 rounded mb-6">
+      <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
+      <!-- 分成兩組：金額統計與百分比統計 -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 金額統計：獲利與虧損 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利：</span>
+            <span id="avgWin" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大獲利：</span>
+            <span id="maxWin" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利交易的平均部位：</span>
+            <span id="avgWinningPosition" class="font-medium">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損：</span>
+            <span id="avgLoss" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大虧損：</span>
+            <span id="maxLoss" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損交易的平均部位：</span>
+            <span id="avgLosingPosition" class="font-medium">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-2 divider mt-4"></div>
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <!-- 百分比統計 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利%：</span>
+            <span id="avgWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% SD：</span>
+            <span id="sdWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% CV：</span>
+            <span id="cvWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 偏度：</span>
+            <span id="skewWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 峰度：</span>
+            <span id="kurtosisWinPercent" class="font-medium">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損%：</span>
+            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% SD：</span>
+            <span id="sdLossPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% CV：</span>
+            <span id="cvLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 偏度：</span>
+            <span id="skewLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 峰度：</span>
+            <span id="kurtosisLossPercent" class="font-medium">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 未平倉統計區塊（名稱已調整） -->
     <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -322,20 +411,20 @@
           <span class="text-gray-600">持倉部位：</span>
           <span id="unclosedPositionTotal" class="font-medium">$0</span>
         </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">自由資金：</span>
-          <span id="freeCapital" class="font-medium">$0</span>
-        </div>
       </div>
     </div>
 
-    <!-- 資金績效統計區塊（占用資金項目已刪除） -->
+    <!-- 資金績效統計區塊（刪除「占用資金」項目） -->
     <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
-      <div class="grid grid-cols-1 gap-4">
+      <div class="grid grid-cols-2 gap-4">
         <div class="flex justify-between">
           <span class="text-gray-600">總資金回報率 (ROI)：</span>
           <span id="roi" class="font-medium">0</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">自由資金：</span>
+          <span id="freeCapital" class="font-medium">$0</span>
         </div>
       </div>
     </div>
