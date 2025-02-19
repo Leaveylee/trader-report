@@ -578,7 +578,7 @@
           <table class="min-w-full bg-white rounded">
             <thead>
               <tr>
-                <!-- 修改「交易」欄位，顯示順序為根據最終排序的逆序 -->
+                <!-- 交易欄位：依據過濾後交易資料總筆數減去目前索引，讓最新交易編號較大 -->
                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
@@ -853,6 +853,7 @@
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
         let filteredTrades = trades;
+        // 依篩選條件進行過濾
         if (selectedStrategyFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
@@ -877,7 +878,7 @@
           if (b.openDate === '') return 1;
           return new Date(b.openDate) - new Date(a.openDate);
         });
-        // 使用反向編號：交易編號 = 總筆數 - index
+        // 使用反向編號：交易編號 = 總筆數 - index（這樣最新的交易編號最大）
         tradesList.innerHTML = filteredTrades.map((trade, index) => {
           const transactionNumber = filteredTrades.length - index;
           let holdingDays = '';
@@ -1262,6 +1263,7 @@
         const direction = document.getElementById('directionFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
+        // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
         selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
@@ -1326,10 +1328,17 @@
         return maxDrawdownPercent;
       }
 
-      // updateStrategyUsage()：依據篩選日期範圍統計各策略使用次數
+      // 更新各策略使用次數的函式，更新為依據所有篩選條件（除了策略本身）進行
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
+        // 過濾依據大盤多空、交易方向、日期範圍
+        if (selectedExternalConditionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+        }
+        if (selectedDirectionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
         if (selectedStartDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
         }
@@ -1354,7 +1363,7 @@
         }
       }
 
-      // updateMarketStatusUsage()：依據篩選日期統計大盤多空天數（每日僅記一次）
+      // 更新大盤多空天數統計：依據篩選日期，每天僅記一次
       function updateMarketStatusUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1518,7 +1527,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 計算持倉天數：僅針對開倉日與平倉日皆有資料的交易
+          // 計算持倉天數：僅針對有完整開倉與平倉日期的交易
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1608,7 +1617,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 損益百分比統計：以勝單與虧單的 returnRate 當作百分比值
+        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1710,9 +1719,16 @@
         updateMarketStatusUsage();
       }
 
+      // 更新各種策略使用次數的函式，更新為依據所有篩選條件（除了策略本身）進行
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
+        if (selectedExternalConditionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+        }
+        if (selectedDirectionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
         if (selectedStartDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
         }
