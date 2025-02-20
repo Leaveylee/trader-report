@@ -221,7 +221,7 @@
             <span id="profitAchievementRate" class="font-medium">0%</span>
           </div>
         </div>
-        <!-- 期望值、總報酬、最大交易回落 (MDD) -->
+        <!-- 期望值、總報酬 -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">期望值：</span>
@@ -234,6 +234,14 @@
             <span id="totalReturn" class="font-bold text-lg">0</span>
           </div>
         </div>
+        <!-- 新增 ROI 項目 -->
+        <div class="flex justify-between font-bold text-lg mt-2">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">總資金回報率 (ROI)：</span>
+            <span id="analysisROI" class="font-bold text-lg">0%</span>
+          </div>
+        </div>
+        <!-- 最大交易回落 (MDD) -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">最大交易回落 (MDD)：</span>
@@ -1417,6 +1425,7 @@
           document.getElementById('maxLoss').textContent = formatMoney(0, 0);
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
+          document.getElementById('analysisROI').textContent = "0%";
           document.getElementById('maxDrawdown').textContent = "0%";
           document.getElementById('avgMFE').textContent = "0%";
           document.getElementById('sdMFE').textContent = "0%";
@@ -1461,6 +1470,13 @@
 
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
+          // 計算 ROI = 總報酬 / 初始資金 * 100%
+          let roi = 0;
+          if (!isNaN(initialCapital) && initialCapital > 0) {
+            roi = ((currentCapital - initialCapital) / initialCapital) * 100;
+          }
+          document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
+          
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
@@ -1636,7 +1652,7 @@
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
-
+        
         // 新增計算「獲利達成率」：平均獲利% / 平均 MFE × 100
         let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
