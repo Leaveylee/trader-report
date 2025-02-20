@@ -253,7 +253,17 @@
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div>
           <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
-          <ul id="strategyUsageList" class="list-disc pl-5"></ul>
+          <!-- 使用表格排版 -->
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr>
+                <th class="border px-4 py-2">策略名稱</th>
+                <th class="border px-4 py-2">使用次數</th>
+                <th class="border px-4 py-2">勝率 (勝/敗)</th>
+              </tr>
+            </thead>
+            <tbody id="strategyUsageList"></tbody>
+          </table>
         </div>
         <div>
           <h3 class="text-md font-medium text-gray-700 mb-2">大盤多空天數</h3>
@@ -1719,7 +1729,7 @@
         updateMarketStatusUsage();
       }
 
-      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (幾勝幾敗)
+      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (勝/敗)
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1741,20 +1751,22 @@
             usage[t.strategyId]++;
           }
         });
-        let list = document.getElementById("strategyUsageList");
-        if(list) {
-          list.innerHTML = "";
+        let tableBody = document.getElementById("strategyUsageList");
+        if(tableBody) {
+          tableBody.innerHTML = "";
           strategies.forEach(s => {
             let count = usage[s.id] || 0;
-            // 針對此策略計算勝率：僅針對已平倉的交易
+            // 針對此策略計算勝率：僅針對已平倉且有報酬率資料的交易
             let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
             let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
             let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
             let losses = closedStrategyTrades.filter(t => parseFloat(t.returnRate) < 0).length;
             let winRate = closedStrategyTrades.length > 0 ? (wins / closedStrategyTrades.length * 100).toFixed(2) : "0.00";
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 次, 勝率 ${winRate}% (${wins}勝${losses}敗)`;
-            list.appendChild(li);
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td class="border px-4 py-2">${escapeHtml(s.name)}</td>
+                            <td class="border px-4 py-2 text-center">${count}</td>
+                            <td class="border px-4 py-2 text-center">勝率 ${winRate}% (${wins}勝 ${losses}敗)</td>`;
+            tableBody.appendChild(tr);
           });
         }
       }
