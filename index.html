@@ -140,6 +140,7 @@
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
+          <!-- 改為篩選大盤多空 -->
           <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
           <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
             <option value="">全部大盤多空</option>
@@ -151,15 +152,6 @@
             <option value="">全部方向</option>
             <option value="多">多</option>
             <option value="空">空</option>
-          </select>
-        </div>
-        <!-- 新增：篩選盈虧 -->
-        <div class="flex-1 min-w-[200px]">
-          <label for="profitLossFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選盈虧</label>
-          <select id="profitLossFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
-            <option value="">全部</option>
-            <option value="profit">獲利交易</option>
-            <option value="loss">虧損交易</option>
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
@@ -318,6 +310,95 @@
       </div>
     </div>
 
+    <!-- 損益統計區塊 -->
+    <div class="bg-gray-50 p-4 rounded mb-6">
+      <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
+      <!-- 分成兩組：金額統計與百分比統計 -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 金額統計：獲利與虧損 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利：</span>
+            <span id="avgWin" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大獲利：</span>
+            <span id="maxWin" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利交易的平均部位：</span>
+            <span id="avgWinningPosition" class="font-medium">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損：</span>
+            <span id="avgLoss" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">最大虧損：</span>
+            <span id="maxLoss" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損交易的平均部位：</span>
+            <span id="avgLosingPosition" class="font-medium">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-2 divider mt-4"></div>
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <!-- 百分比統計 -->
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均獲利%：</span>
+            <span id="avgWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% SD：</span>
+            <span id="sdWinPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% CV：</span>
+            <span id="cvWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 偏度：</span>
+            <span id="skewWinPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">獲利% 峰度：</span>
+            <span id="kurtosisWinPercent" class="font-medium">0</span>
+          </div>
+        </div>
+        <div class="border p-4 rounded">
+          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損百分比統計</h4>
+          <div class="flex justify-between">
+            <span class="text-gray-600">平均虧損%：</span>
+            <span id="avgLossPercentDisplay" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% SD：</span>
+            <span id="sdLossPercent" class="font-medium">0%</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% CV：</span>
+            <span id="cvLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 偏度：</span>
+            <span id="skewLossPercent" class="font-medium">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">虧損% 峰度：</span>
+            <span id="kurtosisLossPercent" class="font-medium">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 未平倉統計區塊（名稱已調整） -->
     <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
@@ -333,7 +414,7 @@
       </div>
     </div>
 
-    <!-- 資金績效統計區塊（占用資金已刪除） -->
+    <!-- 資金績效統計區塊（刪除「占用資金」項目） -->
     <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -534,8 +615,7 @@
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
-      let selectedCloseStatusFilter = null; // 平倉狀態
-      let selectedProfitLossFilter = null;  // 新增：盈虧篩選
+      let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
       // 全局變數：下一個交易ID
       let nextTradeId = 1;
 
@@ -679,11 +759,9 @@
         selectedEndDateFilter = null;
         selectedDirectionFilter = null;
         selectedCloseStatusFilter = null;
-        selectedProfitLossFilter = null;
         document.getElementById('strategyFilter').value = '';
         document.getElementById('externalConditionFilter').value = '';
         document.getElementById('directionFilter').value = '';
-        document.getElementById('profitLossFilter').value = '';
         document.getElementById('closeStatusFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
@@ -784,13 +862,6 @@
         }
         if (selectedDirectionFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === 'profit') {
-            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) > 0);
-          } else if (selectedProfitLossFilter === 'loss') {
-            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
-          }
         }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
@@ -1197,15 +1268,13 @@
         const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
-        const profitLoss = document.getElementById('profitLossFilter').value;
         const closeStatus = document.getElementById('closeStatusFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
-        // 更新各篩選條件全域變數
+        // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
         selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
-        selectedProfitLossFilter = profitLoss === '' ? null : profitLoss;
         selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
         selectedStartDateFilter = startDate === '' ? null : startDate;
         selectedEndDateFilter = endDate === '' ? null : endDate;
@@ -1281,13 +1350,6 @@
         }
         if (selectedDirectionFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === 'profit') {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
-          } else if (selectedProfitLossFilter === 'loss') {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
-          }
         }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
@@ -1596,7 +1658,7 @@
         let freeCapital = currentCapital - unclosedPositionSum;
         document.getElementById('roi').textContent = formatNumberNoSign(roi, 2);
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
-        // 占用資金項目已移除
+        // 刪除占用資金，故不再更新 capitalUsed
 
         // 更新各策略使用次數與大盤多空天數
         updateStrategyUsage();
