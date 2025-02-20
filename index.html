@@ -1719,7 +1719,7 @@
         updateMarketStatusUsage();
       }
 
-      // 更新各種策略使用次數的函式，更新為依據所有篩選條件（除了策略本身）進行
+      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (幾勝幾敗)
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1746,8 +1746,14 @@
           list.innerHTML = "";
           strategies.forEach(s => {
             let count = usage[s.id] || 0;
+            // 針對此策略計算勝率：僅針對已平倉的交易
+            let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
+            let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
+            let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
+            let losses = closedStrategyTrades.filter(t => parseFloat(t.returnRate) < 0).length;
+            let winRate = closedStrategyTrades.length > 0 ? (wins / closedStrategyTrades.length * 100).toFixed(2) : "0.00";
             let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 次`;
+            li.textContent = `${s.name}：${count} 次, 勝率 ${winRate}% (${wins}勝${losses}敗)`;
             list.appendChild(li);
           });
         }
