@@ -140,7 +140,6 @@
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
-          <!-- 改為篩選大盤多空 -->
           <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
           <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
             <option value="">全部大盤多空</option>
@@ -154,21 +153,21 @@
             <option value="空">空</option>
           </select>
         </div>
+        <!-- 新增：篩選盈虧 -->
+        <div class="flex-1 min-w-[200px]">
+          <label for="profitLossFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選盈虧</label>
+          <select id="profitLossFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="profit">獲利交易</option>
+            <option value="loss">虧損交易</option>
+          </select>
+        </div>
         <div class="flex-1 min-w-[200px]">
           <label for="closeStatusFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選平倉狀態</label>
           <select id="closeStatusFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
             <option value="">全部</option>
             <option value="closed">已平倉</option>
             <option value="open">未平倉</option>
-          </select>
-        </div>
-        <!-- 新增篩選盈虧條件 -->
-        <div class="flex-1 min-w-[200px]">
-          <label for="profitLossFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選盈虧</label>
-          <select id="profitLossFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
-            <option value="">全部</option>
-            <option value="profit">獲利的交易</option>
-            <option value="loss">虧損的交易</option>
           </select>
         </div>
         <div class="flex-1 min-w-[300px]">
@@ -334,7 +333,7 @@
       </div>
     </div>
 
-    <!-- 資金績效統計區塊（刪除「占用資金」項目） -->
+    <!-- 資金績效統計區塊（占用資金已刪除） -->
     <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -523,17 +522,21 @@
     </div>
 
     <script>
-      // 全域變數
+      // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+      // 大盤多空列表（原外部條件）
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
+      // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
+      // 當前篩選條件
       let selectedStrategyFilter = null;
       let selectedExternalConditionFilter = null;
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
-      let selectedCloseStatusFilter = null;
-      let selectedProfitLossFilter = null; // 新增盈虧篩選
+      let selectedCloseStatusFilter = null; // 平倉狀態
+      let selectedProfitLossFilter = null;  // 新增：盈虧篩選
+      // 全局變數：下一個交易ID
       let nextTradeId = 1;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -680,8 +683,8 @@
         document.getElementById('strategyFilter').value = '';
         document.getElementById('externalConditionFilter').value = '';
         document.getElementById('directionFilter').value = '';
-        document.getElementById('closeStatusFilter').value = '';
         document.getElementById('profitLossFilter').value = '';
+        document.getElementById('closeStatusFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
         renderStrategies();
@@ -772,7 +775,7 @@
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
         let filteredTrades = trades;
-        // 依篩選條件過濾
+        // 依篩選條件進行過濾
         if (selectedStrategyFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
@@ -781,6 +784,13 @@
         }
         if (selectedDirectionFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
+        if (selectedProfitLossFilter !== null) {
+          if (selectedProfitLossFilter === 'profit') {
+            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+          } else if (selectedProfitLossFilter === 'loss') {
+            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
+          }
         }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
@@ -797,26 +807,14 @@
             filteredTrades = filteredTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
           }
         }
-        // 新增盈虧過濾
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") {
-            filteredTrades = filteredTrades.filter(trade =>
-              trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
-            );
-          } else if (selectedProfitLossFilter === "loss") {
-            filteredTrades = filteredTrades.filter(trade =>
-              trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
-            );
-          }
-        }
-        // 依開倉日由新至舊排序
+        // 依開倉日由新至舊排序（保持原排序）
         filteredTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
           if (b.openDate === '') return 1;
           return new Date(b.openDate) - new Date(a.openDate);
         });
-        // 使用反向編號：交易編號 = 總筆數 - index
+        // 使用反向編號：交易編號 = 總筆數 - index（這樣最新的交易編號最大）
         tradesList.innerHTML = filteredTrades.map((trade, index) => {
           const transactionNumber = filteredTrades.length - index;
           let holdingDays = '';
@@ -826,7 +824,9 @@
             const closeDate = new Date(trade.closeDate);
             const diffTime = closeDate - openDate;
             holdingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            if (holdingDays < 0) holdingDays = '';
+            if (holdingDays < 0) {
+              holdingDays = '';
+            }
           } else {
             holdingDays = '未平倉';
             holdingDaysClass = 'text-red-500';
@@ -1197,15 +1197,16 @@
         const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
-        const closeStatus = document.getElementById('closeStatusFilter').value;
         const profitLoss = document.getElementById('profitLossFilter').value;
+        const closeStatus = document.getElementById('closeStatusFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
+        // 更新各篩選條件全域變數
         selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
-        selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
         selectedProfitLossFilter = profitLoss === '' ? null : profitLoss;
+        selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
         selectedStartDateFilter = startDate === '' ? null : startDate;
         selectedEndDateFilter = endDate === '' ? null : endDate;
         calculateStats();
@@ -1267,6 +1268,7 @@
         return maxDrawdownPercent;
       }
 
+      // calculateStats()：更新所有統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1279,6 +1281,13 @@
         }
         if (selectedDirectionFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
+        if (selectedProfitLossFilter !== null) {
+          if (selectedProfitLossFilter === 'profit') {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+          } else if (selectedProfitLossFilter === 'loss') {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
+          }
         }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
@@ -1295,18 +1304,6 @@
             closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
           }
         }
-        // 新增盈虧篩選條件於統計中
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") {
-            closedTrades = closedTrades.filter(trade =>
-              trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
-            );
-          } else if (selectedProfitLossFilter === "loss") {
-            closedTrades = closedTrades.filter(trade =>
-              trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) < 0
-            );
-          }
-        }
         let closedTradesWithPosition = closedTrades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
         );
@@ -1318,6 +1315,7 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
+        // 計算 MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1412,6 +1410,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
+          // 計算持倉天數：僅針對有完整開倉與平倉日期的交易
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1431,6 +1430,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
+        // MFE 與 MAE 相關數據計算
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1500,6 +1500,7 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
+        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1547,9 +1548,11 @@
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
 
+        // 新增計算「獲利達成率」：平均獲利% / 平均 MFE × 100
         let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
 
+        // 計算獲利交易平均部位與虧損交易平均部位
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1593,12 +1596,14 @@
         let freeCapital = currentCapital - unclosedPositionSum;
         document.getElementById('roi').textContent = formatNumberNoSign(roi, 2);
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
-        // 刪除占用資金項目
+        // 占用資金項目已移除
 
+        // 更新各策略使用次數與大盤多空天數
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
 
+      // 更新各種策略使用次數的函式，更新為依據所有篩選條件（除了策略本身）進行
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
