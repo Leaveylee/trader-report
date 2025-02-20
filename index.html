@@ -1476,6 +1476,17 @@
             roi = ((currentCapital - initialCapital) / initialCapital) * 100;
           }
           document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
+          // 根據 ROI 數值調整顏色：正數顯示紅色，負數顯示綠色
+          const analysisROI = document.getElementById('analysisROI');
+          if (roi > 0) {
+            analysisROI.classList.add('text-red-500');
+            analysisROI.classList.remove('text-green-500');
+          } else if (roi < 0) {
+            analysisROI.classList.add('text-green-500');
+            analysisROI.classList.remove('text-red-500');
+          } else {
+            analysisROI.classList.remove('text-red-500', 'text-green-500');
+          }
           
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
