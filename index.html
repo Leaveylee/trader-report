@@ -162,6 +162,14 @@
             <option value="open">未平倉</option>
           </select>
         </div>
+        <div class="flex-1 min-w-[200px]">
+          <label for="profitLossFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選盈虧</label>
+          <select id="profitLossFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="profit">獲利的交易</option>
+            <option value="loss">虧損的交易</option>
+          </select>
+        </div>
         <div class="flex-1 min-w-[300px]">
           <label class="block text-sm font-medium text-gray-700 mb-1">篩選日期範圍</label>
           <div class="flex space-x-2">
@@ -616,6 +624,7 @@
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
       let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
+      let selectedProfitLossFilter = null; // 新增：盈虧交易篩選
       // 全局變數：下一個交易ID
       let nextTradeId = 1;
 
@@ -759,10 +768,12 @@
         selectedEndDateFilter = null;
         selectedDirectionFilter = null;
         selectedCloseStatusFilter = null;
+        selectedProfitLossFilter = null;
         document.getElementById('strategyFilter').value = '';
         document.getElementById('externalConditionFilter').value = '';
         document.getElementById('directionFilter').value = '';
         document.getElementById('closeStatusFilter').value = '';
+        document.getElementById('profitLossFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
         renderStrategies();
@@ -876,6 +887,13 @@
             filteredTrades = filteredTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
           } else if (selectedCloseStatusFilter === "closed") {
             filteredTrades = filteredTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+          }
+        }
+        if (selectedProfitLossFilter !== null) {
+          if (selectedProfitLossFilter === "profit") {
+            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+          } else if (selectedProfitLossFilter === "loss") {
+            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
           }
         }
         // 依開倉日由新至舊排序（保持原排序）
@@ -1269,6 +1287,7 @@
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
         const closeStatus = document.getElementById('closeStatusFilter').value;
+        const profitLoss = document.getElementById('profitLossFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
         // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
@@ -1276,6 +1295,7 @@
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
         selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
+        selectedProfitLossFilter = profitLoss === '' ? null : profitLoss;
         selectedStartDateFilter = startDate === '' ? null : startDate;
         selectedEndDateFilter = endDate === '' ? null : endDate;
         calculateStats();
@@ -1364,6 +1384,13 @@
             closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
           } else if (selectedCloseStatusFilter === "closed") {
             closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+          }
+        }
+        if (selectedProfitLossFilter !== null) {
+          if (selectedProfitLossFilter === "profit") {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+          } else if (selectedProfitLossFilter === "loss") {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
           }
         }
         let closedTradesWithPosition = closedTrades.filter(trade =>
