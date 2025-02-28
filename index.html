@@ -270,7 +270,7 @@
           <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
         </div>
       </div>
-      <!-- 新增「持倉天數」區塊，放在 MFE/MAE 統計區塊上方 -->
+      <!-- 新增「持倉天數」區塊，放在 MFE/EDR 統計區塊上方 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利交易平均持倉天數</h4>
@@ -285,7 +285,7 @@
           </div>
         </div>
       </div>
-      <!-- MFE 與 MAE 統計 -->
+      <!-- MFE 與 EDR 統計 -->
       <div class="grid grid-cols-2 gap-4 mt-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
@@ -311,25 +311,25 @@
           </div>
         </div>
         <div class="border p-4 rounded">
-          <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
+          <h4 class="text-lg font-medium text-gray-700 mb-2">EDR 統計</h4>
           <div class="flex justify-between">
-            <span>平均 MAE:</span>
+            <span>平均 EDR:</span>
             <span id="avgMAE" class="font-bold">0%</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE SD:</span>
+            <span>EDR SD:</span>
             <span id="sdMAE" class="font-bold">0%</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE CV:</span>
+            <span>EDR CV:</span>
             <span id="cvMAE" class="font-bold">0</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE 偏度:</span>
+            <span>EDR 偏度:</span>
             <span id="skewMAE" class="font-bold">0</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE 峰度:</span>
+            <span>EDR 峰度:</span>
             <span id="kurtosisMAE" class="font-bold">0</span>
           </div>
         </div>
@@ -1565,7 +1565,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 與 MAE 相關數據計算（修改 MAE 計算公式，計算高點回撤到出場點的距離）
+        // MFE 與 EDR 相關數據計算（修改 EDR 計算公式，計算高點回撤到出場點的距離）
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '' && trade.exitPrice !== ''
         );
