@@ -128,8 +128,7 @@
 <body>
   <div class="card">
     <h1 class="text-2xl font-bold text-center mb-8 text-[#B86E52]">交易員報告書</h1>
-
-    <!-- 篩選條件 -->
+<!-- 篩選條件 -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">篩選條件</label>
       <div class="flex space-x-4 flex-wrap">
@@ -194,8 +193,7 @@
       </div>
       <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
     </div>
-
-    <!-- 分析結果區塊 (不涉及交易方向) -->
+<!-- 分析結果區塊 (不涉及交易方向) -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
       <div class="space-y-4">
@@ -270,7 +268,7 @@
           <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
         </div>
       </div>
-      <!-- 新增「持倉天數」區塊，放在 MFE/MAE 統計區塊上方 -->
+      <!-- 新增「持倉天數」區塊，放在 MFE/EDR 統計區塊上方 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利交易平均持倉天數</h4>
@@ -285,7 +283,7 @@
           </div>
         </div>
       </div>
-      <!-- MFE 與 MAE 統計 -->
+      <!-- MFE 與 EDR 統計 (這裡將MAE改為EDR) -->
       <div class="grid grid-cols-2 gap-4 mt-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
@@ -311,32 +309,31 @@
           </div>
         </div>
         <div class="border p-4 rounded">
-          <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
+          <h4 class="text-lg font-medium text-gray-700 mb-2">EDR 退出回撤比統計</h4>
           <div class="flex justify-between">
-            <span>平均 MAE:</span>
+            <span>平均 EDR:</span>
             <span id="avgMAE" class="font-bold">0%</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE SD:</span>
+            <span>EDR SD:</span>
             <span id="sdMAE" class="font-bold">0%</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE CV:</span>
+            <span>EDR CV:</span>
             <span id="cvMAE" class="font-bold">0</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE 偏度:</span>
+            <span>EDR 偏度:</span>
             <span id="skewMAE" class="font-bold">0</span>
           </div>
           <div class="flex justify-between">
-            <span>MAE 峰度:</span>
+            <span>EDR 峰度:</span>
             <span id="kurtosisMAE" class="font-bold">0</span>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 損益統計區塊 -->
+<!-- 損益統計區塊 -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
       <!-- 分成兩組：金額統計與百分比統計 -->
@@ -454,8 +451,7 @@
         </div>
       </div>
     </div>
-
-    <!-- 策略管理區塊 -->
+<!-- 策略管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">策略管理</h2>
@@ -485,8 +481,7 @@
         </table>
       </div>
     </div>
-
-    <!-- 大盤多空管理區塊 (原外部條件管理) -->
+<!-- 大盤多空管理區塊 (原外部條件管理) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">大盤多空管理</h2>
@@ -516,8 +511,7 @@
         </table>
       </div>
     </div>
-
-    <!-- 新增策略模態框 -->
+<!-- 新增策略模態框 -->
     <div id="addStrategyModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">新增</h3>
@@ -578,153 +572,68 @@
         </div>
       </div>
     </div>
-
-    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「最高價格」與「最低價格」欄位) -->
-    <div class="mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
-        <div class="flex space-x-2">
-          <button class="button" onclick="addTrade()">添加交易</button>
-          <button class="button" onclick="exportToExcel()">匯出</button>
-          <button class="button" onclick="document.getElementById('importExcelInput').click()">匯入</button>
-          <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
-        </div>
-      </div>
-      <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
-      </div>
-      <div class="relative">
-        <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
-          <div id="topScrollbarContent"></div>
-        </div>
-        <div class="overflow-x-auto" id="bottomScrollbar">
-          <table class="min-w-full bg-white rounded">
-            <thead>
-              <tr>
-                <!-- 交易欄位：依據過濾後交易資料總筆數減去目前索引，讓最新交易編號較大 -->
-                <th class="px-4 py-2 min-w-[80px]">交易</th>
-                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
-                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                <th class="px-4 py-2 min-w-[100px]">持倉天數</th>
-                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
-                <th class="px-4 py-2 min-w-[100px]">部位金額</th>
-                <th class="px-4 py-2 min-w-[100px]">進場價格</th>
-                <th class="px-4 py-2 min-w-[100px]">最高價格</th>
-                <th class="px-4 py-2 min-w-[100px]">最低價格</th>
-                <th class="px-4 py-2 min-w-[100px]">交易方向</th>
-                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
-                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
-                <th class="px-4 py-2 min-w-[150px]">大盤多空</th>
-                <th class="px-4 py-2 min-w-[200px]">文字說明</th>
-                <th class="px-4 py-2 min-w-[200px]">圖片</th>
-                <th class="px-4 py-2 min-w-[80px]">操作</th>
-              </tr>
-            </thead>
-            <tbody id="tradesList">
-              <!-- 交易記錄將在此動態生成 -->
-            </tbody>
-          </table>
+<!-- 新增策略模態框 -->
+    <div id="addStrategyModal" class="modal hidden">
+      <div class="bg-white p-6 rounded-lg w-96">
+        <h3 class="text-lg font-medium mb-4">新增</h3>
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyName">策略名稱</label>
+        <input type="text" id="newStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="newStrategyDescription">描述</label>
+        <textarea id="newStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+        <div class="flex justify-end">
+          <button class="button mr-2" onclick="closeAddStrategyModal()">取消</button>
+          <button class="button" onclick="addStrategy()">新增</button>
         </div>
       </div>
     </div>
 
-    <script>
-      // 策略列表
-      let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-      // 大盤多空列表（原外部條件）
-      let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
-      // 交易記錄列表，新增 "direction"、"entryPrice"、"highestPrice" 與 "lowestPrice" 欄位
-      let trades = [];
-      // 當前篩選條件
-      let selectedStrategyFilter = null;
-      let selectedExternalConditionFilter = null;
-      let selectedStartDateFilter = null;
-      let selectedEndDateFilter = null;
-      let selectedDirectionFilter = null;
-      let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
-      let selectedProfitLossFilter = null; // 新增：盈虧交易篩選
-      // 全局變數：下一個交易ID
-      let nextTradeId = 1;
+    <!-- 編輯策略模態框 -->
+    <div id="editStrategyModal" class="modal hidden">
+      <div class="bg-white p-6 rounded-lg w-96">
+        <h3 class="text-lg font-medium mb-4">編輯策略</h3>
+        <input type="hidden" id="editStrategyId">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyName">策略名稱</label>
+        <input type="text" id="editStrategyName" class="w-full p-2 border rounded mb-4" placeholder="輸入策略名稱">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="editStrategyDescription">描述</label>
+        <textarea id="editStrategyDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入策略描述"></textarea>
+        <div class="flex justify-end">
+          <button class="button mr-2" onclick="closeEditStrategyModal()">取消</button>
+          <button class="button" onclick="updateStrategy()">更新</button>
+        </div>
+      </div>
+    </div>
 
-      function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
-        const number = parseFloat(value);
-        if (isNaN(number)) return '0';
-        if (isMoneyAmount) {
-          return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
-                            : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
-        }
-        return number >= 0 ? `+${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
-                          : `-${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
-      }
+    <!-- 新增大盤多空模態框 (原新增外部條件模態框) -->
+    <div id="addExternalConditionModal" class="modal hidden">
+      <div class="bg-white p-6 rounded-lg w-96">
+        <h3 class="text-lg font-medium mb-4">新增大盤多空</h3>
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionName">大盤多空名稱</label>
+        <input type="text" id="newExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空名稱">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="newExternalConditionDescription">描述</label>
+        <textarea id="newExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空描述"></textarea>
+        <div class="flex justify-end">
+          <button class="button mr-2" onclick="closeAddExternalConditionModal()">取消</button>
+          <button class="button" onclick="addExternalCondition()">新增</button>
+        </div>
+      </div>
+    </div>
 
-      function formatNumberNoSign(value, decimalPlaces = 2) {
-        const number = parseFloat(value);
-        if (isNaN(number)) return '0';
-        return number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces });
-      }
-
-      function formatTradeCount(value) {
-        const number = parseInt(value, 10);
-        if (isNaN(number)) return '0';
-        return number.toLocaleString();
-      }
-
-      function formatMoney(value, decimalPlaces = 0) {
-        const number = parseFloat(value);
-        if (isNaN(number)) return '$0';
-        return number >= 0 ? `$${number.toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`
-                           : `-$${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
-      }
-
-      function saveData() {
-        localStorage.setItem('trades', JSON.stringify(trades));
-        saveStrategies();
-        saveExternalConditions();
-        saveCollapseState();
-      }
-
-      function saveStrategies() {
-        localStorage.setItem('strategies', JSON.stringify(strategies));
-      }
-
-      function saveExternalConditions() {
-        localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
-      }
-
-      function saveCollapseState() {
-        const strategyCollapsed = document.getElementById('strategyManagementContent').classList.contains('hidden');
-        const externalConditionCollapsed = document.getElementById('externalConditionManagementContent').classList.contains('hidden');
-        localStorage.setItem('strategyManagementCollapsed', strategyCollapsed);
-        localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
-      }
-
-      function saveTotalOperatingCapital() {
-        const initialCapital = document.getElementById('totalOperatingCapital').value;
-        localStorage.setItem('totalOperatingCapital', initialCapital);
-      }
-
-      function loadTotalOperatingCapital() {
-        const initialCapital = localStorage.getItem('totalOperatingCapital');
-        if (initialCapital !== null) {
-          document.getElementById('totalOperatingCapital').value = initialCapital;
-        }
-      }
-
-      function loadStrategies() {
-        const savedStrategies = JSON.parse(localStorage.getItem('strategies'));
-        if (savedStrategies && Array.isArray(savedStrategies)) {
-          strategies = savedStrategies;
-        } else {
-          strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-          saveStrategies();
-        }
-        const maxStrategyId = strategies.reduce((max, strategy) => strategy.id > max ? strategy.id : max, 0);
-        if (maxStrategyId >= nextTradeId) {
-          nextTradeId = maxStrategyId + 1;
-        }
-      }
-
-      function loadExternalConditions() {
+    <!-- 編輯大盤多空模態框 (原編輯外部條件模態框) -->
+    <div id="editExternalConditionModal" class="modal hidden">
+      <div class="bg-white p-6 rounded-lg w-96">
+        <h3 class="text-lg font-medium mb-4">編輯大盤多空</h3>
+        <input type="hidden" id="editExternalConditionId">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionName">大盤多空名稱</label>
+        <input type="text" id="editExternalConditionName" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空名稱">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="editExternalConditionDescription">描述</label>
+        <textarea id="editExternalConditionDescription" class="w-full p-2 border rounded mb-4" placeholder="輸入大盤多空描述"></textarea>
+        <div class="flex justify-end">
+          <button class="button mr-2" onclick="closeEditExternalConditionModal()">取消</button>
+          <button class="button" onclick="updateExternalCondition()">更新</button>
+        </div>
+      </div>
+    </div>
+function loadExternalConditions() {
         const savedExternalConditions = JSON.parse(localStorage.getItem('externalConditions'));
         if (savedExternalConditions && Array.isArray(savedExternalConditions)) {
           externalConditions = savedExternalConditions;
@@ -847,8 +756,7 @@
           `).join('')}
         `;
       }
-
-      function renderExternalConditions() {
+function renderExternalConditions() {
         const externalConditionsList = document.getElementById('externalConditionsList');
         externalConditionsList.innerHTML = externalConditions.map(condition => `
           <tr>
@@ -877,8 +785,7 @@
           `).join('')}
         `;
       }
-
-      function renderTrades() {
+function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
         let filteredTrades = trades;
@@ -914,7 +821,7 @@
             filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
           }
         }
-        // 依開倉日由新至舊排序（保持原排序）
+// 依開倉日由新至舊排序（保持原排序）
         filteredTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
@@ -953,7 +860,7 @@
               <td class="border px-4 py-2 min-w-[100px]">
                 <input type="text" value="${trade.returnRate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)" class="w-full p-1 border rounded trade-input" placeholder="+6.66 或 -2.92" data-row-index="${trades.indexOf(trade)}" data-field="returnRate" data-trade-id="${trade.id}">
               </td>
-              <td class="border px-4 py-2 min-w-[100px]">
+<td class="border px-4 py-2 min-w-[100px]">
                 <input type="number" value="${trade.position}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${trades.indexOf(trade)}" data-field="position">
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
@@ -982,7 +889,7 @@
                   `).join('')}
                 </select>
               </td>
-              <td class="border px-4 py-2 min-w-[150px]">
+<td class="border px-4 py-2 min-w-[150px]">
                 <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
                   <option value="">選擇大盤多空</option>
                   ${externalConditions.map(condition => `
@@ -1024,8 +931,7 @@
         bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
         topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
       }
-
-      function getStrategyName(strategyId) {
+function getStrategyName(strategyId) {
         const strategy = strategies.find(s => s.id === strategyId);
         return strategy ? strategy.name : '';
       }
@@ -1120,8 +1026,7 @@
           }
         }, 100);
       }
-
-      function removeTrade(index) {
+function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
           trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
@@ -1214,8 +1119,7 @@
         renderTrades();
         calculateStats();
       }
-
-      // 大盤多空管理（原外部條件管理）
+// 大盤多空管理（原外部條件管理）
       function openAddExternalConditionModal() {
         openModal('addExternalConditionModal');
       }
@@ -1299,8 +1203,7 @@
         renderTrades();
         calculateStats();
       }
-
-      function applyFilters() {
+function applyFilters() {
         const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
@@ -1343,8 +1246,7 @@
       function formatDate(date) {
         return date.toISOString().split('T')[0];
       }
-
-      // calculateMDD() 函式（不變）
+// calculateMDD() 函式（不變）
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1374,8 +1276,7 @@
         });
         return maxDrawdownPercent;
       }
-
-      // calculateStats()：更新所有統計數據
+// calculateStats()：更新所有統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         
@@ -1421,8 +1322,7 @@
         }
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
-        
-        // 計算 MDD%
+// 計算 MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1497,8 +1397,7 @@
           } else {
             analysisROI.classList.remove('text-red-500', 'text-green-500');
           }
-          
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
+var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
           document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
@@ -1555,8 +1454,7 @@
           document.getElementById('avgWinHoldingDays').textContent = formatNumberNoSign(avgWinHoldingDays, 2);
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
-
-        // MFE 與 MAE 相關數據計算（修改 MAE 計算公式）
+// MFE 與 EDR(退出回撤比) 相關數據計算
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1570,20 +1468,23 @@
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
-            let mfe = 0, mae = 0;
+            let exitPrice = trade.closeDate && trade.closeDate.trim() !== '' ? entry * (1 + parseFloat(trade.returnRate) / 100) : entry;
+            let mfe = 0, edr = 0; // 將mae替換為edr (退出回撤比)
+            
             if (trade.direction === "多") {
               mfe = (high - entry) / entry * 100;
-              // MAE 以最高價為基準計算
-              mae = ((high - low) / high) * 100;
+              // EDR計算: (最高價-退出價) / (最高價-最低價) * 100
+              edr = high !== low ? ((high - exitPrice) / (high - low)) * 100 : 0;
             } else {
               mfe = (entry - low) / entry * 100;
-              // MAE 以最低價為基準計算
-              mae = ((high - low) / low) * 100;
+              // EDR計算: (退出價-最低價) / (最高價-最低價) * 100
+              edr = high !== low ? ((exitPrice - low) / (high - low)) * 100 : 0;
             }
+            
             totalMFE += mfe;
-            totalMAE += mae;
+            totalMAE += edr; // 存入totalMAE變數(實際為EDR)
             mfeValues.push(mfe);
-            maeValues.push(mae);
+            maeValues.push(edr); // 存入maeValues變數(實際為EDR值)
           });
           avgMFE = totalMFE / tradesWithPrices.length;
           avgMAE = totalMAE / tradesWithPrices.length;
@@ -1627,8 +1528,7 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
-
-        // 損益百分比統計
+// 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1647,7 +1547,7 @@
         let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
         let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
         let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        let winPercentSkewness = 0, lossPercentSkewness = 0;
+let winPercentSkewness = 0, lossPercentSkewness = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
           winPercentSkewness = (sumCubeWin / winPercentValues.length) / Math.pow(sdWinPercent, 3);
@@ -1665,7 +1565,7 @@
           let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
           lossPercentKurtosis = (sumFourthLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 4);
         }
-        document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
+document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
         document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
         document.getElementById('cvWinPercent').textContent = formatNumberNoSign(cvWinPercent, 2);
         document.getElementById('skewWinPercent').textContent = formatNumberNoSign(winPercentSkewness, 2);
@@ -1679,8 +1579,7 @@
         // 新增計算「獲利達成率」：平均獲利% / 平均 MFE × 100
         let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
-
-        // 計算獲利交易平均部位與虧損交易平均部位
+// 計算獲利交易平均部位與虧損交易平均部位
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1730,8 +1629,7 @@
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
-
-      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (勝/敗)
+// 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (勝/敗)
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1807,8 +1705,7 @@
           });
         }
       }
-
-      loadStrategies();
+loadStrategies();
       loadExternalConditions();
       loadData();
 
@@ -1871,8 +1768,7 @@
         };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
-
-      function exportToExcel() {
+function exportToExcel() {
         if (trades.length === 0) {
           alert('目前沒有交易紀錄可供匯出。');
           return;
@@ -1917,8 +1813,7 @@
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         return diffDays >= 0 ? diffDays : '';
       }
-      
-      function importFromExcel(event) {
+function importFromExcel(event) {
         const file = event.target.files[0];
         if (!file) {
           return;
@@ -1995,8 +1890,7 @@
         };
         reader.readAsBinaryString(file);
       }
-      
-      function exportStrategiesToExcel() {
+function exportStrategiesToExcel() {
         if (strategies.length === 0) {
           alert('目前沒有策略資料可供匯出。');
           return;
@@ -2019,8 +1913,7 @@
         link.click();
         document.body.removeChild(link);
       }
-      
-      function importStrategiesFromExcel(event) {
+function importStrategiesFromExcel(event) {
         const file = event.target.files[0];
         if (!file) {
           return;
@@ -2048,7 +1941,7 @@
             alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
             return;
           }
-          const importedStrategies = jsonData.map(item => {
+const importedStrategies = jsonData.map(item => {
             const name = item["策略名稱"].trim();
             const description = item["描述"].trim();
             const existingStrategy = strategies.find(s => s.name === name);
@@ -2081,8 +1974,7 @@
         };
         reader.readAsBinaryString(file);
       }
-      
-      function exportExternalConditionsToExcel() {
+function exportExternalConditionsToExcel() {
         if (externalConditions.length === 0) {
           alert('目前沒有大盤多空資料可供匯出。');
           return;
@@ -2105,8 +1997,7 @@
         link.click();
         document.body.removeChild(link);
       }
-      
-      function importExternalConditionsFromExcel(event) {
+function importExternalConditionsFromExcel(event) {
         const file = event.target.files[0];
         if (!file) {
           return;
@@ -2134,7 +2025,7 @@
             alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
             return;
           }
-          const importedExternalConditions = jsonData.map(item => {
+const importedExternalConditions = jsonData.map(item => {
             const name = item["大盤多空名稱"].trim();
             const description = item["描述"].trim();
             const existingCondition = externalConditions.find(c => c.name === name);
