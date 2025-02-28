@@ -1565,9 +1565,9 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 與 MAE 相關數據計算（修改 MAE 計算公式）
+        // MFE 與 MAE 相關數據計算（修改 MAE 計算公式，計算高點回撤到出場點的距離）
         let tradesWithPrices = closedTrades.filter(trade => 
-          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '' && trade.exitPrice !== ''
         );
         let avgMFE = 0, avgMAE = 0;
         let totalMFE = 0, totalMAE = 0;
@@ -1579,15 +1579,14 @@
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
+            let exit = parseFloat(trade.exitPrice);
             let mfe = 0, mae = 0;
             if (trade.direction === "多") {
               mfe = (high - entry) / entry * 100;
-              // MAE 以最高價為基準計算
-              mae = ((high - low) / high) * 100;
+              mae = ((high - exit) / high) * 100;
             } else {
               mfe = (entry - low) / entry * 100;
-              // MAE 以最低價為基準計算
-              mae = ((high - low) / low) * 100;
+              mae = ((exit - low) / low) * 100;
             }
             totalMFE += mfe;
             totalMAE += mae;
