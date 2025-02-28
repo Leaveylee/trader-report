@@ -140,7 +140,6 @@
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
-          <!-- 改為篩選大盤多空 -->
           <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
           <select id="externalConditionFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
             <option value="">全部大盤多空</option>
@@ -199,7 +198,6 @@
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
       <div class="space-y-4">
-        <!-- 上半部：交易數、勝率、風報比 -->
         <div class="flex justify-between font-bold text-lg">
           <div class="flex-1 text-center">
             <span class="text-gray-600">交易數：</span>
@@ -214,14 +212,12 @@
             <span id="riskRewardRatio" class="font-medium">0</span>
           </div>
         </div>
-        <!-- 新增獲利達成率 -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-600">獲利達成率：</span>
             <span id="profitAchievementRate" class="font-medium">0%</span>
           </div>
         </div>
-        <!-- 期望值、總報酬 -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">期望值：</span>
@@ -234,14 +230,12 @@
             <span id="totalReturn" class="font-bold text-lg">0</span>
           </div>
         </div>
-        <!-- 新增 ROI 項目 -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">總資金回報率 (ROI)：</span>
             <span id="analysisROI" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- 最大交易回落 (MDD) -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">最大交易回落 (MDD)：</span>
@@ -249,11 +243,9 @@
           </div>
         </div>
       </div>
-      <!-- 將「各種策略的使用次數」與「大盤多空天數」排版合併為兩欄 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div>
           <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
-          <!-- 使用表格排版 -->
           <table class="min-w-full border-collapse">
             <thead>
               <tr>
@@ -270,7 +262,6 @@
           <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
         </div>
       </div>
-      <!-- 新增「持倉天數」區塊，放在 MFE/EDR 統計區塊上方 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利交易平均持倉天數</h4>
@@ -285,7 +276,6 @@
           </div>
         </div>
       </div>
-      <!-- MFE 與 EDR 統計 -->
       <div class="grid grid-cols-2 gap-4 mt-4">
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
@@ -339,9 +329,7 @@
     <!-- 損益統計區塊 -->
     <div class="bg-gray-50 p-4 rounded mb-6">
       <h3 class="text-md font-medium text-gray-700 mb-3">損益統計</h3>
-      <!-- 分成兩組：金額統計與百分比統計 -->
       <div class="grid grid-cols-2 gap-4">
-        <!-- 金額統計：獲利與虧損 -->
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利</h4>
           <div class="flex justify-between">
@@ -375,7 +363,6 @@
       </div>
       <div class="col-span-2 divider mt-4"></div>
       <div class="grid grid-cols-2 gap-4 mt-4">
-        <!-- 百分比統計 -->
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">獲利百分比統計</h4>
           <div class="flex justify-between">
@@ -425,7 +412,7 @@
       </div>
     </div>
 
-    <!-- 未平倉統計區塊（名稱已調整） -->
+    <!-- 未平倉統計區塊 -->
     <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -440,7 +427,7 @@
       </div>
     </div>
 
-    <!-- 資金績效統計區塊（刪除「占用資金」項目） -->
+    <!-- 資金績效統計區塊 -->
     <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -486,7 +473,7 @@
       </div>
     </div>
 
-    <!-- 大盤多空管理區塊 (原外部條件管理) -->
+    <!-- 大盤多空管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">大盤多空管理</h2>
@@ -548,7 +535,7 @@
       </div>
     </div>
 
-    <!-- 新增大盤多空模態框 (原新增外部條件模態框) -->
+    <!-- 新增大盤多空模態框 -->
     <div id="addExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">新增大盤多空</h3>
@@ -563,7 +550,7 @@
       </div>
     </div>
 
-    <!-- 編輯大盤多空模態框 (原編輯外部條件模態框) -->
+    <!-- 編輯大盤多空模態框 -->
     <div id="editExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">編輯大盤多空</h3>
@@ -579,7 +566,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「出場價格」、「最高價格」與「最低價格」欄位) -->
+    <!-- 交易紀錄區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -589,6 +576,11 @@
           <button class="button" onclick="document.getElementById('importExcelInput').click()">匯入</button>
           <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
         </div>
+      </div>
+      <!-- 全局核取方塊：僅計算勾選資料 -->
+      <div class="flex items-center mb-2">
+        <input type="checkbox" id="onlySelectedCheckbox" onchange="toggleOnlySelected(this.checked)">
+        <label for="onlySelectedCheckbox" class="ml-2">僅計算勾選資料</label>
       </div>
       <div class="text-sm text-gray-600 mb-2">
         請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
@@ -601,7 +593,9 @@
           <table class="min-w-full bg-white rounded">
             <thead>
               <tr>
-                <!-- 交易欄位：依據過濾後交易資料總筆數減去目前索引，讓最新交易編號較大 -->
+                <!-- 新增「選取」欄位 -->
+                <th class="px-4 py-2 min-w-[50px]">選取</th>
+                <!-- 原有欄位 -->
                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
@@ -630,22 +624,22 @@
     </div>
 
     <script>
-      // 策略列表
+      // 全局變數
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-      // 大盤多空列表（原外部條件）
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
-      // 交易記錄列表，新增 "direction"、"entryPrice"、"exitPrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
-      // 當前篩選條件
+      // 篩選條件變數
       let selectedStrategyFilter = null;
       let selectedExternalConditionFilter = null;
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
-      let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
-      let selectedProfitLossFilter = null; // 新增：盈虧交易篩選
-      // 全局變數：下一個交易ID
+      let selectedCloseStatusFilter = null;
+      let selectedProfitLossFilter = null;
+      // 全局交易 ID
       let nextTradeId = 1;
+      // 是否僅計算勾選的交易（全局核取方塊）
+      let onlyCalculateSelected = false;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
         const number = parseFloat(value);
@@ -761,6 +755,7 @@
             if (typeof trade.highestPrice === 'undefined') trade.highestPrice = '';
             if (typeof trade.lowestPrice === 'undefined') trade.lowestPrice = '';
             if (typeof trade.direction === 'undefined') trade.direction = "多";
+            if (typeof trade.selected === 'undefined') trade.selected = false;
             return trade;
           });
         }
@@ -780,7 +775,8 @@
             closeDate: '',
             description: '', 
             imageUrl: '',
-            direction: "多"
+            direction: "多",
+            selected: false
           });
         }
         selectedStrategyFilter = null;
@@ -805,20 +801,9 @@
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
       }
 
-      function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
-        if (strategyCollapsed) {
-          document.getElementById('strategyManagementContent').classList.add('hidden');
-          document.getElementById('strategyToggleIcon').setAttribute('data-lucide', 'chevron-right');
-          const strategyToggleButton = document.querySelector('#strategyToggleIcon').parentElement;
-          strategyToggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        if (externalConditionCollapsed) {
-          document.getElementById('externalConditionManagementContent').classList.add('hidden');
-          document.getElementById('externalConditionToggleIcon').setAttribute('data-lucide', 'chevron-right');
-          const externalConditionToggleButton = document.querySelector('#externalConditionToggleIcon').parentElement;
-          externalConditionToggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
+      function toggleOnlySelected(checked) {
+        onlyCalculateSelected = checked;
+        calculateStats();
       }
 
       function renderStrategies() {
@@ -884,49 +869,53 @@
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
-        let filteredTrades = trades;
-        // 依篩選條件進行過濾
-        if (selectedStrategyFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-        }
-        if (selectedExternalConditionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
-          const startDate = new Date(selectedStartDateFilter);
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
-        }
-        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
-          const endDate = new Date(selectedEndDateFilter);
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
-        }
-        if (selectedCloseStatusFilter !== null) {
-          if (selectedCloseStatusFilter === "open") {
-            filteredTrades = filteredTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
-          } else if (selectedCloseStatusFilter === "closed") {
-            filteredTrades = filteredTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+        // 若全局僅計算勾選資料，則忽略其他篩選條件
+        let baseTrades;
+        if (onlyCalculateSelected) {
+          baseTrades = trades.filter(trade => trade.selected);
+        } else {
+          baseTrades = trades.slice();
+          if (selectedStrategyFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+          }
+          if (selectedExternalConditionFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+          }
+          if (selectedDirectionFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.direction === selectedDirectionFilter);
+          }
+          if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+            const startDate = new Date(selectedStartDateFilter);
+            baseTrades = baseTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+          }
+          if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+            const endDate = new Date(selectedEndDateFilter);
+            baseTrades = baseTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+          }
+          if (selectedCloseStatusFilter !== null) {
+            if (selectedCloseStatusFilter === "open") {
+              baseTrades = baseTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+            } else if (selectedCloseStatusFilter === "closed") {
+              baseTrades = baseTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+            }
+          }
+          if (selectedProfitLossFilter !== null) {
+            if (selectedProfitLossFilter === "profit") {
+              baseTrades = baseTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+            } else if (selectedProfitLossFilter === "loss") {
+              baseTrades = baseTrades.filter(trade => parseFloat(trade.returnRate) < 0);
+            }
           }
         }
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") {
-            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) > 0);
-          } else if (selectedProfitLossFilter === "loss") {
-            filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
-          }
-        }
-        // 依開倉日由新至舊排序（保持原排序）
-        filteredTrades.sort((a, b) => {
+        // 排序：依開倉日由新至舊
+        baseTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
           if (b.openDate === '') return 1;
           return new Date(b.openDate) - new Date(a.openDate);
         });
-        // 使用反向編號：交易編號 = 總筆數 - index（這樣最新的交易編號最大）
-        tradesList.innerHTML = filteredTrades.map((trade, index) => {
-          const transactionNumber = filteredTrades.length - index;
+        tradesList.innerHTML = baseTrades.map((trade, index) => {
+          const transactionNumber = baseTrades.length - index;
           let holdingDays = '';
           let holdingDaysClass = '';
           if (trade.openDate !== '' && trade.closeDate !== '') {
@@ -943,6 +932,9 @@
           }
           return `
             <tr>
+              <td class="border px-4 py-2 text-center min-w-[50px]">
+                <input type="checkbox" onchange="handleTradeSelect(${trades.indexOf(trade)}, this.checked)" ${trade.selected ? "checked" : ""}>
+              </td>
               <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
               <td class="border px-4 py-2 min-w-[100px]">
                 <input type="date" value="${trade.openDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="openDate">
@@ -1031,6 +1023,12 @@
         topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
       }
 
+      function handleTradeSelect(index, checked) {
+        trades[index].selected = checked;
+        calculateStats();
+        saveData();
+      }
+
       function getStrategyName(strategyId) {
         const strategy = strategies.find(s => s.id === strategyId);
         return strategy ? strategy.name : '';
@@ -1116,7 +1114,8 @@
           closeDate: '',
           description: '', 
           imageUrl: '',
-          direction: "多"
+          direction: "多",
+          selected: false
         };
         trades.unshift(newTrade);
         renderTrades();
@@ -1133,7 +1132,7 @@
       function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多", selected: false });
         }
         renderTrades();
         calculateStats();
@@ -1224,7 +1223,6 @@
         calculateStats();
       }
 
-      // 大盤多空管理（原外部條件管理）
       function openAddExternalConditionModal() {
         openModal('addExternalConditionModal');
       }
@@ -1310,21 +1308,41 @@
       }
 
       function applyFilters() {
-        const strategyId = document.getElementById('strategyFilter').value;
-        const externalConditionId = document.getElementById('externalConditionFilter').value;
-        const direction = document.getElementById('directionFilter').value;
-        const closeStatus = document.getElementById('closeStatusFilter').value;
-        const profitLoss = document.getElementById('profitLossFilter').value;
-        const startDate = document.getElementById('startDateFilter').value;
-        const endDate = document.getElementById('endDateFilter').value;
-        // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
-        selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
-        selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
-        selectedDirectionFilter = direction === '' ? null : direction;
-        selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
-        selectedProfitLossFilter = profitLoss === '' ? null : profitLoss;
-        selectedStartDateFilter = startDate === '' ? null : startDate;
-        selectedEndDateFilter = endDate === '' ? null : endDate;
+        // 當全局「僅計算勾選資料」被勾選時，忽略篩選條件
+        if (!onlyCalculateSelected) {
+          let filtered = trades.slice();
+          if (selectedStrategyFilter !== null) {
+            filtered = filtered.filter(trade => trade.strategyId === selectedStrategyFilter);
+          }
+          if (selectedExternalConditionFilter !== null) {
+            filtered = filtered.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+          }
+          if (selectedDirectionFilter !== null) {
+            filtered = filtered.filter(trade => trade.direction === selectedDirectionFilter);
+          }
+          if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+            const startDate = new Date(selectedStartDateFilter);
+            filtered = filtered.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+          }
+          if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+            const endDate = new Date(selectedEndDateFilter);
+            filtered = filtered.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+          }
+          if (selectedCloseStatusFilter !== null) {
+            if (selectedCloseStatusFilter === "open") {
+              filtered = filtered.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+            } else if (selectedCloseStatusFilter === "closed") {
+              filtered = filtered.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+            }
+          }
+          if (selectedProfitLossFilter !== null) {
+            if (selectedProfitLossFilter === "profit") {
+              filtered = filtered.filter(trade => parseFloat(trade.returnRate) > 0);
+            } else if (selectedProfitLossFilter === "loss") {
+              filtered = filtered.filter(trade => parseFloat(trade.returnRate) < 0);
+            }
+          }
+        }
         calculateStats();
         renderTrades();
       }
@@ -1353,73 +1371,47 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 函式（不變）
-      function calculateMDD(initialCapital, tradesWithPosition) {
-        let groups = {};
-        tradesWithPosition.forEach(trade => {
-          if (trade.closeDate && trade.closeDate.trim() !== '') {
-            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
-            groups[trade.closeDate].push(trade);
-          }
-        });
-        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
-        let equity = initialCapital;
-        let maxDrawdownPercent = 0;
-        dates.forEach(date => {
-          let groupTrades = groups[date];
-          let profitSum = 0, lossSum = 0;
-          groupTrades.forEach(trade => {
-            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-            if (p > 0) profitSum += p;
-            else lossSum += p;
-          });
-          let dayPeak = equity + profitSum;
-          let dayEnd = dayPeak + lossSum;
-          let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
-          if (dayDrawdownPercent > maxDrawdownPercent) {
-            maxDrawdownPercent = dayDrawdownPercent;
-          }
-          equity = dayEnd;
-        });
-        return maxDrawdownPercent;
-      }
-
-      // calculateStats()：更新所有統計數據
+      // 統計計算：如果僅計算勾選資料，則直接以勾選的交易為基礎，否則依篩選條件
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
-        
-        let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
-        if (selectedStrategyFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-        }
-        if (selectedExternalConditionFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
-          const startDate = new Date(selectedStartDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
-        }
-        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
-          const endDate = new Date(selectedEndDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
-        }
-        if (selectedCloseStatusFilter !== null) {
-          if (selectedCloseStatusFilter === "open") {
-            closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
-          } else if (selectedCloseStatusFilter === "closed") {
-            closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+        let baseTrades;
+        if (onlyCalculateSelected) {
+          baseTrades = trades.filter(trade => trade.selected);
+        } else {
+          baseTrades = trades.slice();
+          if (selectedStrategyFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+          }
+          if (selectedExternalConditionFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+          }
+          if (selectedDirectionFilter !== null) {
+            baseTrades = baseTrades.filter(trade => trade.direction === selectedDirectionFilter);
+          }
+          if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
+            const startDate = new Date(selectedStartDateFilter);
+            baseTrades = baseTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
+          }
+          if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
+            const endDate = new Date(selectedEndDateFilter);
+            baseTrades = baseTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
+          }
+          if (selectedCloseStatusFilter !== null) {
+            if (selectedCloseStatusFilter === "open") {
+              baseTrades = baseTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+            } else if (selectedCloseStatusFilter === "closed") {
+              baseTrades = baseTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+            }
+          }
+          if (selectedProfitLossFilter !== null) {
+            if (selectedProfitLossFilter === "profit") {
+              baseTrades = baseTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+            } else if (selectedProfitLossFilter === "loss") {
+              baseTrades = baseTrades.filter(trade => parseFloat(trade.returnRate) < 0);
+            }
           }
         }
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
-          } else if (selectedProfitLossFilter === "loss") {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
-          }
-        }
+        let closedTrades = baseTrades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
         let closedTradesWithPosition = closedTrades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
         );
@@ -1431,7 +1423,6 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算 MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1489,13 +1480,11 @@
 
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          // 計算 ROI = 總報酬 / 初始資金 * 100%
           let roi = 0;
           if (!isNaN(initialCapital) && initialCapital > 0) {
             roi = ((currentCapital - initialCapital) / initialCapital) * 100;
           }
           document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
-          // 根據 ROI 數值調整顏色：正數顯示紅色，負數顯示綠色
           const analysisROI = document.getElementById('analysisROI');
           if (roi > 0) {
             analysisROI.classList.add('text-red-500');
@@ -1545,7 +1534,6 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 計算持倉天數：僅針對有完整開倉與平倉日期的交易
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1565,7 +1553,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 與 EDR 相關數據計算（修改 EDR 計算公式，計算高點回撤到出場點的距離）
+        // MFE 與 EDR 相關數據計算（EDR：計算高點回撤到出場點的距離）
         let tradesWithPrices = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '' && trade.exitPrice !== ''
         );
@@ -1636,7 +1624,6 @@
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1684,11 +1671,9 @@
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
         
-        // 新增計算「獲利達成率」：平均獲利% / 平均 MFE × 100
         let profitAchievementRate = (avgMFE !== 0) ? (avgWinPercentValue / avgMFE) * 100 : 0;
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
 
-        // 計算獲利交易平均部位與虧損交易平均部位
         const winningTrades = closedTrades.filter(trade => 
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0 &&
           trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)) && parseFloat(trade.returnRate) > 0
@@ -1732,88 +1717,6 @@
         let freeCapital = currentCapital - unclosedPositionSum;
         document.getElementById('roi').textContent = formatNumberNoSign(roi, 2);
         document.getElementById('freeCapital').textContent = formatMoney(freeCapital, 0);
-        // 刪除占用資金，故不再更新 capitalUsed
-
-        // 更新各策略使用次數與大盤多空天數
-        updateStrategyUsage();
-        updateMarketStatusUsage();
-      }
-
-      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (勝/敗)
-      function updateStrategyUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedExternalConditionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => {
-          if(t.strategyId !== null) {
-            usage[t.strategyId]++;
-          }
-        });
-        let tableBody = document.getElementById("strategyUsageList");
-        if(tableBody) {
-          tableBody.innerHTML = "";
-          strategies.forEach(s => {
-            let count = usage[s.id] || 0;
-            // 針對此策略計算勝率：僅針對已平倉且有報酬率資料的交易
-            let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
-            let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
-            let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
-            let losses = closedStrategyTrades.filter(t => parseFloat(t.returnRate) < 0).length;
-            let winRate = closedStrategyTrades.length > 0 ? (wins / closedStrategyTrades.length * 100).toFixed(2) : "0.00";
-            let tr = document.createElement("tr");
-            tr.innerHTML = `<td class="border px-4 py-2">${escapeHtml(s.name)}</td>
-                            <td class="border px-4 py-2 text-center">${count}</td>
-                            <td class="border px-4 py-2 text-center">勝率 ${winRate}% (${wins}勝 ${losses}敗)</td>`;
-            tableBody.appendChild(tr);
-          });
-        }
-      }
-
-      function updateMarketStatusUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        let dayStatus = {};
-        filteredTrades.forEach(t => {
-          let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]){
-            dayStatus[day] = t.externalConditionId;
-          }
-        });
-        for(let day in dayStatus) {
-          let statusId = dayStatus[day];
-          if(statusId != null){
-            if(!usage[statusId]) usage[statusId] = 0;
-            usage[statusId]++;
-          }
-        }
-        let list = document.getElementById("marketStatusUsageList");
-        if(list) {
-          list.innerHTML = "";
-          externalConditions.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 天`;
-            list.appendChild(li);
-          });
-        }
       }
 
       loadStrategies();
@@ -1986,7 +1889,8 @@
               openDate: item["開倉日"],
               closeDate: item["平倉日"],
               description: item["文字說明"],
-              imageUrl: item["圖片URL"]
+              imageUrl: item["圖片URL"],
+              selected: false
             };
           }).filter(trade => trade !== null);
           if (importedTrades.length === 0) {
