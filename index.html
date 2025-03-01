@@ -311,10 +311,6 @@
           <span>平均達到MFE天數:</span>
           <span id="avgMFEDays" class="font-bold">0</span> 天
         </div>
-        <div class="flex justify-between mt-2">
-          <span>平均高點到出場天數:</span>
-          <span id="avgHighToExitDays" class="font-bold">0</span> 天
-        </div>
         <p class="text-xs text-gray-500 mt-2">
           附註：開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
         </p>
@@ -366,6 +362,11 @@
         <div class="flex justify-between">
           <span>EDR 峰度:</span>
           <span id="kurtosisEDR" class="font-bold">0</span>
+        </div>
+        <!-- 新增平均高點到出場天數至EDR區塊 -->
+        <div class="flex justify-between mt-2">
+          <span>平均高點到出場天數:</span>
+          <span id="avgHighToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
           附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
@@ -1430,7 +1431,7 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats() 更新統計數據
+      // calculateStats() 更新統計數據，包括新增「平均高點到出場天數」計算（從 mfeDate 到 closeDate）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1587,7 +1588,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 計算持倉天數：從開倉日到平倉日
+          // 持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
