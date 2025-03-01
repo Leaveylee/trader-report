@@ -419,6 +419,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">獲利% SD：</span>
+            <!-- 使用樣本標準差公式 -->
             <span id="sdWinPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -442,6 +443,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">虧損% SD：</span>
+            <!-- 使用樣本標準差公式 -->
             <span id="sdLossPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -1688,29 +1690,31 @@
             }
           }
         });
-        let avgWinPercentValue = winPercentValues.length > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / winPercentValues.length : 0;
-        let sdWinPercent = winPercentValues.length > 0 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / winPercentValues.length) : 0;
+        let nWin = winPercentValues.length;
+        let avgWinPercentValue = nWin > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / nWin : 0;
+        let sdWinPercent = nWin > 1 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / (nWin - 1)) : 0;
         let cvWinPercent = avgWinPercentValue !== 0 ? sdWinPercent / avgWinPercentValue : 0;
-        let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
-        let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
+        let nLoss = lossPercentValues.length;
+        let avgLossPercentValue = nLoss > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / nLoss : 0;
+        let sdLossPercent = nLoss > 1 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / (nLoss - 1)) : 0;
         let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
         let winPercentSkewness = 0, lossPercentSkewness = 0;
-        if (winPercentValues.length > 0 && sdWinPercent !== 0) {
+        if (nWin > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
-          winPercentSkewness = (sumCubeWin / winPercentValues.length) / Math.pow(sdWinPercent, 3);
+          winPercentSkewness = (sumCubeWin / nWin) / Math.pow(sdWinPercent, 3);
         }
-        if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
+        if (nLoss > 0 && sdLossPercent !== 0) {
           let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
-          lossPercentSkewness = (sumCubeLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 3);
+          lossPercentSkewness = (sumCubeLoss / nLoss) / Math.pow(sdLossPercent, 3);
         }
         let winPercentKurtosis = 0, lossPercentKurtosis = 0;
-        if (winPercentValues.length > 0 && sdWinPercent !== 0) {
+        if (nWin > 0 && sdWinPercent !== 0) {
           let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
-          winPercentKurtosis = (sumFourthWin / winPercentValues.length) / Math.pow(sdWinPercent, 4);
+          winPercentKurtosis = (sumFourthWin / nWin) / Math.pow(sdWinPercent, 4);
         }
-        if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
+        if (nLoss > 0 && sdLossPercent !== 0) {
           let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
-          lossPercentKurtosis = (sumFourthLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 4);
+          lossPercentKurtosis = (sumFourthLoss / nLoss) / Math.pow(sdLossPercent, 4);
         }
         document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
         document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
