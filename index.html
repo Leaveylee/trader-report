@@ -1544,6 +1544,10 @@
 
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+          
+          // 補上 expectedValueAmount 的計算與 DOM 更新
+          const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
+          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           const expectedValueElem = document.getElementById('expectedValue');
           if (expectedValueAmount > 0) {
             expectedValueElem.classList.add('text-red-500');
@@ -1554,6 +1558,7 @@
           } else {
             expectedValueElem.classList.remove('text-red-500', 'text-green-500');
           }
+          
           const totalReturnElem = document.getElementById('totalReturn');
           if (totalReturnAmount > 0) {
             totalReturnElem.classList.add('text-red-500');
@@ -1563,6 +1568,21 @@
             totalReturnElem.classList.remove('text-red-500');
           } else {
             totalReturnElem.classList.remove('text-red-500', 'text-green-500');
+          }
+          let roi = 0;
+          if (!isNaN(initialCapital) && initialCapital > 0) {
+            roi = ((currentCapital - initialCapital) / initialCapital) * 100;
+          }
+          document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
+          const analysisROI = document.getElementById('analysisROI');
+          if (roi > 0) {
+            analysisROI.classList.add('text-red-500');
+            analysisROI.classList.remove('text-green-500');
+          } else if (roi < 0) {
+            analysisROI.classList.add('text-green-500');
+            analysisROI.classList.remove('text-red-500');
+          } else {
+            analysisROI.classList.remove('text-red-500', 'text-green-500');
           }
           const maxDrawdownElem = document.getElementById('maxDrawdown');
           maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
