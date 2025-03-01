@@ -419,6 +419,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">獲利% SD：</span>
+            <!-- 使用樣本標準差公式 -->
             <span id="sdWinPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -442,6 +443,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">虧損% SD：</span>
+            <!-- 使用樣本標準差公式 -->
             <span id="sdLossPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -1552,7 +1554,130 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // 統一採用樣本標準差公式計算獲利% SD 與 虧損% SD
+        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
+        let tradesForMFE = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+        );
+        let avgMFE = 0, totalMFE = 0;
+        let mfeValues = [];
+        let skewMFE = 0, kurtosisMFE = 0;
+        if (tradesForMFE.length > 0) {
+          tradesForMFE.forEach(trade => {
+            let entry = parseFloat(trade.entryPrice);
+            let high = parseFloat(trade.highestPrice);
+            let low = parseFloat(trade.lowestPrice);
+            let mfe = 0;
+            if (trade.direction === "多") {
+              mfe = (high - entry) / entry * 100;
+            } else {
+              mfe = (entry - low) / entry * 100;
+            }
+            totalMFE += mfe;
+            mfeValues.push(mfe);
+          });
+          avgMFE = totalMFE / tradesForMFE.length;
+          let sumSqMFE = 0;
+          mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
+          let nMFE = tradesForMFE.length;
+          var stdMFE = (nMFE > 1) ? Math.sqrt(sumSqMFE / (nMFE - 1)) : 0;
+          var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
+          let sumCubeMFE = 0;
+          mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
+          skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesForMFE.length) / Math.pow(stdMFE, 3) : 0;
+          let sumFourthMFE = 0;
+          mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
+          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesForMFE.length) / Math.pow(stdMFE, 4) : 0;
+        } else {
+          avgMFE = 0; var stdMFE = 0; var cvMFE = 0; skewMFE = 0; kurtosisMFE = 0;
+        }
+        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
+        document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
+        document.getElementById('cvMFE').textContent = formatNumberNoSign(cvMFE, 2);
+        document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
+        document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
+
+        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
+        let tradesForNewMAE = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
+        );
+        let avgMAE = 0, totalMAE = 0;
+        let maeValues = [];
+        let skewMAE = 0, kurtosisMAE = 0;
+        if (tradesForNewMAE.length > 0) {
+          tradesForNewMAE.forEach(trade => {
+            let entry = parseFloat(trade.entryPrice);
+            let adverse = parseFloat(trade.entryDayAdversePrice);
+            let mae = 0;
+            if (trade.direction === "多") {
+              mae = ((entry - adverse) / entry) * 100;
+            } else {
+              mae = ((adverse - entry) / entry) * 100;
+            }
+            totalMAE += mae;
+            maeValues.push(mae);
+          });
+          avgMAE = totalMAE / tradesForNewMAE.length;
+          let sumSqMAE = 0;
+          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
+          let nMAE = tradesForNewMAE.length;
+          var stdMAE = (nMAE > 1) ? Math.sqrt(sumSqMAE / (nMAE - 1)) : 0;
+          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
+          let sumCubeMAE = 0;
+          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
+          skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 3) : 0;
+          let sumFourthMAE = 0;
+          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
+          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 4) : 0;
+        } else {
+          avgMAE = 0; var stdMAE = 0; var cvMAE = 0; skewMAE = 0; kurtosisMAE = 0;
+        }
+        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
+        document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
+        document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
+        document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
+        document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
+
+        // EDR 統計計算（採用樣本標準差公式）
+        let tradesForEDR = closedTrades.filter(trade => 
+          trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+        );
+        let edrValues = [];
+        let totalEDR = 0;
+        tradesForEDR.forEach(trade => {
+          let exit = parseFloat(trade.exitPrice);
+          let high = parseFloat(trade.highestPrice);
+          let low = parseFloat(trade.lowestPrice);
+          let edr = 0;
+          if (trade.direction === "多") {
+            edr = ((high - exit) / high) * 100;
+          } else {
+            edr = ((exit - low) / low) * 100;
+          }
+          totalEDR += edr;
+          edrValues.push(edr);
+        });
+        let avgEDR = 0, stdEDR = 0, cvEDR = 0, skewEDR = 0, kurtosisEDR = 0;
+        if (edrValues.length > 0) {
+          avgEDR = totalEDR / edrValues.length;
+          let sumSqEDR = 0;
+          edrValues.forEach(val => { sumSqEDR += Math.pow(val - avgEDR, 2); });
+          let nEDR = edrValues.length;
+          stdEDR = (nEDR > 1) ? Math.sqrt(sumSqEDR / (nEDR - 1)) : 0;
+          cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
+          let sumCubeEDR = 0;
+          edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
+          skewEDR = stdEDR !== 0 ? (sumCubeEDR / edrValues.length) / Math.pow(stdEDR, 3) : 0;
+          let sumFourthEDR = 0;
+          edrValues.forEach(val => { sumFourthEDR += Math.pow(val - avgEDR, 4); });
+          kurtosisEDR = stdEDR !== 0 ? (sumFourthEDR / edrValues.length) / Math.pow(stdEDR, 4) : 0;
+        }
+        document.getElementById('avgEDR').textContent = formatNumberNoSign(avgEDR, 2) + "%";
+        document.getElementById('sdEDR').textContent = formatNumberNoSign(stdEDR, 2) + "%";
+        document.getElementById('cvEDR').textContent = formatNumberNoSign(cvEDR, 2);
+        document.getElementById('skewEDR').textContent = formatNumberNoSign(skewEDR, 2);
+        document.getElementById('kurtosisEDR').textContent = formatNumberNoSign(kurtosisEDR, 2);
+
+        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1636,15 +1761,6 @@
         let avgMFEToExitDays = mfeToExitDaysArray.length > 0 ? mfeToExitDaysArray.reduce((a, b) => a + b, 0) / mfeToExitDaysArray.length : 0;
         document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
-
-        // 更新未平倉統計區塊：持倉數量和持倉部位總額
-        let openTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
-        document.getElementById('unclosedTradeCount').textContent = openTrades.length;
-        let openPositionsTotal = openTrades.reduce((sum, trade) => {
-          let pos = parseFloat(trade.position);
-          return sum + (isNaN(pos) ? 0 : pos);
-        }, 0);
-        document.getElementById('unclosedPositionTotal').textContent = formatMoney(openPositionsTotal, 0);
 
         // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
@@ -2090,375 +2206,6 @@
           alert('讀取文件時發生錯誤。');
         };
         reader.readAsBinaryString(file);
-      }
-      
-      // 計算各項統計數據，包括未平倉統計
-      function calculateStats() {
-        const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
-        let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
-        if (selectedStrategyFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
-        }
-        if (selectedExternalConditionFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
-          const startDate = new Date(selectedStartDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
-        }
-        if (selectedEndDateFilter !== null && selectedEndDateFilter !== '') {
-          const endDate = new Date(selectedEndDateFilter);
-          closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
-        }
-        if (selectedCloseStatusFilter !== null) {
-          if (selectedCloseStatusFilter === "open") {
-            closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
-          } else if (selectedCloseStatusFilter === "closed") {
-            closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
-          }
-        }
-        if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
-          } else if (selectedProfitLossFilter === "loss") {
-            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
-          }
-        }
-        let closedTradesWithPosition = closedTrades.filter(trade =>
-          trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
-        );
-        let totalReturnAmount = 0;
-        if (closedTradesWithPosition.length > 0) {
-          totalReturnAmount = closedTradesWithPosition.reduce((sum, trade) => 
-            sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0);
-        }
-        const currentCapital = initialCapital + totalReturnAmount;
-        document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
-        
-        if (closedTrades.length === 0) {
-          document.getElementById('totalTrades').textContent = '0';
-          document.getElementById('winRate').textContent = '0% (0勝0敗)';
-          document.getElementById('riskRewardRatio').textContent = '0';
-          document.getElementById('avgWin').textContent = formatMoney(0, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(0, 0);
-          document.getElementById('maxWin').textContent = formatMoney(0, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(0, 0);
-          document.getElementById('expectedValue').textContent = formatMoney(0, 0);
-          document.getElementById('totalReturn').textContent = formatMoney(0, 0);
-          document.getElementById('analysisROI').textContent = "0%";
-        } else {
-          const results = closedTrades.map(trade => parseFloat(trade.returnRate));
-          const wins = results.filter(result => result > 0);
-          const losses = results.filter(result => result < 0);
-          const winRate = (wins.length / results.length) * 100;
-          const avgWinRate = wins.length > 0 ? wins.reduce((a, b) => a + b) / wins.length : 0;
-          const avgLossRate = losses.length > 0 ? losses.reduce((a, b) => a + b) / losses.length : 0;
-          const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
-          const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
-
-          // 平均交易部位（不乘以報酬率）
-          const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
-          const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
-          const avgWinningPosition = winsWithPosition.length > 0 
-            ? winsWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winsWithPosition.length 
-            : 0;
-          const avgLosingPosition = lossesWithPosition.length > 0 
-            ? lossesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / lossesWithPosition.length 
-            : 0;
-
-          document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
-          document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
-
-          const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
-          const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
-          
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('maxWin').textContent = formatMoney(Math.max(...winsWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(Math.min(...lossesWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
-          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
-          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          let roi = 0;
-          if (!isNaN(initialCapital) && initialCapital > 0) {
-            roi = ((currentCapital - initialCapital) / initialCapital) * 100;
-          }
-          document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
-          const analysisROI = document.getElementById('analysisROI');
-          if (roi > 0) {
-            analysisROI.classList.add('text-red-500');
-            analysisROI.classList.remove('text-green-500');
-          } else if (roi < 0) {
-            analysisROI.classList.add('text-green-500');
-            analysisROI.classList.remove('text-red-500');
-          } else {
-            analysisROI.classList.remove('text-red-500', 'text-green-500');
-          }
-          
-          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
-          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          
-          // 持倉天數：從開倉日到平倉日
-          let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
-          let winHoldingDays = [];
-          let lossHoldingDays = [];
-          closedTradesWithDays.forEach(trade => {
-            let open = new Date(trade.openDate);
-            let close = new Date(trade.closeDate);
-            let days = (close - open) / (1000 * 60 * 60 * 24);
-            if (parseFloat(trade.returnRate) > 0) {
-              winHoldingDays.push(days);
-            } else if (parseFloat(trade.returnRate) < 0) {
-              lossHoldingDays.push(days);
-            }
-          });
-          let avgWinHoldingDays = winHoldingDays.length > 0 ? winHoldingDays.reduce((sum, d) => sum + d, 0) / winHoldingDays.length : 0;
-          let avgLossHoldingDays = lossHoldingDays.length > 0 ? lossHoldingDays.reduce((sum, d) => sum + d, 0) / lossHoldingDays.length : 0;
-          document.getElementById('avgWinHoldingDays').textContent = formatNumberNoSign(avgWinHoldingDays, 2);
-          document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
-        }
-
-        // 統一採用樣本標準差公式計算獲利% SD 與 虧損% SD
-        let winPercentValues = [];
-        let lossPercentValues = [];
-        closedTradesWithPosition.forEach(trade => {
-          let ret = parseFloat(trade.returnRate);
-          if (!isNaN(ret)) {
-            if (ret > 0) {
-              winPercentValues.push(ret);
-            } else if (ret < 0) {
-              lossPercentValues.push(Math.abs(ret));
-            }
-          }
-        });
-        let nWin = winPercentValues.length;
-        let avgWinPercentValue = nWin > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / nWin : 0;
-        let sdWinPercent = nWin > 1 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / (nWin - 1)) : 0;
-        let cvWinPercent = avgWinPercentValue !== 0 ? sdWinPercent / avgWinPercentValue : 0;
-        let nLoss = lossPercentValues.length;
-        let avgLossPercentValue = nLoss > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / nLoss : 0;
-        let sdLossPercent = nLoss > 1 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / (nLoss - 1)) : 0;
-        let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        let winPercentSkewness = 0, lossPercentSkewness = 0;
-        if (nWin > 0 && sdWinPercent !== 0) {
-          let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
-          winPercentSkewness = (sumCubeWin / nWin) / Math.pow(sdWinPercent, 3);
-        }
-        if (nLoss > 0 && sdLossPercent !== 0) {
-          let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
-          lossPercentSkewness = (sumCubeLoss / nLoss) / Math.pow(sdLossPercent, 3);
-        }
-        let winPercentKurtosis = 0, lossPercentKurtosis = 0;
-        if (nWin > 0 && sdWinPercent !== 0) {
-          let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
-          winPercentKurtosis = (sumFourthWin / nWin) / Math.pow(sdWinPercent, 4);
-        }
-        if (nLoss > 0 && sdLossPercent !== 0) {
-          let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
-          lossPercentKurtosis = (sumFourthLoss / nLoss) / Math.pow(sdLossPercent, 4);
-        }
-        document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
-        document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
-        document.getElementById('cvWinPercent').textContent = formatNumberNoSign(cvWinPercent, 2);
-        document.getElementById('skewWinPercent').textContent = formatNumberNoSign(winPercentSkewness, 2);
-        document.getElementById('kurtosisWinPercent').textContent = formatNumberNoSign(winPercentKurtosis, 2);
-        document.getElementById('avgLossPercentDisplay').textContent = formatNumberNoSign(avgLossPercentValue, 2) + "%";
-        document.getElementById('sdLossPercent').textContent = formatNumberNoSign(sdLossPercent, 2) + "%";
-        document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
-        document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
-        document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
-        
-        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
-        var profitAchievementRate = 0;
-        if(avgMFE !== 0) {
-          profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
-        }
-        document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
-        
-        // 新增：計算最大交易回落 (MDD)
-        let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
-        document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
-
-        // 新增：計算平均達到MFE天數與平均MFE到出場天數
-        let mfedaysArray = [];
-        let mfeToExitDaysArray = [];
-        closedTrades.forEach(trade => {
-          if (trade.openDate && trade.mfeDate) {
-            let open = new Date(trade.openDate);
-            let mfe = new Date(trade.mfeDate);
-            if (mfe >= open) {
-              mfedaysArray.push((mfe - open) / (1000 * 60 * 60 * 24));
-            }
-          }
-          if (trade.mfeDate && trade.closeDate) {
-            let mfe = new Date(trade.mfeDate);
-            let close = new Date(trade.closeDate);
-            if (close >= mfe) {
-              mfeToExitDaysArray.push((close - mfe) / (1000 * 60 * 60 * 24));
-            }
-          }
-        });
-        let avgMFEDays = mfedaysArray.length > 0 ? mfedaysArray.reduce((a, b) => a + b, 0) / mfedaysArray.length : 0;
-        let avgMFEToExitDays = mfeToExitDaysArray.length > 0 ? mfeToExitDaysArray.reduce((a, b) => a + b, 0) / mfeToExitDaysArray.length : 0;
-        document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
-        document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
-
-        // 更新未平倉統計區塊：持倉數量和持倉部位總額
-        let openTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
-        document.getElementById('unclosedTradeCount').textContent = openTrades.length;
-        let openPositionsTotal = openTrades.reduce((sum, trade) => {
-          let pos = parseFloat(trade.position);
-          return sum + (isNaN(pos) ? 0 : pos);
-        }, 0);
-        document.getElementById('unclosedPositionTotal').textContent = formatMoney(openPositionsTotal, 0);
-
-        // 更新「各種策略的使用次數」與「大盤多空天數」
-        updateStrategyUsage();
-        updateMarketStatusUsage();
-      }
-
-      function updateStrategyUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedExternalConditionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
-        }
-        if (selectedDirectionFilter !== null) {
-          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
-        }
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => {
-          if(t.strategyId !== null) {
-            usage[t.strategyId]++;
-          }
-        });
-        let tableBody = document.getElementById("strategyUsageList");
-        if(tableBody) {
-          tableBody.innerHTML = "";
-          strategies.forEach(s => {
-            let count = usage[s.id] || 0;
-            let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
-            let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
-            let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
-            let losses = closedStrategyTrades.filter(t => parseFloat(t.returnRate) < 0).length;
-            let winRate = closedStrategyTrades.length > 0 ? (wins / closedStrategyTrades.length * 100).toFixed(2) : "0.00";
-            let tr = document.createElement("tr");
-            tr.innerHTML = `<td class="border px-4 py-2">${escapeHtml(s.name)}</td>
-                            <td class="border px-4 py-2 text-center">${count}</td>
-                            <td class="border px-4 py-2 text-center">勝率 ${winRate}% (${wins}勝 ${losses}敗)</td>`;
-            tableBody.appendChild(tr);
-          });
-        }
-      }
-
-      function updateMarketStatusUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
-        }
-        if (selectedEndDateFilter) {
-          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
-        }
-        let dayStatus = {};
-        filteredTrades.forEach(t => {
-          let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]){
-            dayStatus[day] = t.externalConditionId;
-          }
-        });
-        for(let day in dayStatus) {
-          let statusId = dayStatus[day];
-          if(statusId != null){
-            if(!usage[statusId]) usage[statusId] = 0;
-            usage[statusId]++;
-          }
-        }
-        let list = document.getElementById("marketStatusUsageList");
-        if(list) {
-          list.innerHTML = "";
-          externalConditions.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 天`;
-            list.appendChild(li);
-          });
-        }
-      }
-
-      loadStrategies();
-      loadExternalConditions();
-      loadData();
-
-      function toggleStrategyManagement() {
-        const content = document.getElementById('strategyManagementContent');
-        const toggleIcon = document.getElementById('strategyToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function toggleExternalConditionManagement() {
-        const content = document.getElementById('externalConditionManagementContent');
-        const toggleIcon = document.getElementById('externalConditionToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function openModal(modalId) {
-        document.getElementById(modalId).classList.remove('hidden');
-      }
-
-      function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        const inputs = modal.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-          if (input.type !== 'hidden') {
-            input.value = '';
-          }
-        });
-      }
-
-      function escapeHtml(text) {
-        const map = {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
     </script>
   </div>
