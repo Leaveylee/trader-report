@@ -666,35 +666,25 @@
     </div>
 
     <script>
-      // 新增 calculateMDD 函式（計算最大交易回落）
+      // 更新後的 calculateMDD 函式：計算累積權益曲線上的最大回撤百分比
       function calculateMDD(initialCapital, tradesWithPosition) {
-        let groups = {};
-        tradesWithPosition.forEach(trade => {
-          if (trade.closeDate && trade.closeDate.trim() !== '') {
-            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
-            groups[trade.closeDate].push(trade);
-          }
-        });
-        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+        // 將已平倉交易依平倉日期由舊至新排序
+        let sortedTrades = tradesWithPosition.slice().sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
         let equity = initialCapital;
-        let maxDrawdownPercent = 0;
-        dates.forEach(date => {
-          let groupTrades = groups[date];
-          let profitSum = 0, lossSum = 0;
-          groupTrades.forEach(trade => {
-            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-            if (p > 0) profitSum += p;
-            else lossSum += p;
-          });
-          let dayPeak = equity + profitSum;
-          let dayEnd = dayPeak + lossSum;
-          let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
-          if (dayDrawdownPercent > maxDrawdownPercent) {
-            maxDrawdownPercent = dayDrawdownPercent;
+        let peak = initialCapital;
+        let maxDrawdown = 0;
+        sortedTrades.forEach(trade => {
+          let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
+          equity += profit;
+          if (equity > peak) {
+            peak = equity;
           }
-          equity = dayEnd;
+          let drawdown = (peak - equity) / peak;
+          if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
         });
-        return maxDrawdownPercent;
+        return maxDrawdown;
       }
 
       // 策略列表
@@ -1431,7 +1421,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateStats() 更新統計數據（包含 MDD 與獲利達成率計算）
+      // calculateStats() 更新統計數據（包含正確的 MDD 與獲利達成率計算）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1477,7 +1467,7 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算 MDD
+        // 使用新的 calculateMDD 計算累積權益曲線上的最大回撤
         let mddPercent = 0;
         if (closedTradesWithPosition.length > 0) {
           mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
@@ -1736,7 +1726,7 @@
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
-
+        
         // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
         var profitAchievementRate = 0;
         if(avgMFE !== 0) {
