@@ -307,10 +307,13 @@
           <span>MFE 峰度:</span>
           <span id="kurtosisMFE" class="font-bold">0</span>
         </div>
-        <!-- 新增：平均達到MFE天數 -->
         <div class="flex justify-between mt-2">
           <span>平均達到MFE天數:</span>
           <span id="avgMFEDays" class="font-bold">0</span> 天
+        </div>
+        <div class="flex justify-between mt-2">
+          <span>平均高點到出場天數:</span>
+          <span id="avgHighToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
           附註：開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
@@ -1584,7 +1587,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 持倉天數
+          // 計算持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1615,6 +1618,19 @@
           });
           let avgMFEDays = mfeDays.length > 0 ? mfeDays.reduce((sum, d) => sum + d, 0) / mfeDays.length : 0;
           document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
+
+          // 平均高點到出場天數：從 mfeDate 到 closeDate
+          let highToExitDays = [];
+          closedTrades.forEach(trade => {
+            if (trade.mfeDate && trade.closeDate) {
+              let mfe = new Date(trade.mfeDate);
+              let close = new Date(trade.closeDate);
+              let diffDays = (close - mfe) / (1000 * 60 * 60 * 24);
+              if (diffDays >= 0) highToExitDays.push(diffDays);
+            }
+          });
+          let avgHighToExitDays = highToExitDays.length > 0 ? highToExitDays.reduce((sum, d) => sum + d, 0) / highToExitDays.length : 0;
+          document.getElementById('avgHighToExitDays').textContent = formatNumberNoSign(avgHighToExitDays, 2);
         }
 
         // MFE 統計（保持原有邏輯）
