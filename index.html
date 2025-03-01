@@ -309,6 +309,9 @@
             <span>MFE 峰度:</span>
             <span id="kurtosisMFE" class="font-bold">0</span>
           </div>
+          <p class="text-xs text-gray-500 mt-2">
+            附註：開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
+          </p>
         </div>
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
@@ -332,6 +335,9 @@
             <span>MAE 峰度:</span>
             <span id="kurtosisMAE" class="font-bold">0</span>
           </div>
+          <p class="text-xs text-gray-500 mt-2">
+            附註：開倉當天在建倉後出現的最大不利幅度。目標是找出當天最適停損範圍，盡快排除會賠錢的交易。
+          </p>
         </div>
         <div class="border p-4 rounded">
           <h4 class="text-lg font-medium text-gray-700 mb-2">EDR 統計</h4>
@@ -355,6 +361,9 @@
             <span>EDR 峰度:</span>
             <span id="kurtosisEDR" class="font-bold">0</span>
           </div>
+          <p class="text-xs text-gray-500 mt-2">
+            附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是找出在回撤多少%後容易觸發出場條件，以規劃分批減碼策略。
+          </p>
         </div>
       </div>
     </div>
