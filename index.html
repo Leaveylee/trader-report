@@ -474,6 +474,10 @@
           <span class="text-gray-600">持倉部位：</span>
           <span id="unclosedPositionTotal" class="font-medium">$0</span>
         </div>
+        <div class="flex justify-between col-span-2">
+          <span class="text-gray-600">自由資金：</span>
+          <span id="unclosedFreeCapital" class="font-medium">$0</span>
+        </div>
       </div>
     </div>
 
@@ -1769,9 +1773,16 @@
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
 
+        // 新增：計算未平倉自由資金 = 最新資金水位 - 持倉部位
+        let unclosedFreeCapital = currentCapital - unclosedPositionTotal;
+        document.getElementById('unclosedFreeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
+
         // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
+
+        // 同時更新資金績效區塊中的自由資金（如果有需要）
+        document.getElementById('freeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
       }
 
       function updateStrategyUsage() {
