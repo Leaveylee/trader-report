@@ -602,7 +602,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「出場價格」、「最高價格」與「最低價格」欄位) -->
+    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「出場價格」、「進場當天不利價格」、「最高價格」與「最低價格」欄位) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -614,7 +614,7 @@
         </div>
       </div>
       <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
+        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、進場當天不利價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
       <div class="relative">
         <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
@@ -633,6 +633,7 @@
                 <th class="px-4 py-2 min-w-[100px]">部位金額</th>
                 <th class="px-4 py-2 min-w-[100px]">進場價格</th>
                 <th class="px-4 py-2 min-w-[100px]">出場價格</th>
+                <th class="px-4 py-2 min-w-[100px]">進場當天不利價格</th>
                 <th class="px-4 py-2 min-w-[100px]">最高價格</th>
                 <th class="px-4 py-2 min-w-[100px]">最低價格</th>
                 <th class="px-4 py-2 min-w-[100px]">交易方向</th>
@@ -657,7 +658,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 大盤多空列表（原外部條件）
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
-      // 交易記錄列表，新增 "direction"、"entryPrice"、"exitPrice"、"highestPrice" 與 "lowestPrice" 欄位
+      // 交易記錄列表，新增 "direction"、"entryPrice"、"exitPrice"、"entryDayAdversePrice"、"highestPrice" 與 "lowestPrice" 欄位
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -781,6 +782,7 @@
             if (typeof trade.position === 'undefined') trade.position = '';
             if (typeof trade.entryPrice === 'undefined') trade.entryPrice = '';
             if (typeof trade.exitPrice === 'undefined') trade.exitPrice = '';
+            if (typeof trade.entryDayAdversePrice === 'undefined') trade.entryDayAdversePrice = '';
             if (typeof trade.highestPrice === 'undefined') trade.highestPrice = '';
             if (typeof trade.lowestPrice === 'undefined') trade.lowestPrice = '';
             if (typeof trade.direction === 'undefined') trade.direction = "多";
@@ -794,6 +796,7 @@
             position: '', 
             entryPrice: '',
             exitPrice: '',
+            entryDayAdversePrice: '',
             highestPrice: '',
             lowestPrice: '',
             assetName: '', 
@@ -989,6 +992,9 @@
                 <input type="number" value="${trade.exitPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'exitPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="出場價格" data-row-index="${trades.indexOf(trade)}" data-field="exitPrice">
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
+                <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${trades.indexOf(trade)}" data-field="entryDayAdversePrice">
+              </td>
+              <td class="border px-4 py-2 min-w-[100px]">
                 <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
@@ -1106,6 +1112,8 @@
           trades[index].highestPrice = value.trim();
         } else if (field === 'lowestPrice') {
           trades[index].lowestPrice = value.trim();
+        } else if (field === 'entryDayAdversePrice') {
+          trades[index].entryDayAdversePrice = value.trim();
         }
         calculateStats();
         saveData();
@@ -1130,6 +1138,7 @@
           position: '',
           entryPrice: '',
           exitPrice: '',
+          entryDayAdversePrice: '',
           highestPrice: '',
           lowestPrice: '',
           assetName: '', 
@@ -1156,7 +1165,7 @@
       function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
         }
         renderTrades();
         calculateStats();
@@ -1472,13 +1481,18 @@
           document.getElementById('avgMFE').textContent = "0%";
           document.getElementById('sdMFE').textContent = "0%";
           document.getElementById('cvMFE').textContent = "0";
+          // MAE (使用進場當天不利價格新公式) 預設
           document.getElementById('avgMAE').textContent = "0%";
           document.getElementById('sdMAE').textContent = "0%";
           document.getElementById('cvMAE').textContent = "0";
-          document.getElementById('skewMFE').textContent = "0";
           document.getElementById('skewMAE').textContent = "0";
-          document.getElementById('kurtosisMFE').textContent = "0";
           document.getElementById('kurtosisMAE').textContent = "0";
+          // EDR 統計預設
+          document.getElementById('avgEDR').textContent = "0%";
+          document.getElementById('sdEDR').textContent = "0%";
+          document.getElementById('cvEDR').textContent = "0";
+          document.getElementById('skewEDR').textContent = "0";
+          document.getElementById('kurtosisEDR').textContent = "0";
           document.getElementById('avgWinPercent').textContent = "0%";
           document.getElementById('sdWinPercent').textContent = "0%";
           document.getElementById('cvWinPercent').textContent = "0";
@@ -1492,12 +1506,6 @@
           document.getElementById('profitAchievementRate').textContent = "0%";
           document.getElementById('avgWinHoldingDays').textContent = "0";
           document.getElementById('avgLossHoldingDays').textContent = "0";
-          // EDR 統計預設
-          document.getElementById('avgEDR').textContent = "0%";
-          document.getElementById('sdEDR').textContent = "0%";
-          document.getElementById('cvEDR').textContent = "0";
-          document.getElementById('skewEDR').textContent = "0";
-          document.getElementById('kurtosisEDR').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1594,85 +1602,94 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 與 MAE 相關數據計算（修改 MAE 計算公式）
-        let tradesWithPrices = closedTrades.filter(trade => 
+        // MFE 相關數據計算（保持原有計算方式）
+        let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
-        let avgMFE = 0, avgMAE = 0;
-        let totalMFE = 0, totalMAE = 0;
-        let mfeValues = [], maeValues = [];
-        let skewMFE = 0, skewMAE = 0;
-        let kurtosisMFE = 0, kurtosisMAE = 0;
-        if (tradesWithPrices.length > 0) {
-          tradesWithPrices.forEach(trade => {
+        let avgMFE = 0, totalMFE = 0;
+        let mfeValues = [];
+        let skewMFE = 0, kurtosisMFE = 0;
+        if (tradesForMFE.length > 0) {
+          tradesForMFE.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
-            let mfe = 0, mae = 0;
+            let mfe = 0;
             if (trade.direction === "多") {
               mfe = (high - entry) / entry * 100;
-              // MAE 以最高價為基準計算
-              mae = ((high - low) / high) * 100;
             } else {
               mfe = (entry - low) / entry * 100;
-              // MAE 以最低價為基準計算
-              mae = ((high - low) / low) * 100;
             }
             totalMFE += mfe;
-            totalMAE += mae;
             mfeValues.push(mfe);
-            maeValues.push(mae);
           });
-          avgMFE = totalMFE / tradesWithPrices.length;
-          avgMAE = totalMAE / tradesWithPrices.length;
-          let sumSqMFE = 0, sumSqMAE = 0;
+          avgMFE = totalMFE / tradesForMFE.length;
+          let sumSqMFE = 0;
           mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
-          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
-          var stdMFE = Math.sqrt(sumSqMFE / tradesWithPrices.length);
-          var stdMAE = Math.sqrt(sumSqMAE / tradesWithPrices.length);
+          var stdMFE = Math.sqrt(sumSqMFE / tradesForMFE.length);
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
-          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
-          let sumCubeMFE = 0, sumCubeMAE = 0;
+          let sumCubeMFE = 0;
           mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
-          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
-          let skewMFEVal = stdMFE !== 0 ? (sumCubeMFE / tradesWithPrices.length) / Math.pow(stdMFE, 3) : 0;
-          let skewMAEVal = stdMAE !== 0 ? (sumCubeMAE / tradesWithPrices.length) / Math.pow(stdMAE, 3) : 0;
-          skewMFE = skewMFEVal;
-          skewMAE = skewMAEVal;
-          let sumFourthMFE = 0, sumFourthMAE = 0;
+          skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesForMFE.length) / Math.pow(stdMFE, 3) : 0;
+          let sumFourthMFE = 0;
           mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
-          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
-          let kurtosisMFEVal = stdMFE !== 0 ? (sumFourthMFE / tradesWithPrices.length) / Math.pow(stdMFE, 4) : 0;
-          let kurtosisMAEVal = stdMAE !== 0 ? (sumFourthMAE / tradesWithPrices.length) / Math.pow(stdMAE, 4) : 0;
-          kurtosisMFE = kurtosisMFEVal;
-          kurtosisMAE = kurtosisMAEVal;
+          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesForMFE.length) / Math.pow(stdMFE, 4) : 0;
         } else {
-          avgMFE = 0; avgMAE = 0;
-          var stdMFE = 0, stdMAE = 0;
-          var cvMFE = 0, cvMAE = 0;
-          skewMFE = 0;
-          skewMAE = 0;
-          kurtosisMFE = 0;
-          kurtosisMAE = 0;
+          avgMFE = 0; var stdMFE = 0; var cvMFE = 0; skewMFE = 0; kurtosisMFE = 0;
         }
         document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
         document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
         document.getElementById('cvMFE').textContent = formatNumberNoSign(cvMFE, 2);
+        document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
+        document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
+
+        // MAE 相關數據計算（使用進場當天不利價格新公式）
+        let tradesForNewMAE = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
+        );
+        let avgMAE = 0, totalMAE = 0;
+        let maeValues = [];
+        let skewMAE = 0, kurtosisMAE = 0;
+        if (tradesForNewMAE.length > 0) {
+          tradesForNewMAE.forEach(trade => {
+            let entry = parseFloat(trade.entryPrice);
+            let adverse = parseFloat(trade.entryDayAdversePrice);
+            let mae = 0;
+            if (trade.direction === "多") {
+              mae = ((entry - adverse) / entry) * 100;
+            } else {
+              mae = ((adverse - entry) / entry) * 100;
+            }
+            totalMAE += mae;
+            maeValues.push(mae);
+          });
+          avgMAE = totalMAE / tradesForNewMAE.length;
+          let sumSqMAE = 0;
+          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
+          var stdMAE = Math.sqrt(sumSqMAE / tradesForNewMAE.length);
+          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
+          let sumCubeMAE = 0;
+          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
+          skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 3) : 0;
+          let sumFourthMAE = 0;
+          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
+          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 4) : 0;
+        } else {
+          avgMAE = 0; var stdMAE = 0; var cvMAE = 0; skewMAE = 0; kurtosisMAE = 0;
+        }
         document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
         document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
         document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
-        document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
-        document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
         // EDR 統計計算
-        let tradesWithEDR = closedTrades.filter(trade => 
+        let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
         let edrValues = [];
         let totalEDR = 0;
-        tradesWithEDR.forEach(trade => {
+        tradesForEDR.forEach(trade => {
           let exit = parseFloat(trade.exitPrice);
           let high = parseFloat(trade.highestPrice);
           let low = parseFloat(trade.lowestPrice);
@@ -1754,7 +1771,6 @@
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
       }
 
-      // 更新各種策略使用次數的函式，並在每個策略後面加入勝率 (勝/敗)
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
@@ -1781,7 +1797,6 @@
           tableBody.innerHTML = "";
           strategies.forEach(s => {
             let count = usage[s.id] || 0;
-            // 針對此策略計算勝率：僅針對已平倉且有報酬率資料的交易
             let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
             let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
             let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
@@ -1906,6 +1921,7 @@
           "部位金額": trade.position,
           "進場價格": trade.entryPrice,
           "出場價格": trade.exitPrice,
+          "進場當天不利價格": trade.entryDayAdversePrice,
           "最高價格": trade.highestPrice,
           "最低價格": trade.lowestPrice,
           "交易方向": trade.direction,
@@ -1959,7 +1975,7 @@
           }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (jsonData.length === 0) {
             alert('Excel文件中沒有任何數據。');
@@ -1992,6 +2008,7 @@
               position: item["部位金額"],
               entryPrice: item["進場價格"],
               exitPrice: item["出場價格"] || '',
+              entryDayAdversePrice: item["進場當天不利價格"] || '',
               highestPrice: item["最高價格"],
               lowestPrice: item["最低價格"],
               direction: item["交易方向"] || "多",
