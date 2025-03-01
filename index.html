@@ -286,7 +286,6 @@
 
     <!-- 統計區塊：MFE、MAE 與 EDR -->
     <div class="grid grid-cols-3 gap-4 mt-4">
-      <!-- MFE 統計 -->
       <div class="border p-4 rounded">
         <h4 class="text-lg font-medium text-gray-700 mb-2">MFE 統計</h4>
         <div class="flex justify-between">
@@ -314,10 +313,9 @@
           <span id="avgMFEDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉後到完全出場前曾出現的最大有利漲幅。
+          附註：開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
         </p>
       </div>
-      <!-- MAE 統計 -->
       <div class="border p-4 rounded">
         <h4 class="text-lg font-medium text-gray-700 mb-2">MAE 統計</h4>
         <div class="flex justify-between">
@@ -341,10 +339,9 @@
           <span id="kurtosisMAE" class="font-bold">0</span>
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉當天在建倉後出現的最大不利幅度。
+          附註：開倉當天在建倉後出現的最大不利幅度。目標是找出當天最適的停損範圍，盡快排除會賠錢的交易。
         </p>
       </div>
-      <!-- EDR 統計 -->
       <div class="border p-4 rounded">
         <h4 class="text-lg font-medium text-gray-700 mb-2">EDR 統計</h4>
         <div class="flex justify-between">
@@ -372,7 +369,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：波段最高(或最低)點回撤到完全平倉價的距離。
+          附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
         </p>
       </div>
     </div>
@@ -671,6 +668,7 @@
     <script>
       // 更新後的 calculateMDD 函式：計算累積權益曲線上的最大回撤百分比
       function calculateMDD(initialCapital, tradesWithPosition) {
+        // 將已平倉交易依平倉日期由舊至新排序
         let sortedTrades = tradesWithPosition.slice().sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
         let equity = initialCapital;
         let peak = initialCapital;
@@ -678,16 +676,24 @@
         sortedTrades.forEach(trade => {
           let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
           equity += profit;
-          if (equity > peak) { peak = equity; }
+          if (equity > peak) {
+            peak = equity;
+          }
           let drawdown = (peak - equity) / peak;
-          if (drawdown > maxDrawdown) { maxDrawdown = drawdown; }
+          if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
         });
         return maxDrawdown;
       }
 
+      // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
+      // 大盤多空列表
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
+      // 交易記錄列表，新增欄位：direction、entryPrice、exitPrice、entryDayAdversePrice、mfeDate、highestPrice、lowestPrice
       let trades = [];
+      // 當前篩選條件
       let selectedStrategyFilter = null;
       let selectedExternalConditionFilter = null;
       let selectedStartDateFilter = null;
@@ -695,6 +701,7 @@
       let selectedDirectionFilter = null;
       let selectedCloseStatusFilter = null;
       let selectedProfitLossFilter = null;
+      // 全域變數：下一個交易ID
       let nextTradeId = 1;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -770,7 +777,9 @@
           saveStrategies();
         }
         const maxStrategyId = strategies.reduce((max, strategy) => strategy.id > max ? strategy.id : max, 0);
-        if (maxStrategyId >= nextTradeId) { nextTradeId = maxStrategyId + 1; }
+        if (maxStrategyId >= nextTradeId) {
+          nextTradeId = maxStrategyId + 1;
+        }
       }
 
       function loadExternalConditions() {
@@ -782,7 +791,9 @@
           saveExternalConditions();
         }
         const maxConditionId = externalConditions.reduce((max, condition) => condition.id > max ? condition.id : max, 0);
-        if (maxConditionId >= nextTradeId) { nextTradeId = maxConditionId + 1; }
+        if (maxConditionId >= nextTradeId) {
+          nextTradeId = maxConditionId + 1;
+        }
       }
 
       function loadData() {
@@ -792,8 +803,13 @@
         
         if (savedTrades && Array.isArray(savedTrades)) {
           trades = savedTrades.map(trade => {
-            if (!trade.id) { trade.id = nextTradeId++; }
-            else { if (trade.id >= nextTradeId) { nextTradeId = trade.id + 1; } }
+            if (!trade.id) {
+              trade.id = nextTradeId++;
+            } else {
+              if (trade.id >= nextTradeId) {
+                nextTradeId = trade.id + 1;
+              }
+            }
             if (!trade.description) trade.description = '';
             if (!trade.imageUrl) trade.imageUrl = '';
             if (typeof trade.position === 'undefined') trade.position = '';
@@ -808,7 +824,25 @@
           });
         }
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', mfeDate: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+          trades.push({ 
+            id: nextTradeId++, 
+            returnRate: '', 
+            position: '', 
+            entryPrice: '',
+            exitPrice: '',
+            entryDayAdversePrice: '',
+            mfeDate: '',
+            highestPrice: '',
+            lowestPrice: '',
+            assetName: '', 
+            strategyId: null, 
+            externalConditionId: null, 
+            openDate: '', 
+            closeDate: '',
+            description: '', 
+            imageUrl: '',
+            direction: "多"
+          });
         }
         selectedStrategyFilter = null;
         selectedExternalConditionFilter = null;
@@ -958,7 +992,9 @@
             const closeDate = new Date(trade.closeDate);
             const diffTime = closeDate - openDate;
             holdingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            if (holdingDays < 0) { holdingDays = ''; }
+            if (holdingDays < 0) {
+              holdingDays = '';
+            }
           } else {
             holdingDays = '未平倉';
             holdingDaysClass = 'text-red-500';
@@ -1048,8 +1084,12 @@
         const bottomScrollDiv = document.getElementById('bottomScrollbar');
         topScrollbar.removeEventListener('scroll', syncTopToBottom);
         bottomScrollDiv.removeEventListener('scroll', syncBottomToTop);
-        function syncTopToBottom() { bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft; }
-        function syncBottomToTop() { topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft; }
+        function syncTopToBottom() {
+          bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft;
+        }
+        function syncBottomToTop() {
+          topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
+        }
         topScrollbar.addEventListener('scroll', syncTopToBottom);
         bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
         topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
@@ -1154,7 +1194,9 @@
         saveData();
         setTimeout(() => {
           const newInput = document.querySelector(`input[data-trade-id="${newTrade.id}"][data-field="returnRate"]`);
-          if (newInput) { newInput.focus(); }
+          if (newInput) {
+            newInput.focus();
+          }
         }, 100);
       }
 
@@ -1168,17 +1210,28 @@
         saveData();
       }
 
-      function openAddStrategyModal() { openModal('addStrategyModal'); }
-      function closeAddStrategyModal() { closeModal('addStrategyModal'); }
+      function openAddStrategyModal() {
+        openModal('addStrategyModal');
+      }
+
+      function closeAddStrategyModal() {
+        closeModal('addStrategyModal');
+      }
 
       function addStrategy() {
         const nameInput = document.getElementById('newStrategyName');
         const descriptionInput = document.getElementById('newStrategyDescription');
         const name = nameInput.value.trim();
         const description = descriptionInput.value.trim();
-        if (name === '') { alert('策略名稱不能為空。'); return; }
+        if (name === '') {
+          alert('策略名稱不能為空。');
+          return;
+        }
         const existingStrategy = strategies.find(strategy => strategy.name === name);
-        if (existingStrategy) { alert('策略名稱已存在，請選擇其他名稱。'); return; }
+        if (existingStrategy) {
+          alert('策略名稱已存在，請選擇其他名稱。');
+          return;
+        }
         const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
         strategies.push({ id: newId, name, description });
         saveStrategies();
@@ -1197,15 +1250,23 @@
         openModal('editStrategyModal');
       }
 
-      function closeEditStrategyModal() { closeModal('editStrategyModal'); }
+      function closeEditStrategyModal() {
+        closeModal('editStrategyModal');
+      }
 
       function updateStrategy() {
         const id = parseInt(document.getElementById('editStrategyId').value, 10);
         const name = document.getElementById('editStrategyName').value.trim();
         const description = document.getElementById('editStrategyDescription').value.trim();
-        if (name === '') { alert('策略名稱不能為空。'); return; }
+        if (name === '') {
+          alert('策略名稱不能為空。');
+          return;
+        }
         const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
-        if (existingStrategy) { alert('策略名稱已存在，請選擇其他名稱。'); return; }
+        if (existingStrategy) {
+          alert('策略名稱已存在，請選擇其他名稱。');
+          return;
+        }
         const strategyIndex = strategies.findIndex(s => s.id === id);
         if (strategyIndex === -1) return;
         strategies[strategyIndex].name = name;
@@ -1223,7 +1284,9 @@
           alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
           return;
         }
-        if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) { return; }
+        if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
+          return;
+        }
         strategies = strategies.filter(strategy => strategy.id !== strategyId);
         saveStrategies();
         renderStrategies();
@@ -1231,17 +1294,28 @@
         calculateStats();
       }
 
-      function openAddExternalConditionModal() { openModal('addExternalConditionModal'); }
-      function closeAddExternalConditionModal() { closeModal('addExternalConditionModal'); }
+      function openAddExternalConditionModal() {
+        openModal('addExternalConditionModal');
+      }
+
+      function closeAddExternalConditionModal() {
+        closeModal('addExternalConditionModal');
+      }
 
       function addExternalCondition() {
         const nameInput = document.getElementById('newExternalConditionName');
         const descriptionInput = document.getElementById('newExternalConditionDescription');
         const name = nameInput.value.trim();
         const description = descriptionInput.value.trim();
-        if (name === '') { alert('大盤多空名稱不能為空。'); return; }
+        if (name === '') {
+          alert('大盤多空名稱不能為空。');
+          return;
+        }
         const existingCondition = externalConditions.find(condition => condition.name === name);
-        if (existingCondition) { alert('大盤多空名稱已存在，請選擇其他名稱。'); return; }
+        if (existingCondition) {
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
+          return;
+        }
         const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
         externalConditions.push({ id: newId, name, description });
         saveExternalConditions();
@@ -1260,15 +1334,23 @@
         openModal('editExternalConditionModal');
       }
 
-      function closeEditExternalConditionModal() { closeModal('editExternalConditionModal'); }
+      function closeEditExternalConditionModal() {
+        closeModal('editExternalConditionModal');
+      }
 
       function updateExternalCondition() {
         const id = parseInt(document.getElementById('editExternalConditionId').value, 10);
         const name = document.getElementById('editExternalConditionName').value.trim();
         const description = document.getElementById('editExternalConditionDescription').value.trim();
-        if (name === '') { alert('大盤多空名稱不能為空。'); return; }
+        if (name === '') {
+          alert('大盤多空名稱不能為空。');
+          return;
+        }
         const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
-        if (existingCondition) { alert('大盤多空名稱已存在，請選擇其他名稱。'); return; }
+        if (existingCondition) {
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
+          return;
+        }
         const conditionIndex = externalConditions.findIndex(c => c.id === id);
         if (conditionIndex === -1) return;
         externalConditions[conditionIndex].name = name;
@@ -1286,7 +1368,9 @@
           alert('有交易紀錄正在使用此大盤多空，請先移除或更改相關交易紀錄。');
           return;
         }
-        if (!confirm('您確定要刪除此大盤多空嗎？此操作無法撤銷。')) { return; }
+        if (!confirm('您確定要刪除此大盤多空嗎？此操作無法撤銷。')) {
+          return;
+        }
         externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
         saveExternalConditions();
         renderExternalConditions();
@@ -1327,19 +1411,29 @@
         if (endDate) {
           endDate.setDate(endDate.getDate() + days);
           endDateInput.value = formatDate(endDate);
-        } else { alert('請先設定結束日期，再進行調整。'); }
+        } else {
+          alert('請先設定結束日期，再進行調整。');
+        }
         applyFilters();
       }
 
-      function formatDate(date) { return date.toISOString().split('T')[0]; }
+      function formatDate(date) {
+        return date.toISOString().split('T')[0];
+      }
 
-      // calculateStats() 更新統計數據，並修正偏度與峰度計算（使用無偏公式）
+      // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
-        if (selectedStrategyFilter !== null) { closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter); }
-        if (selectedExternalConditionFilter !== null) { closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter); }
-        if (selectedDirectionFilter !== null) { closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter); }
+        if (selectedStrategyFilter !== null) {
+          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
+        }
+        if (selectedExternalConditionFilter !== null) {
+          closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+        }
+        if (selectedDirectionFilter !== null) {
+          closedTrades = closedTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
         if (selectedStartDateFilter !== null && selectedStartDateFilter !== '') {
           const startDate = new Date(selectedStartDateFilter);
           closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= startDate);
@@ -1349,12 +1443,18 @@
           closedTrades = closedTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= endDate);
         }
         if (selectedCloseStatusFilter !== null) {
-          if (selectedCloseStatusFilter === "open") { closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === ''); }
-          else if (selectedCloseStatusFilter === "closed") { closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== ''); }
+          if (selectedCloseStatusFilter === "open") {
+            closedTrades = closedTrades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+          } else if (selectedCloseStatusFilter === "closed") {
+            closedTrades = closedTrades.filter(trade => trade.closeDate && trade.closeDate.trim() !== '');
+          }
         }
         if (selectedProfitLossFilter !== null) {
-          if (selectedProfitLossFilter === "profit") { closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0); }
-          else if (selectedProfitLossFilter === "loss") { closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0); }
+          if (selectedProfitLossFilter === "profit") {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) > 0);
+          } else if (selectedProfitLossFilter === "loss") {
+            closedTrades = closedTrades.filter(trade => parseFloat(trade.returnRate) < 0);
+          }
         }
         let closedTradesWithPosition = closedTrades.filter(trade =>
           trade.position !== '' && !isNaN(parseFloat(trade.position)) && parseFloat(trade.position) > 0
@@ -1388,6 +1488,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
+          // 平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
@@ -1431,6 +1532,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
+          // 持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1438,8 +1540,11 @@
             let open = new Date(trade.openDate);
             let close = new Date(trade.closeDate);
             let days = (close - open) / (1000 * 60 * 60 * 24);
-            if (parseFloat(trade.returnRate) > 0) { winHoldingDays.push(days); }
-            else if (parseFloat(trade.returnRate) < 0) { lossHoldingDays.push(days); }
+            if (parseFloat(trade.returnRate) > 0) {
+              winHoldingDays.push(days);
+            } else if (parseFloat(trade.returnRate) < 0) {
+              lossHoldingDays.push(days);
+            }
           });
           let avgWinHoldingDays = winHoldingDays.length > 0 ? winHoldingDays.reduce((sum, d) => sum + d, 0) / winHoldingDays.length : 0;
           let avgLossHoldingDays = lossHoldingDays.length > 0 ? lossHoldingDays.reduce((sum, d) => sum + d, 0) / lossHoldingDays.length : 0;
@@ -1447,8 +1552,10 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 統計（修正偏度與峰度計算，採用無偏樣本公式）
-        let tradesForMFE = closedTrades.filter(trade => trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
+        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
+        let tradesForMFE = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+        );
         let avgMFE = 0, totalMFE = 0;
         let mfeValues = [];
         let skewMFE = 0, kurtosisMFE = 0;
@@ -1457,7 +1564,12 @@
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
-            let mfe = (trade.direction === "多") ? (high - entry) / entry * 100 : (entry - low) / entry * 100;
+            let mfe = 0;
+            if (trade.direction === "多") {
+              mfe = (high - entry) / entry * 100;
+            } else {
+              mfe = (entry - low) / entry * 100;
+            }
             totalMFE += mfe;
             mfeValues.push(mfe);
           });
@@ -1469,19 +1581,23 @@
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
           let sumCubeMFE = 0;
           mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
-          skewMFE = (nMFE > 2 && stdMFE !== 0) ? (nMFE * sumCubeMFE / ((nMFE - 1) * (nMFE - 2))) / Math.pow(stdMFE, 3) : 0;
+          skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesForMFE.length) / Math.pow(stdMFE, 3) : 0;
           let sumFourthMFE = 0;
           mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
-          kurtosisMFE = (nMFE > 3 && stdMFE !== 0) ? (nMFE * (nMFE+1) / ((nMFE-1)*(nMFE-2)*(nMFE-3))) * (sumFourthMFE / Math.pow(stdMFE,4)) - (3 * Math.pow(nMFE-1,2) / ((nMFE-2)*(nMFE-3))) : 0;
-        } else { avgMFE = 0; stdMFE = 0; cvMFE = 0; skewMFE = 0; kurtosisMFE = 0; }
+          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesForMFE.length) / Math.pow(stdMFE, 4) : 0;
+        } else {
+          avgMFE = 0; var stdMFE = 0; var cvMFE = 0; skewMFE = 0; kurtosisMFE = 0;
+        }
         document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
         document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
         document.getElementById('cvMFE').textContent = formatNumberNoSign(cvMFE, 2);
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 統計（修正偏度與峰度，使用無偏樣本公式）
-        let tradesForNewMAE = closedTrades.filter(trade => trade.entryPrice !== '' && trade.entryDayAdversePrice !== '');
+        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
+        let tradesForNewMAE = closedTrades.filter(trade => 
+          trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
+        );
         let avgMAE = 0, totalMAE = 0;
         let maeValues = [];
         let skewMAE = 0, kurtosisMAE = 0;
@@ -1489,7 +1605,12 @@
           tradesForNewMAE.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
             let adverse = parseFloat(trade.entryDayAdversePrice);
-            let mae = (trade.direction === "多") ? ((entry - adverse) / entry) * 100 : ((adverse - entry) / entry) * 100;
+            let mae = 0;
+            if (trade.direction === "多") {
+              mae = ((entry - adverse) / entry) * 100;
+            } else {
+              mae = ((adverse - entry) / entry) * 100;
+            }
             totalMAE += mae;
             maeValues.push(mae);
           });
@@ -1501,26 +1622,35 @@
           var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
           let sumCubeMAE = 0;
           maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
-          skewMAE = (nMAE > 2 && stdMAE !== 0) ? (nMAE * sumCubeMAE / ((nMAE - 1) * (nMAE - 2))) / Math.pow(stdMAE, 3) : 0;
+          skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 3) : 0;
           let sumFourthMAE = 0;
           maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
-          kurtosisMAE = (nMAE > 3 && stdMAE !== 0) ? (nMAE * (nMAE+1) / ((nMAE-1)*(nMAE-2)*(nMAE-3))) * (sumFourthMAE / Math.pow(stdMAE,4)) - (3 * Math.pow(nMAE-1,2) / ((nMAE-2)*(nMAE-3))) : 0;
-        } else { avgMAE = 0; stdMAE = 0; cvMAE = 0; skewMAE = 0; kurtosisMAE = 0; }
+          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 4) : 0;
+        } else {
+          avgMAE = 0; var stdMAE = 0; var cvMAE = 0; skewMAE = 0; kurtosisMAE = 0;
+        }
         document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
         document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
         document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // EDR 統計（修正偏度與峰度，使用無偏樣本公式）
-        let tradesForEDR = closedTrades.filter(trade => trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
+        // EDR 統計計算（採用樣本標準差公式）
+        let tradesForEDR = closedTrades.filter(trade => 
+          trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
+        );
         let edrValues = [];
         let totalEDR = 0;
         tradesForEDR.forEach(trade => {
           let exit = parseFloat(trade.exitPrice);
           let high = parseFloat(trade.highestPrice);
           let low = parseFloat(trade.lowestPrice);
-          let edr = (trade.direction === "多") ? ((high - exit) / high) * 100 : ((exit - low) / low) * 100;
+          let edr = 0;
+          if (trade.direction === "多") {
+            edr = ((high - exit) / high) * 100;
+          } else {
+            edr = ((exit - low) / low) * 100;
+          }
           totalEDR += edr;
           edrValues.push(edr);
         });
@@ -1534,10 +1664,10 @@
           cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
           let sumCubeEDR = 0;
           edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
-          skewEDR = (nEDR > 2 && stdEDR !== 0) ? (nEDR * sumCubeEDR / ((nEDR - 1) * (nEDR - 2))) / Math.pow(stdEDR, 3) : 0;
+          skewEDR = stdEDR !== 0 ? (sumCubeEDR / edrValues.length) / Math.pow(stdEDR, 3) : 0;
           let sumFourthEDR = 0;
           edrValues.forEach(val => { sumFourthEDR += Math.pow(val - avgEDR, 4); });
-          kurtosisEDR = (nEDR > 3 && stdEDR !== 0) ? (nEDR * (nEDR+1) / ((nEDR-1)*(nEDR-2)*(nEDR-3))) * (sumFourthEDR / Math.pow(stdEDR,4)) - (3 * Math.pow(nEDR-1,2) / ((nEDR-2)*(nEDR-3))) : 0;
+          kurtosisEDR = stdEDR !== 0 ? (sumFourthEDR / edrValues.length) / Math.pow(stdEDR, 4) : 0;
         }
         document.getElementById('avgEDR').textContent = formatNumberNoSign(avgEDR, 2) + "%";
         document.getElementById('sdEDR').textContent = formatNumberNoSign(stdEDR, 2) + "%";
@@ -1551,8 +1681,11 @@
         closedTradesWithPosition.forEach(trade => {
           let ret = parseFloat(trade.returnRate);
           if (!isNaN(ret)) {
-            if (ret > 0) { winPercentValues.push(ret); }
-            else if (ret < 0) { lossPercentValues.push(Math.abs(ret)); }
+            if (ret > 0) {
+              winPercentValues.push(ret);
+            } else if (ret < 0) {
+              lossPercentValues.push(Math.abs(ret));
+            }
           }
         });
         let avgWinPercentValue = winPercentValues.length > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / winPercentValues.length : 0;
@@ -1564,20 +1697,20 @@
         let winPercentSkewness = 0, lossPercentSkewness = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
-          winPercentSkewness = (winPercentValues.length > 2) ? (winPercentValues.length * sumCubeWin / ((winPercentValues.length - 1) * (winPercentValues.length - 2))) / Math.pow(sdWinPercent, 3) : 0;
+          winPercentSkewness = (sumCubeWin / winPercentValues.length) / Math.pow(sdWinPercent, 3);
         }
         if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
           let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
-          lossPercentSkewness = (lossPercentValues.length > 2) ? (lossPercentValues.length * sumCubeLoss / ((lossPercentValues.length - 1) * (lossPercentValues.length - 2))) / Math.pow(sdLossPercent, 3) : 0;
+          lossPercentSkewness = (sumCubeLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 3);
         }
         let winPercentKurtosis = 0, lossPercentKurtosis = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
-          winPercentKurtosis = (winPercentValues.length > 3) ? (winPercentValues.length * (winPercentValues.length+1) / ((winPercentValues.length - 1) * (winPercentValues.length - 2) * (winPercentValues.length - 3))) * (sumFourthWin / Math.pow(sdWinPercent, 4)) - (3 * Math.pow(winPercentValues.length - 1,2) / ((winPercentValues.length - 2) * (winPercentValues.length - 3))) : 0;
+          winPercentKurtosis = (sumFourthWin / winPercentValues.length) / Math.pow(sdWinPercent, 4);
         }
         if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
           let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
-          lossPercentKurtosis = (lossPercentValues.length > 3) ? (lossPercentValues.length * (lossPercentValues.length+1) / ((lossPercentValues.length - 1) * (lossPercentValues.length - 2) * (lossPercentValues.length - 3))) * (sumFourthLoss / Math.pow(sdLossPercent, 4)) - (3 * Math.pow(lossPercentValues.length - 1,2) / ((lossPercentValues.length - 2) * (lossPercentValues.length - 3))) : 0;
+          lossPercentKurtosis = (sumFourthLoss / lossPercentValues.length) / Math.pow(sdLossPercent, 4);
         }
         document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
         document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
@@ -1590,13 +1723,18 @@
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
         
+        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
         var profitAchievementRate = 0;
-        if(avgMFE !== 0) { profitAchievementRate = (avgWinPercentValue / avgMFE) * 100; }
+        if(avgMFE !== 0) {
+          profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
+        }
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
         
+        // 新增：計算最大交易回落 (MDD)
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
 
+        // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
@@ -1604,12 +1742,24 @@
       function updateStrategyUsage() {
         let usage = {};
         let filteredTrades = trades;
-        if (selectedExternalConditionFilter !== null) { filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter); }
-        if (selectedDirectionFilter !== null) { filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter); }
-        if (selectedStartDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter)); }
-        if (selectedEndDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter)); }
+        if (selectedExternalConditionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
+        }
+        if (selectedDirectionFilter !== null) {
+          filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter);
+        }
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
         strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => { if(t.strategyId !== null) { usage[t.strategyId]++; } });
+        filteredTrades.forEach(t => {
+          if(t.strategyId !== null) {
+            usage[t.strategyId]++;
+          }
+        });
         let tableBody = document.getElementById("strategyUsageList");
         if(tableBody) {
           tableBody.innerHTML = "";
@@ -1632,16 +1782,22 @@
       function updateMarketStatusUsage() {
         let usage = {};
         let filteredTrades = trades;
-        if (selectedStartDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter)); }
-        if (selectedEndDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter)); }
+        if (selectedStartDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
+        }
+        if (selectedEndDateFilter) {
+          filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter));
+        }
         let dayStatus = {};
         filteredTrades.forEach(t => {
           let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]) { dayStatus[day] = t.externalConditionId; }
+          if(!dayStatus[day]){
+            dayStatus[day] = t.externalConditionId;
+          }
         });
         for(let day in dayStatus) {
           let statusId = dayStatus[day];
-          if(statusId != null) {
+          if(statusId != null){
             if(!usage[statusId]) usage[statusId] = 0;
             usage[statusId]++;
           }
@@ -1696,21 +1852,37 @@
         saveCollapseState();
       }
 
-      function openModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
+      function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+      }
+
       function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         modal.classList.add('hidden');
         const inputs = modal.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => { if (input.type !== 'hidden') { input.value = ''; } });
+        inputs.forEach(input => {
+          if (input.type !== 'hidden') {
+            input.value = '';
+          }
+        });
       }
 
       function escapeHtml(text) {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        const map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
 
       function exportToExcel() {
-        if (trades.length === 0) { alert('目前沒有交易紀錄可供匯出。'); return; }
+        if (trades.length === 0) {
+          alert('目前沒有交易紀錄可供匯出。');
+          return;
+        }
         const exportData = trades.map(trade => ({
           "交易ID": trade.id,
           "報酬率 (%)": trade.returnRate,
@@ -1757,28 +1929,48 @@
       
       function importFromExcel(event) {
         const file = event.target.files[0];
-        if (!file) { return; }
+        if (!file) {
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           const data = e.target.result;
           let workbook;
-          try { workbook = XLSX.read(data, { type: 'binary' }); }
-          catch (error) { alert('無法解析該文件。請確認文件為有效的Excel格式。'); return; }
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "MFE日期", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) { alert('Excel文件中沒有任何數據。'); return; }
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) { alert(`缺少以下必要欄位：${missingFields.join(', ')}`); return; }
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
           const importedTrades = jsonData.map(item => {
             const strategy = strategies.find(s => s.name === item["策略名稱"]);
             const externalCondition = externalConditions.find(c => c.name === item["大盤多空"]);
-            if (!strategy) { alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`); return null; }
-            if (!externalCondition) { alert(`大盤多空名稱 "${item["大盤多空"]}" 不存在。請先新增該大盤多空後再匯入。`); return null; }
+            if (!strategy) {
+              alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
+              return null;
+            }
+            if (!externalCondition) {
+              alert(`大盤多空名稱 "${item["大盤多空"]}" 不存在。請先新增該大盤多空後再匯入。`);
+              return null;
+            }
             const newTradeId = nextTradeId++;
             let holdingDays = item["持倉天數"];
-            if (holdingDays === '' || holdingDays === '未平倉') { holdingDays = '未平倉'; }
+            if (holdingDays === '' || holdingDays === '未平倉') {
+              holdingDays = '未平倉';
+            }
             return {
               id: newTradeId,
               returnRate: item["報酬率 (%)"],
@@ -1799,7 +1991,10 @@
               imageUrl: item["圖片URL"]
             };
           }).filter(trade => trade !== null);
-          if (importedTrades.length === 0) { alert('沒有有效的交易紀錄被匯入。'); return; }
+          if (importedTrades.length === 0) {
+            alert('沒有有效的交易紀錄被匯入。');
+            return;
+          }
           trades = trades.concat(importedTrades);
           renderTrades();
           calculateStats();
@@ -1807,12 +2002,17 @@
           alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
           document.getElementById('importExcelInput').value = '';
         };
-        reader.onerror = function() { alert('讀取文件時發生錯誤。'); };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
         reader.readAsBinaryString(file);
       }
       
       function exportStrategiesToExcel() {
-        if (strategies.length === 0) { alert('目前沒有策略資料可供匯出。'); return; }
+        if (strategies.length === 0) {
+          alert('目前沒有策略資料可供匯出。');
+          return;
+        }
         const exportData = strategies.map(strategy => ({
           "策略ID": strategy.id,
           "策略名稱": strategy.name,
@@ -1834,29 +2034,51 @@
       
       function importStrategiesFromExcel(event) {
         const file = event.target.files[0];
-        if (!file) { return; }
+        if (!file) {
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           const data = e.target.result;
           let workbook;
-          try { workbook = XLSX.read(data, { type: 'binary' }); }
-          catch (error) { alert('無法解析該文件。請確認文件為有效的Excel格式。'); return; }
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) { alert('Excel文件中沒有任何數據。'); return; }
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
           const requiredFields = ["策略ID", "策略名稱", "描述"];
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) { alert(`缺少以下必要欄位：${missingFields.join(', ')}`); return; }
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
           const importedStrategies = jsonData.map(item => {
             const name = item["策略名稱"].trim();
             const description = item["描述"].trim();
             const existingStrategy = strategies.find(s => s.name === name);
-            if (existingStrategy) { alert(`策略名稱 "${name}" 已存在。請避免重複新增。`); return null; }
+            if (existingStrategy) {
+              alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
             const newStrategyId = nextTradeId++;
-            return { id: newStrategyId, name: name, description: description };
+            return {
+              id: newStrategyId,
+              name: name,
+              description: description
+            };
           }).filter(strategy => strategy !== null);
-          if (importedStrategies.length === 0) { alert('沒有有效的策略紀錄被匯入。'); return; }
+          if (importedStrategies.length === 0) {
+            alert('沒有有效的策略紀錄被匯入。');
+            return;
+          }
           strategies = strategies.concat(importedStrategies);
           renderStrategies();
           renderTrades();
@@ -1866,12 +2088,17 @@
           alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
           document.getElementById('importStrategiesInput').value = '';
         };
-        reader.onerror = function() { alert('讀取文件時發生錯誤。'); };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
         reader.readAsBinaryString(file);
       }
       
       function exportExternalConditionsToExcel() {
-        if (externalConditions.length === 0) { alert('目前沒有大盤多空資料可供匯出。'); return; }
+        if (externalConditions.length === 0) {
+          alert('目前沒有大盤多空資料可供匯出。');
+          return;
+        }
         const exportData = externalConditions.map(condition => ({
           "大盤多空ID": condition.id,
           "大盤多空名稱": condition.name,
@@ -1893,29 +2120,51 @@
       
       function importExternalConditionsFromExcel(event) {
         const file = event.target.files[0];
-        if (!file) { return; }
+        if (!file) {
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           const data = e.target.result;
           let workbook;
-          try { workbook = XLSX.read(data, { type: 'binary' }); }
-          catch (error) { alert('無法解析該文件。請確認文件為有效的Excel格式。'); return; }
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) { alert('Excel文件中沒有任何數據。'); return; }
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
           const requiredFields = ["大盤多空ID", "大盤多空名稱", "描述"];
           const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) { alert(`缺少以下必要欄位：${missingFields.join(', ')}`); return; }
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
           const importedExternalConditions = jsonData.map(item => {
             const name = item["大盤多空名稱"].trim();
             const description = item["描述"].trim();
             const existingCondition = externalConditions.find(c => c.name === name);
-            if (existingCondition) { alert(`大盤多空名稱 "${name}" 已存在。請避免重複新增。`); return null; }
+            if (existingCondition) {
+              alert(`大盤多空名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
             const newConditionId = nextTradeId++;
-            return { id: newConditionId, name: name, description: description };
+            return {
+              id: newConditionId,
+              name: name,
+              description: description
+            };
           }).filter(condition => condition !== null);
-          if (importedExternalConditions.length === 0) { alert('沒有有效的大盤多空紀錄被匯入。'); return; }
+          if (importedExternalConditions.length === 0) {
+            alert('沒有有效的大盤多空紀錄被匯入。');
+            return;
+          }
           externalConditions = externalConditions.concat(importedExternalConditions);
           renderExternalConditions();
           renderTrades();
@@ -1925,285 +2174,10 @@
           alert(`成功匯入 ${importedExternalConditions.length} 筆大盤多空紀錄。`);
           document.getElementById('importExternalConditionsInput').value = '';
         };
-        reader.onerror = function() { alert('讀取文件時發生錯誤。'); };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
         reader.readAsBinaryString(file);
-      }
-
-      // -----------------------------
-      // 以下為修正偏度與峰度計算的部分
-      // -----------------------------
-      
-      // calculateStats() 內的 MFE、MAE、EDR 部分已採用樣本標準差 (n-1)
-      // 修正偏度、峰度計算：使用無偏樣本公式
-      // Sample skewness: g1 = [n / ((n-1)*(n-2))] * Σ((x_i - x̄) / s)^3
-      // Sample kurtosis: g2 = [n*(n+1)/((n-1)*(n-2)*(n-3))] * Σ((x_i - x̄) / s)^4 - [3*(n-1)^2/((n-2)*(n-3))]
-      
-      // -----------------------------
-      // 以上修改皆已在 calculateStats() 中相應區塊完成
-      // -----------------------------
-
-      function calculateStats() {
-        // ...（前段計算與更新略，同上）...
-
-        // 更新後的 MFE 統計
-        let tradesForMFE = closedTrades.filter(trade => trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
-        let avgMFE = 0, totalMFE = 0;
-        let mfeValues = [];
-        let skewMFE = 0, kurtosisMFE = 0;
-        if (tradesForMFE.length > 0) {
-          tradesForMFE.forEach(trade => {
-            let entry = parseFloat(trade.entryPrice);
-            let high = parseFloat(trade.highestPrice);
-            let low = parseFloat(trade.lowestPrice);
-            let mfe = (trade.direction === "多") ? (high - entry) / entry * 100 : (entry - low) / entry * 100;
-            totalMFE += mfe;
-            mfeValues.push(mfe);
-          });
-          avgMFE = totalMFE / tradesForMFE.length;
-          let sumSqMFE = 0;
-          mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
-          let nMFE = tradesForMFE.length;
-          var stdMFE = (nMFE > 1) ? Math.sqrt(sumSqMFE / (nMFE - 1)) : 0;
-          var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
-          let sumCubeMFE = 0;
-          mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
-          skewMFE = (nMFE > 2 && stdMFE !== 0) ? (nMFE * sumCubeMFE / ((nMFE - 1) * (nMFE - 2))) / Math.pow(stdMFE, 3) : 0;
-          let sumFourthMFE = 0;
-          mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
-          kurtosisMFE = (nMFE > 3 && stdMFE !== 0) ? (nMFE * (nMFE+1) / ((nMFE-1)*(nMFE-2)*(nMFE-3))) * (sumFourthMFE / Math.pow(stdMFE,4)) - (3 * Math.pow(nMFE-1,2) / ((nMFE-2)*(nMFE-3))) : 0;
-        } else { avgMFE = 0; stdMFE = 0; cvMFE = 0; skewMFE = 0; kurtosisMFE = 0; }
-        document.getElementById('avgMFE').textContent = formatNumberNoSign(avgMFE, 2) + "%";
-        document.getElementById('sdMFE').textContent = formatNumberNoSign(stdMFE, 2) + "%";
-        document.getElementById('cvMFE').textContent = formatNumberNoSign(cvMFE, 2);
-        document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
-        document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
-
-        // 更新後的 MAE 統計
-        let tradesForNewMAE = closedTrades.filter(trade => trade.entryPrice !== '' && trade.entryDayAdversePrice !== '');
-        let avgMAE = 0, totalMAE = 0;
-        let maeValues = [];
-        let skewMAE = 0, kurtosisMAE = 0;
-        if (tradesForNewMAE.length > 0) {
-          tradesForNewMAE.forEach(trade => {
-            let entry = parseFloat(trade.entryPrice);
-            let adverse = parseFloat(trade.entryDayAdversePrice);
-            let mae = (trade.direction === "多") ? ((entry - adverse) / entry) * 100 : ((adverse - entry) / entry) * 100;
-            totalMAE += mae;
-            maeValues.push(mae);
-          });
-          avgMAE = totalMAE / tradesForNewMAE.length;
-          let sumSqMAE = 0;
-          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
-          let nMAE = tradesForNewMAE.length;
-          var stdMAE = (nMAE > 1) ? Math.sqrt(sumSqMAE / (nMAE - 1)) : 0;
-          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
-          let sumCubeMAE = 0;
-          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
-          skewMAE = (nMAE > 2 && stdMAE !== 0) ? (nMAE * sumCubeMAE / ((nMAE - 1) * (nMAE - 2))) / Math.pow(stdMAE, 3) : 0;
-          let sumFourthMAE = 0;
-          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
-          kurtosisMAE = (nMAE > 3 && stdMAE !== 0) ? (nMAE * (nMAE+1) / ((nMAE-1)*(nMAE-2)*(nMAE-3))) * (sumFourthMAE / Math.pow(stdMAE,4)) - (3 * Math.pow(nMAE-1,2) / ((nMAE-2)*(nMAE-3))) : 0;
-        } else { avgMAE = 0; stdMAE = 0; cvMAE = 0; skewMAE = 0; kurtosisMAE = 0; }
-        document.getElementById('avgMAE').textContent = formatNumberNoSign(avgMAE, 2) + "%";
-        document.getElementById('sdMAE').textContent = formatNumberNoSign(stdMAE, 2) + "%";
-        document.getElementById('cvMAE').textContent = formatNumberNoSign(cvMAE, 2);
-        document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
-        document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
-
-        // 更新後的 EDR 統計
-        let tradesForEDR = closedTrades.filter(trade => trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '');
-        let edrValues = [];
-        let totalEDR = 0;
-        tradesForEDR.forEach(trade => {
-          let exit = parseFloat(trade.exitPrice);
-          let high = parseFloat(trade.highestPrice);
-          let low = parseFloat(trade.lowestPrice);
-          let edr = (trade.direction === "多") ? ((high - exit) / high) * 100 : ((exit - low) / low) * 100;
-          totalEDR += edr;
-          edrValues.push(edr);
-        });
-        let avgEDR = 0, stdEDR = 0, cvEDR = 0, skewEDR = 0, kurtosisEDR = 0;
-        if (edrValues.length > 0) {
-          avgEDR = totalEDR / edrValues.length;
-          let sumSqEDR = 0;
-          edrValues.forEach(val => { sumSqEDR += Math.pow(val - avgEDR, 2); });
-          let nEDR = edrValues.length;
-          stdEDR = (nEDR > 1) ? Math.sqrt(sumSqEDR / (nEDR - 1)) : 0;
-          cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
-          let sumCubeEDR = 0;
-          edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
-          skewEDR = (nEDR > 2 && stdEDR !== 0) ? (nEDR * sumCubeEDR / ((nEDR - 1) * (nEDR - 2))) / Math.pow(stdEDR, 3) : 0;
-          let sumFourthEDR = 0;
-          edrValues.forEach(val => { sumFourthEDR += Math.pow(val - avgEDR, 4); });
-          kurtosisEDR = (nEDR > 3 && stdEDR !== 0) ? (nEDR * (nEDR+1) / ((nEDR-1)*(nEDR-2)*(nEDR-3))) * (sumFourthEDR / Math.pow(stdEDR,4)) - (3 * Math.pow(nEDR-1,2) / ((nEDR-2)*(nEDR-3))) : 0;
-        }
-        document.getElementById('avgEDR').textContent = formatNumberNoSign(avgEDR, 2) + "%";
-        document.getElementById('sdEDR').textContent = formatNumberNoSign(stdEDR, 2) + "%";
-        document.getElementById('cvEDR').textContent = formatNumberNoSign(cvEDR, 2);
-        document.getElementById('skewEDR').textContent = formatNumberNoSign(skewEDR, 2);
-        document.getElementById('kurtosisEDR').textContent = formatNumberNoSign(kurtosisEDR, 2);
-
-        let winPercentValues = [];
-        let lossPercentValues = [];
-        closedTradesWithPosition.forEach(trade => {
-          let ret = parseFloat(trade.returnRate);
-          if (!isNaN(ret)) {
-            if (ret > 0) { winPercentValues.push(ret); }
-            else if (ret < 0) { lossPercentValues.push(Math.abs(ret)); }
-          }
-        });
-        let avgWinPercentValue = winPercentValues.length > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / winPercentValues.length : 0;
-        let sdWinPercent = winPercentValues.length > 0 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / winPercentValues.length) : 0;
-        let cvWinPercent = avgWinPercentValue !== 0 ? sdWinPercent / avgWinPercentValue : 0;
-        let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
-        let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
-        let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
-        let winPercentSkewness = 0, lossPercentSkewness = 0;
-        if (winPercentValues.length > 0 && sdWinPercent !== 0) {
-          let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
-          winPercentSkewness = (winPercentValues.length > 2) ? (winPercentValues.length * sumCubeWin / ((winPercentValues.length - 1) * (winPercentValues.length - 2))) / Math.pow(sdWinPercent, 3) : 0;
-        }
-        if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
-          let sumCubeLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 3), 0);
-          lossPercentSkewness = (lossPercentValues.length > 2) ? (lossPercentValues.length * sumCubeLoss / ((lossPercentValues.length - 1) * (lossPercentValues.length - 2))) / Math.pow(sdLossPercent, 3) : 0;
-        }
-        let winPercentKurtosis = 0, lossPercentKurtosis = 0;
-        if (winPercentValues.length > 0 && sdWinPercent !== 0) {
-          let sumFourthWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 4), 0);
-          winPercentKurtosis = (winPercentValues.length > 3) ? (winPercentValues.length * (winPercentValues.length+1) / ((winPercentValues.length - 1) * (winPercentValues.length - 2) * (winPercentValues.length - 3))) * (sumFourthWin / Math.pow(sdWinPercent, 4)) - (3 * Math.pow(winPercentValues.length - 1,2) / ((winPercentValues.length - 2) * (winPercentValues.length - 3))) : 0;
-        }
-        if (lossPercentValues.length > 0 && sdLossPercent !== 0) {
-          let sumFourthLoss = lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 4), 0);
-          lossPercentKurtosis = (lossPercentValues.length > 3) ? (lossPercentValues.length * (lossPercentValues.length+1) / ((lossPercentValues.length - 1) * (lossPercentValues.length - 2) * (lossPercentValues.length - 3))) * (sumFourthLoss / Math.pow(sdLossPercent, 4)) - (3 * Math.pow(lossPercentValues.length - 1,2) / ((lossPercentValues.length - 2) * (lossPercentValues.length - 3))) : 0;
-        }
-        document.getElementById('avgWinPercent').textContent = formatNumberNoSign(avgWinPercentValue, 2) + "%";
-        document.getElementById('sdWinPercent').textContent = formatNumberNoSign(sdWinPercent, 2) + "%";
-        document.getElementById('cvWinPercent').textContent = formatNumberNoSign(cvWinPercent, 2);
-        document.getElementById('skewWinPercent').textContent = formatNumberNoSign(winPercentSkewness, 2);
-        document.getElementById('kurtosisWinPercent').textContent = formatNumberNoSign(winPercentKurtosis, 2);
-        document.getElementById('avgLossPercentDisplay').textContent = formatNumberNoSign(avgLossPercentValue, 2) + "%";
-        document.getElementById('sdLossPercent').textContent = formatNumberNoSign(sdLossPercent, 2) + "%";
-        document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
-        document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
-        document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
-        
-        var profitAchievementRate = 0;
-        if(avgMFE !== 0) { profitAchievementRate = (avgWinPercentValue / avgMFE) * 100; }
-        document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
-        
-        let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
-        document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
-
-        updateStrategyUsage();
-        updateMarketStatusUsage();
-      }
-
-      function updateStrategyUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedExternalConditionFilter !== null) { filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter); }
-        if (selectedDirectionFilter !== null) { filteredTrades = filteredTrades.filter(trade => trade.direction === selectedDirectionFilter); }
-        if (selectedStartDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter)); }
-        if (selectedEndDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter)); }
-        strategies.forEach(s => { usage[s.id] = 0; });
-        filteredTrades.forEach(t => { if(t.strategyId !== null) { usage[t.strategyId]++; } });
-        let tableBody = document.getElementById("strategyUsageList");
-        if(tableBody) {
-          tableBody.innerHTML = "";
-          strategies.forEach(s => {
-            let count = usage[s.id] || 0;
-            let strategyTrades = filteredTrades.filter(t => t.strategyId === s.id);
-            let closedStrategyTrades = strategyTrades.filter(t => t.closeDate && t.closeDate.trim() !== '' && t.returnRate !== '');
-            let wins = closedStrategyTrades.filter(t => parseFloat(t.returnRate) > 0).length;
-            let losses = closedStrategyTrades.filter(t => parseFloat(t.returnRate) < 0).length;
-            let winRate = closedStrategyTrades.length > 0 ? (wins / closedStrategyTrades.length * 100).toFixed(2) : "0.00";
-            let tr = document.createElement("tr");
-            tr.innerHTML = `<td class="border px-4 py-2">${escapeHtml(s.name)}</td>
-                            <td class="border px-4 py-2 text-center">${count}</td>
-                            <td class="border px-4 py-2 text-center">勝率 ${winRate}% (${wins}勝 ${losses}敗)</td>`;
-            tableBody.appendChild(tr);
-          });
-        }
-      }
-
-      function updateMarketStatusUsage() {
-        let usage = {};
-        let filteredTrades = trades;
-        if (selectedStartDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter)); }
-        if (selectedEndDateFilter) { filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) <= new Date(selectedEndDateFilter)); }
-        let dayStatus = {};
-        filteredTrades.forEach(t => {
-          let day = new Date(t.openDate).toISOString().split("T")[0];
-          if(!dayStatus[day]) { dayStatus[day] = t.externalConditionId; }
-        });
-        for(let day in dayStatus) {
-          let statusId = dayStatus[day];
-          if(statusId != null) {
-            if(!usage[statusId]) usage[statusId] = 0;
-            usage[statusId]++;
-          }
-        }
-        let list = document.getElementById("marketStatusUsageList");
-        if(list) {
-          list.innerHTML = "";
-          externalConditions.forEach(s => {
-            let count = usage[s.id] || 0;
-            let li = document.createElement("li");
-            li.textContent = `${s.name}：${count} 天`;
-            list.appendChild(li);
-          });
-        }
-      }
-
-      loadStrategies();
-      loadExternalConditions();
-      loadData();
-
-      function toggleStrategyManagement() {
-        const content = document.getElementById('strategyManagementContent');
-        const toggleIcon = document.getElementById('strategyToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function toggleExternalConditionManagement() {
-        const content = document.getElementById('externalConditionManagementContent');
-        const toggleIcon = document.getElementById('externalConditionToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      function openModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
-      function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        const inputs = modal.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => { if (input.type !== 'hidden') { input.value = ''; } });
-      }
-
-      function escapeHtml(text) {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
     </script>
   </div>
