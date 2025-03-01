@@ -1730,6 +1730,10 @@
         // 新增：計算最大交易回落 (MDD)
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
+
+        // 呼叫更新各種策略使用次數與大盤多空天數的函式
+        updateStrategyUsage();
+        updateMarketStatusUsage();
       }
 
       function updateStrategyUsage() {
