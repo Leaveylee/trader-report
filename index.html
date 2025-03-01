@@ -234,18 +234,24 @@
             <span id="totalReturn" class="font-bold text-lg">0</span>
           </div>
         </div>
-        <!-- 新增 ROI 項目 -->
+        <!-- 新增 ROI 與 MDD -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">總資金回報率 (ROI)：</span>
             <span id="analysisROI" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- 最大交易回落 (MDD) -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">最大交易回落 (MDD)：</span>
             <span id="maxDrawdown" class="font-bold text-lg">0%</span>
+          </div>
+        </div>
+        <!-- 新增 平均達到MFE天數 -->
+        <div class="flex justify-between font-bold text-lg mt-2">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">平均達到MFE天數：</span>
+            <span id="avgMFEDays" class="font-bold text-lg">0</span> 天
           </div>
         </div>
       </div>
@@ -336,7 +342,7 @@
             <span id="kurtosisMAE" class="font-bold">0</span>
           </div>
           <p class="text-xs text-gray-500 mt-2">
-            附註：開倉當天在建倉後出現的最大不利幅度。目標是找出當天最適停損範圍，盡快排除會賠錢的交易。
+            附註：開倉當天在建倉後出現的最大不利幅度。目標是找出當天最適的停損範圍，盡快排除會賠錢的交易。
           </p>
         </div>
         <div class="border p-4 rounded">
@@ -362,7 +368,7 @@
             <span id="kurtosisEDR" class="font-bold">0</span>
           </div>
           <p class="text-xs text-gray-500 mt-2">
-            附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是找出在回撤多少%後容易觸發出場條件，以規劃分批減碼策略。
+            附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
           </p>
         </div>
       </div>
@@ -457,7 +463,7 @@
       </div>
     </div>
 
-    <!-- 未平倉統計區塊（名稱已調整） -->
+    <!-- 未平倉統計區塊 -->
     <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -472,7 +478,7 @@
       </div>
     </div>
 
-    <!-- 資金績效統計區塊（刪除「占用資金」項目） -->
+    <!-- 資金績效統計區塊 -->
     <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -518,7 +524,7 @@
       </div>
     </div>
 
-    <!-- 大盤多空管理區塊 (原外部條件管理) -->
+    <!-- 大盤多空管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">大盤多空管理</h2>
@@ -580,7 +586,7 @@
       </div>
     </div>
 
-    <!-- 新增大盤多空模態框 (原新增外部條件模態框) -->
+    <!-- 新增大盤多空模態框 -->
     <div id="addExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">新增大盤多空</h3>
@@ -595,7 +601,7 @@
       </div>
     </div>
 
-    <!-- 編輯大盤多空模態框 (原編輯外部條件模態框) -->
+    <!-- 編輯大盤多空模態框 -->
     <div id="editExternalConditionModal" class="modal hidden">
       <div class="bg-white p-6 rounded-lg w-96">
         <h3 class="text-lg font-medium mb-4">編輯大盤多空</h3>
@@ -611,7 +617,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「出場價格」、「進場當天不利價格」、「最高價格」與「最低價格」欄位) -->
+    <!-- 交易記錄區塊 (新增「交易方向」、「進場價格」、「出場價格」、「進場當天不利價格」、「MFE日期」、「最高價格」與「最低價格」欄位) -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -623,7 +629,7 @@
         </div>
       </div>
       <div class="text-sm text-gray-600 mb-2">
-        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、進場當天不利價格、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
+        請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、進場當天不利價格、MFE日期、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
       <div class="relative">
         <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
@@ -633,7 +639,7 @@
           <table class="min-w-full bg-white rounded">
             <thead>
               <tr>
-                <!-- 交易欄位：依據過濾後交易資料總筆數減去目前索引，讓最新交易編號較大 -->
+                <!-- 交易欄位 -->
                 <th class="px-4 py-2 min-w-[80px]">交易</th>
                 <th class="px-4 py-2 min-w-[100px]">開倉日</th>
                 <th class="px-4 py-2 min-w-[100px]">平倉日</th>
@@ -643,6 +649,7 @@
                 <th class="px-4 py-2 min-w-[100px]">進場價格</th>
                 <th class="px-4 py-2 min-w-[100px]">出場價格</th>
                 <th class="px-4 py-2 min-w-[100px]">進場當天不利價格</th>
+                <th class="px-4 py-2 min-w-[100px]">MFE日期</th>
                 <th class="px-4 py-2 min-w-[100px]">最高價格</th>
                 <th class="px-4 py-2 min-w-[100px]">最低價格</th>
                 <th class="px-4 py-2 min-w-[100px]">交易方向</th>
@@ -665,9 +672,9 @@
     <script>
       // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
-      // 大盤多空列表（原外部條件）
+      // 大盤多空列表
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
-      // 交易記錄列表，新增 "direction"、"entryPrice"、"exitPrice"、"entryDayAdversePrice"、"highestPrice" 與 "lowestPrice" 欄位
+      // 交易記錄列表，新增欄位：direction、entryPrice、exitPrice、entryDayAdversePrice、mfeDate、highestPrice、lowestPrice
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -675,8 +682,8 @@
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
       let selectedDirectionFilter = null;
-      let selectedCloseStatusFilter = null; // 新增：平倉狀態篩選
-      let selectedProfitLossFilter = null; // 新增：盈虧交易篩選
+      let selectedCloseStatusFilter = null;
+      let selectedProfitLossFilter = null;
       // 全局變數：下一個交易ID
       let nextTradeId = 1;
 
@@ -792,6 +799,7 @@
             if (typeof trade.entryPrice === 'undefined') trade.entryPrice = '';
             if (typeof trade.exitPrice === 'undefined') trade.exitPrice = '';
             if (typeof trade.entryDayAdversePrice === 'undefined') trade.entryDayAdversePrice = '';
+            if (typeof trade.mfeDate === 'undefined') trade.mfeDate = '';
             if (typeof trade.highestPrice === 'undefined') trade.highestPrice = '';
             if (typeof trade.lowestPrice === 'undefined') trade.lowestPrice = '';
             if (typeof trade.direction === 'undefined') trade.direction = "多";
@@ -806,6 +814,7 @@
             entryPrice: '',
             exitPrice: '',
             entryDayAdversePrice: '',
+            mfeDate: '',
             highestPrice: '',
             lowestPrice: '',
             assetName: '', 
@@ -920,7 +929,6 @@
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
         let filteredTrades = trades;
-        // 依篩選條件進行過濾
         if (selectedStrategyFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
@@ -952,14 +960,12 @@
             filteredTrades = filteredTrades.filter(trade => parseFloat(trade.returnRate) < 0);
           }
         }
-        // 依開倉日由新至舊排序（保持原排序）
         filteredTrades.sort((a, b) => {
           if (a.openDate === '' && b.openDate === '') return 0;
           if (a.openDate === '') return -1;
           if (b.openDate === '') return 1;
           return new Date(b.openDate) - new Date(a.openDate);
         });
-        // 使用反向編號：交易編號 = 總筆數 - index（這樣最新的交易編號最大）
         tradesList.innerHTML = filteredTrades.map((trade, index) => {
           const transactionNumber = filteredTrades.length - index;
           let holdingDays = '';
@@ -1002,6 +1008,9 @@
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
                 <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${trades.indexOf(trade)}" data-field="entryDayAdversePrice">
+              </td>
+              <td class="border px-4 py-2 min-w-[100px]">
+                <input type="date" value="${trade.mfeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'mfeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="mfeDate">
               </td>
               <td class="border px-4 py-2 min-w-[100px]">
                 <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
@@ -1123,6 +1132,8 @@
           trades[index].lowestPrice = value.trim();
         } else if (field === 'entryDayAdversePrice') {
           trades[index].entryDayAdversePrice = value.trim();
+        } else if (field === 'mfeDate') {
+          trades[index].mfeDate = value;
         }
         calculateStats();
         saveData();
@@ -1148,6 +1159,7 @@
           entryPrice: '',
           exitPrice: '',
           entryDayAdversePrice: '',
+          mfeDate: '',
           highestPrice: '',
           lowestPrice: '',
           assetName: '', 
@@ -1174,7 +1186,7 @@
       function removeTrade(index) {
         trades = trades.filter((_, i) => i !== index);
         if (trades.length === 0) {
-          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', mfeDate: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
         }
         renderTrades();
         calculateStats();
@@ -1265,7 +1277,6 @@
         calculateStats();
       }
 
-      // 大盤多空管理（原外部條件管理）
       function openAddExternalConditionModal() {
         openModal('addExternalConditionModal');
       }
@@ -1358,7 +1369,6 @@
         const profitLoss = document.getElementById('profitLossFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
-        // 若篩選策略被選取，則只顯示該策略的交易；否則其他統一使用篩選條件
         selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
@@ -1394,7 +1404,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 函式（不變）
+      // calculateMDD() 不變
       function calculateMDD(initialCapital, tradesWithPosition) {
         let groups = {};
         tradesWithPosition.forEach(trade => {
@@ -1425,10 +1435,9 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats()：更新所有統計數據
+      // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
-        
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
         if (selectedStrategyFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
@@ -1472,7 +1481,6 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 計算 MDD%
         let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
         
         if (closedTrades.length === 0) {
@@ -1490,13 +1498,11 @@
           document.getElementById('avgMFE').textContent = "0%";
           document.getElementById('sdMFE').textContent = "0%";
           document.getElementById('cvMFE').textContent = "0";
-          // MAE (使用進場當天不利價格新公式) 預設
           document.getElementById('avgMAE').textContent = "0%";
           document.getElementById('sdMAE').textContent = "0%";
           document.getElementById('cvMAE').textContent = "0";
           document.getElementById('skewMAE').textContent = "0";
           document.getElementById('kurtosisMAE').textContent = "0";
-          // EDR 統計預設
           document.getElementById('avgEDR').textContent = "0%";
           document.getElementById('sdEDR').textContent = "0%";
           document.getElementById('cvEDR').textContent = "0";
@@ -1515,6 +1521,7 @@
           document.getElementById('profitAchievementRate').textContent = "0%";
           document.getElementById('avgWinHoldingDays').textContent = "0";
           document.getElementById('avgLossHoldingDays').textContent = "0";
+          document.getElementById('avgMFEDays').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1535,13 +1542,11 @@
 
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
-          // 計算 ROI = 總報酬 / 初始資金 * 100%
           let roi = 0;
           if (!isNaN(initialCapital) && initialCapital > 0) {
             roi = ((currentCapital - initialCapital) / initialCapital) * 100;
           }
           document.getElementById('analysisROI').textContent = formatNumberNoSign(roi, 2) + "%";
-          // 根據 ROI 數值調整顏色：正數顯示紅色，負數顯示綠色
           const analysisROI = document.getElementById('analysisROI');
           if (roi > 0) {
             analysisROI.classList.add('text-red-500');
@@ -1591,7 +1596,7 @@
             maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
           }
           
-          // 計算持倉天數：僅針對有完整開倉與平倉日期的交易
+          // 計算持倉天數
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1609,9 +1614,22 @@
           let avgLossHoldingDays = lossHoldingDays.length > 0 ? lossHoldingDays.reduce((sum, d) => sum + d, 0) / lossHoldingDays.length : 0;
           document.getElementById('avgWinHoldingDays').textContent = formatNumberNoSign(avgWinHoldingDays, 2);
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
+
+          // 計算平均達到MFE天數
+          let mfeDays = [];
+          closedTrades.forEach(trade => {
+            if (trade.openDate && trade.mfeDate) {
+              let open = new Date(trade.openDate);
+              let mfe = new Date(trade.mfeDate);
+              let diffDays = (mfe - open) / (1000 * 60 * 60 * 24);
+              if (diffDays >= 0) mfeDays.push(diffDays);
+            }
+          });
+          let avgMFEDays = mfeDays.length > 0 ? mfeDays.reduce((sum, d) => sum + d, 0) / mfeDays.length : 0;
+          document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         }
 
-        // MFE 相關數據計算（保持原有計算方式）
+        // MFE 統計（保持原有邏輯）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1652,7 +1670,7 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 相關數據計算（使用進場當天不利價格新公式）
+        // MAE 統計（使用進場當天不利價格新公式）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
@@ -1931,6 +1949,7 @@
           "進場價格": trade.entryPrice,
           "出場價格": trade.exitPrice,
           "進場當天不利價格": trade.entryDayAdversePrice,
+          "MFE日期": trade.mfeDate,
           "最高價格": trade.highestPrice,
           "最低價格": trade.lowestPrice,
           "交易方向": trade.direction,
@@ -1984,7 +2003,7 @@
           }
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "MFE日期", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (jsonData.length === 0) {
             alert('Excel文件中沒有任何數據。');
@@ -2018,6 +2037,7 @@
               entryPrice: item["進場價格"],
               exitPrice: item["出場價格"] || '',
               entryDayAdversePrice: item["進場當天不利價格"] || '',
+              mfeDate: item["MFE日期"] || '',
               highestPrice: item["最高價格"],
               lowestPrice: item["最低價格"],
               direction: item["交易方向"] || "多",
