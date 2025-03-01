@@ -239,7 +239,7 @@
             <span id="profitAchievementRate" class="font-bold text-lg">0%</span>
           </div>
         </div>
-        <!-- 新增 MDD 顯示 -->
+        <!-- 新增最大交易回落 (MDD) -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">最大交易回落 (MDD)：</span>
@@ -1421,7 +1421,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateStats() 更新統計數據（包含正確的 MDD 與獲利達成率計算）
+      // calculateStats() 更新統計數據（移除最大交易回落 MDD 的相關計算與顯示，同時保留其他統計）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1467,12 +1467,6 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // 使用新的 calculateMDD 計算累積權益曲線上的最大回撤
-        let mddPercent = 0;
-        if (closedTradesWithPosition.length > 0) {
-          mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
-        }
-        
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1484,7 +1478,6 @@
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('analysisROI').textContent = "0%";
-          document.getElementById('maxDrawdown').textContent = "0%";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1733,6 +1726,10 @@
           profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
         }
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
+        
+        // 新增：計算最大交易回落 (MDD)
+        let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
+        document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
       }
 
       function updateStrategyUsage() {
