@@ -466,15 +466,17 @@
     <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
       <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
       <div class="grid grid-cols-2 gap-4">
-        <div class="flex justify-between">
+        <!-- 持倉數量獨占一行 -->
+        <div class="flex justify-between col-span-2">
           <span class="text-gray-600">持倉數量：</span>
           <span id="unclosedTradeCount" class="font-medium">0</span>
         </div>
+        <!-- 持倉部位與自由資金並排 -->
         <div class="flex justify-between">
           <span class="text-gray-600">持倉部位：</span>
           <span id="unclosedPositionTotal" class="font-medium">$0</span>
         </div>
-        <div class="flex justify-between col-span-2">
+        <div class="flex justify-between">
           <span class="text-gray-600">自由資金：</span>
           <span id="unclosedFreeCapital" class="font-medium">$0</span>
         </div>
