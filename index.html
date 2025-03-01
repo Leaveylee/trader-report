@@ -701,7 +701,7 @@
       let selectedDirectionFilter = null;
       let selectedCloseStatusFilter = null;
       let selectedProfitLossFilter = null;
-      // 全局變數：下一個交易ID
+      // 全域變數：下一個交易ID
       let nextTradeId = 1;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -1421,7 +1421,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateStats() 更新統計數據（移除最大交易回落 MDD 的相關計算與顯示，同時保留其他統計）
+      // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1552,7 +1552,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 統計（保持原有邏輯）
+        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1576,7 +1576,8 @@
           avgMFE = totalMFE / tradesForMFE.length;
           let sumSqMFE = 0;
           mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
-          var stdMFE = Math.sqrt(sumSqMFE / tradesForMFE.length);
+          let nMFE = tradesForMFE.length;
+          var stdMFE = (nMFE > 1) ? Math.sqrt(sumSqMFE / (nMFE - 1)) : 0;
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
           let sumCubeMFE = 0;
           mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
@@ -1593,7 +1594,7 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 統計（使用進場當天不利價格新公式）
+        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
@@ -1616,7 +1617,8 @@
           avgMAE = totalMAE / tradesForNewMAE.length;
           let sumSqMAE = 0;
           maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
-          var stdMAE = Math.sqrt(sumSqMAE / tradesForNewMAE.length);
+          let nMAE = tradesForNewMAE.length;
+          var stdMAE = (nMAE > 1) ? Math.sqrt(sumSqMAE / (nMAE - 1)) : 0;
           var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
           let sumCubeMAE = 0;
           maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
@@ -1633,7 +1635,7 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // EDR 統計計算
+        // EDR 統計計算（採用樣本標準差公式）
         let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1657,7 +1659,8 @@
           avgEDR = totalEDR / edrValues.length;
           let sumSqEDR = 0;
           edrValues.forEach(val => { sumSqEDR += Math.pow(val - avgEDR, 2); });
-          stdEDR = Math.sqrt(sumSqEDR / edrValues.length);
+          let nEDR = edrValues.length;
+          stdEDR = (nEDR > 1) ? Math.sqrt(sumSqEDR / (nEDR - 1)) : 0;
           cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
           let sumCubeEDR = 0;
           edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
@@ -1731,7 +1734,7 @@
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
 
-        // 呼叫更新各種策略使用次數與大盤多空天數的函式
+        // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
