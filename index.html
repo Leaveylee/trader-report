@@ -313,7 +313,7 @@
           <span id="avgMFEDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
+          附註：開倉後到完全出場前曾出現的最大有利漲幅，計算從開倉日到 MFE 日期的天數。
         </p>
       </div>
       <div class="border p-4 rounded">
@@ -339,7 +339,7 @@
           <span id="kurtosisMAE" class="font-bold">0</span>
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉當天在建倉後出現的最大不利幅度。目標是找出當天最適的停損範圍，盡快排除會賠錢的交易。
+          附註：開倉當天建倉後出現的最大不利幅度，計算方式根據進場當天不利價格。
         </p>
       </div>
       <div class="border p-4 rounded">
@@ -369,7 +369,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
+          附註：從 MFE 日期到平倉日的天數平均值。
         </p>
       </div>
     </div>
@@ -1733,6 +1733,30 @@
         // 新增：計算最大交易回落 (MDD)
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
+
+        // 新增：計算平均達到MFE天數與平均MFE到出場天數
+        let mfedaysArray = [];
+        let mfeToExitDaysArray = [];
+        closedTrades.forEach(trade => {
+          if (trade.openDate && trade.mfeDate) {
+            let open = new Date(trade.openDate);
+            let mfe = new Date(trade.mfeDate);
+            if (mfe >= open) {
+              mfedaysArray.push((mfe - open) / (1000 * 60 * 60 * 24));
+            }
+          }
+          if (trade.mfeDate && trade.closeDate) {
+            let mfe = new Date(trade.mfeDate);
+            let close = new Date(trade.closeDate);
+            if (close >= mfe) {
+              mfeToExitDaysArray.push((close - mfe) / (1000 * 60 * 60 * 24));
+            }
+          }
+        });
+        let avgMFEDays = mfedaysArray.length > 0 ? mfedaysArray.reduce((a, b) => a + b, 0) / mfedaysArray.length : 0;
+        let avgMFEToExitDays = mfeToExitDaysArray.length > 0 ? mfeToExitDaysArray.reduce((a, b) => a + b, 0) / mfeToExitDaysArray.length : 0;
+        document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
+        document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
 
         // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
