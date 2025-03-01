@@ -1552,45 +1552,39 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 統計（使用樣本標準差及校正公式）
+        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
         let avgMFE = 0, totalMFE = 0;
         let mfeValues = [];
-        let sumCubeMFE = 0, sumFourthMFE = 0;
         let skewMFE = 0, kurtosisMFE = 0;
         if (tradesForMFE.length > 0) {
           tradesForMFE.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
             let high = parseFloat(trade.highestPrice);
             let low = parseFloat(trade.lowestPrice);
-            let mfe = (trade.direction === "多") ? (high - entry) / entry * 100 : (entry - low) / entry * 100;
+            let mfe = 0;
+            if (trade.direction === "多") {
+              mfe = (high - entry) / entry * 100;
+            } else {
+              mfe = (entry - low) / entry * 100;
+            }
             totalMFE += mfe;
             mfeValues.push(mfe);
           });
-          let n = tradesForMFE.length;
-          avgMFE = totalMFE / n;
+          avgMFE = totalMFE / tradesForMFE.length;
           let sumSqMFE = 0;
-          mfeValues.forEach(val => { 
-            sumSqMFE += Math.pow(val - avgMFE, 2); 
-            sumCubeMFE += Math.pow(val - avgMFE, 3);
-            sumFourthMFE += Math.pow(val - avgMFE, 4);
-          });
-          // 樣本標準差：分母 n-1
-          var stdMFE = (n > 1) ? Math.sqrt(sumSqMFE / (n - 1)) : 0;
-          var cvMFE = (avgMFE !== 0) ? stdMFE / avgMFE : 0;
-          // 偏度與峰度使用不偏估計
-          if(n > 2 && stdMFE !== 0) {
-            skewMFE = (n / ((n - 1) * (n - 2))) * (sumCubeMFE / Math.pow(stdMFE, 3));
-          } else {
-            skewMFE = 0;
-          }
-          if(n > 3 && stdMFE !== 0) {
-            kurtosisMFE = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3)) * (sumFourthMFE / Math.pow(stdMFE, 4)) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
-          } else {
-            kurtosisMFE = 0;
-          }
+          mfeValues.forEach(val => { sumSqMFE += Math.pow(val - avgMFE, 2); });
+          let nMFE = tradesForMFE.length;
+          var stdMFE = (nMFE > 1) ? Math.sqrt(sumSqMFE / (nMFE - 1)) : 0;
+          var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
+          let sumCubeMFE = 0;
+          mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
+          skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesForMFE.length) / Math.pow(stdMFE, 3) : 0;
+          let sumFourthMFE = 0;
+          mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
+          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesForMFE.length) / Math.pow(stdMFE, 4) : 0;
         } else {
           avgMFE = 0; var stdMFE = 0; var cvMFE = 0; skewMFE = 0; kurtosisMFE = 0;
         }
@@ -1600,42 +1594,38 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 統計（使用樣本標準差及校正公式）
+        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
         let avgMAE = 0, totalMAE = 0;
         let maeValues = [];
-        let sumCubeMAE = 0, sumFourthMAE = 0;
         let skewMAE = 0, kurtosisMAE = 0;
         if (tradesForNewMAE.length > 0) {
           tradesForNewMAE.forEach(trade => {
             let entry = parseFloat(trade.entryPrice);
             let adverse = parseFloat(trade.entryDayAdversePrice);
-            let mae = (trade.direction === "多") ? ((entry - adverse) / entry) * 100 : ((adverse - entry) / entry) * 100;
+            let mae = 0;
+            if (trade.direction === "多") {
+              mae = ((entry - adverse) / entry) * 100;
+            } else {
+              mae = ((adverse - entry) / entry) * 100;
+            }
             totalMAE += mae;
             maeValues.push(mae);
           });
-          let n = tradesForNewMAE.length;
-          avgMAE = totalMAE / n;
+          avgMAE = totalMAE / tradesForNewMAE.length;
           let sumSqMAE = 0;
-          maeValues.forEach(val => { 
-            sumSqMAE += Math.pow(val - avgMAE, 2); 
-            sumCubeMAE += Math.pow(val - avgMAE, 3);
-            sumFourthMAE += Math.pow(val - avgMAE, 4);
-          });
-          var stdMAE = (n > 1) ? Math.sqrt(sumSqMAE / (n - 1)) : 0;
-          var cvMAE = (avgMAE !== 0) ? stdMAE / avgMAE : 0;
-          if(n > 2 && stdMAE !== 0) {
-            skewMAE = (n / ((n - 1) * (n - 2))) * (sumCubeMAE / Math.pow(stdMAE, 3));
-          } else {
-            skewMAE = 0;
-          }
-          if(n > 3 && stdMAE !== 0) {
-            kurtosisMAE = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3)) * (sumFourthMAE / Math.pow(stdMAE, 4)) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
-          } else {
-            kurtosisMAE = 0;
-          }
+          maeValues.forEach(val => { sumSqMAE += Math.pow(val - avgMAE, 2); });
+          let nMAE = tradesForNewMAE.length;
+          var stdMAE = (nMAE > 1) ? Math.sqrt(sumSqMAE / (nMAE - 1)) : 0;
+          var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
+          let sumCubeMAE = 0;
+          maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
+          skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 3) : 0;
+          let sumFourthMAE = 0;
+          maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
+          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 4) : 0;
         } else {
           avgMAE = 0; var stdMAE = 0; var cvMAE = 0; skewMAE = 0; kurtosisMAE = 0;
         }
@@ -1645,45 +1635,39 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // EDR 統計（使用樣本標準差及校正公式）
+        // EDR 統計計算（採用樣本標準差公式）
         let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
         let edrValues = [];
         let totalEDR = 0;
-        let sumCubeEDR = 0, sumFourthEDR = 0;
-        let skewEDR = 0, kurtosisEDR = 0;
-        if (edrValues.length === 0) {} // 初始化
         tradesForEDR.forEach(trade => {
           let exit = parseFloat(trade.exitPrice);
           let high = parseFloat(trade.highestPrice);
           let low = parseFloat(trade.lowestPrice);
-          let edr = (trade.direction === "多") ? ((high - exit) / high) * 100 : ((exit - low) / low) * 100;
+          let edr = 0;
+          if (trade.direction === "多") {
+            edr = ((high - exit) / high) * 100;
+          } else {
+            edr = ((exit - low) / low) * 100;
+          }
           totalEDR += edr;
           edrValues.push(edr);
         });
-        let avgEDR = 0, stdEDR = 0, cvEDR = 0;
+        let avgEDR = 0, stdEDR = 0, cvEDR = 0, skewEDR = 0, kurtosisEDR = 0;
         if (edrValues.length > 0) {
-          let n = edrValues.length;
-          avgEDR = totalEDR / n;
+          avgEDR = totalEDR / edrValues.length;
           let sumSqEDR = 0;
-          edrValues.forEach(val => { 
-            sumSqEDR += Math.pow(val - avgEDR, 2);
-            sumCubeEDR += Math.pow(val - avgEDR, 3);
-            sumFourthEDR += Math.pow(val - avgEDR, 4);
-          });
-          stdEDR = (n > 1) ? Math.sqrt(sumSqEDR / (n - 1)) : 0;
-          cvEDR = (avgEDR !== 0) ? stdEDR / avgEDR : 0;
-          if(n > 2 && stdEDR !== 0) {
-            skewEDR = (n / ((n - 1) * (n - 2))) * (sumCubeEDR / Math.pow(stdEDR, 3));
-          } else {
-            skewEDR = 0;
-          }
-          if(n > 3 && stdEDR !== 0) {
-            kurtosisEDR = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3)) * (sumFourthEDR / Math.pow(stdEDR, 4)) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
-          } else {
-            kurtosisEDR = 0;
-          }
+          edrValues.forEach(val => { sumSqEDR += Math.pow(val - avgEDR, 2); });
+          let nEDR = edrValues.length;
+          stdEDR = (nEDR > 1) ? Math.sqrt(sumSqEDR / (nEDR - 1)) : 0;
+          cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
+          let sumCubeEDR = 0;
+          edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
+          skewEDR = stdEDR !== 0 ? (sumCubeEDR / edrValues.length) / Math.pow(stdEDR, 3) : 0;
+          let sumFourthEDR = 0;
+          edrValues.forEach(val => { sumFourthEDR += Math.pow(val - avgEDR, 4); });
+          kurtosisEDR = stdEDR !== 0 ? (sumFourthEDR / edrValues.length) / Math.pow(stdEDR, 4) : 0;
         }
         document.getElementById('avgEDR').textContent = formatNumberNoSign(avgEDR, 2) + "%";
         document.getElementById('sdEDR').textContent = formatNumberNoSign(stdEDR, 2) + "%";
@@ -1706,10 +1690,10 @@
         });
         let avgWinPercentValue = winPercentValues.length > 0 ? winPercentValues.reduce((sum, v) => sum + v, 0) / winPercentValues.length : 0;
         let sdWinPercent = winPercentValues.length > 0 ? Math.sqrt(winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 2), 0) / winPercentValues.length) : 0;
-        let cvWinPercent = (avgWinPercentValue !== 0) ? sdWinPercent / avgWinPercentValue : 0;
+        let cvWinPercent = avgWinPercentValue !== 0 ? sdWinPercent / avgWinPercentValue : 0;
         let avgLossPercentValue = lossPercentValues.length > 0 ? lossPercentValues.reduce((sum, v) => sum + v, 0) / lossPercentValues.length : 0;
         let sdLossPercent = lossPercentValues.length > 0 ? Math.sqrt(lossPercentValues.reduce((sum, v) => sum + Math.pow(v - avgLossPercentValue, 2), 0) / lossPercentValues.length) : 0;
-        let cvLossPercent = (avgLossPercentValue !== 0) ? sdLossPercent / avgLossPercentValue : 0;
+        let cvLossPercent = avgLossPercentValue !== 0 ? sdLossPercent / avgLossPercentValue : 0;
         let winPercentSkewness = 0, lossPercentSkewness = 0;
         if (winPercentValues.length > 0 && sdWinPercent !== 0) {
           let sumCubeWin = winPercentValues.reduce((sum, v) => sum + Math.pow(v - avgWinPercentValue, 3), 0);
