@@ -220,7 +220,7 @@
             <span id="profitAchievementRate" class="font-medium">0%</span>
           </div>
         </div>
-        <!-- 期望值、總報酬、ROI、MDD -->
+        <!-- 期望值、總報酬、ROI -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
             <span class="text-gray-700">期望值：</span>
@@ -237,12 +237,6 @@
           <div class="flex-1 text-center">
             <span class="text-gray-700">總資金回報率 (ROI)：</span>
             <span id="analysisROI" class="font-bold text-lg">0%</span>
-          </div>
-        </div>
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">最大交易回落 (MDD)：</span>
-            <span id="maxDrawdown" class="font-bold text-lg">0%</span>
           </div>
         </div>
       </div>
@@ -368,7 +362,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：計算從達到最高(或最低)點（MFE）到平倉日的時間，藉此分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
+          附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
         </p>
       </div>
     </div>
@@ -1399,29 +1393,9 @@
         return date.toISOString().split('T')[0];
       }
 
-      // 新的 calculateMDD 函式，計算整個資金曲線的最大回撤
-      function calculateMDD(initialCapital, tradesWithPosition) {
-        // 過濾出已平倉的交易，並依照平倉日期排序
-        let sortedTrades = tradesWithPosition.filter(trade => trade.closeDate && trade.closeDate.trim() !== '')
-                                             .sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
-        let equity = initialCapital;
-        let peak = initialCapital;
-        let maxDrawdown = 0;
-        sortedTrades.forEach(trade => {
-          let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-          equity += profit;
-          if(equity > peak) {
-            peak = equity;
-          }
-          let drawdown = (peak - equity) / peak;
-          if(drawdown > maxDrawdown) {
-            maxDrawdown = drawdown;
-          }
-        });
-        return maxDrawdown;
-      }
+      // calculateMDD() 已刪除
 
-      // calculateStats() 更新統計數據
+      // calculateStats() 更新統計數據（已移除 MDD 計算）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1467,8 +1441,8 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        let mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
-        
+        // MDD 計算及顯示已移除
+
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1480,7 +1454,6 @@
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('analysisROI').textContent = "0%";
-          document.getElementById('maxDrawdown').textContent = "0%";
           document.getElementById('avgMFE').textContent = "0%";
           document.getElementById('sdMFE').textContent = "0%";
           document.getElementById('cvMFE').textContent = "0";
@@ -1514,7 +1487,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 直接平均交易部位
+          // 直接平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
@@ -1536,7 +1509,6 @@
           document.getElementById('maxLoss').textContent = formatMoney(Math.min(...lossesWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          const expectedValueElem = document.getElementById('expectedValue');
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
