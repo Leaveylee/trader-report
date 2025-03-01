@@ -1503,34 +1503,9 @@
           document.getElementById('maxLoss').textContent = formatMoney(Math.min(...lossesWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
           document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
           document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-          // 更新期望值並根據正負設定顏色：正數紅色，負數綠色
-          const expectedValueElement = document.getElementById('expectedValue');
-          expectedValueElement.textContent = formatMoney(expectedValueAmount, 0);
-          if (expectedValueAmount > 0) {
-            expectedValueElement.classList.add('text-red-500');
-            expectedValueElement.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElement.classList.add('text-green-500');
-            expectedValueElement.classList.remove('text-red-500');
-          } else {
-            expectedValueElement.classList.remove('text-red-500', 'text-green-500');
-          }
-          
-          // 更新總報酬並根據正負設定顏色：正數紅色，負數綠色
-          const totalReturnElement = document.getElementById('totalReturn');
-          totalReturnElement.textContent = formatMoney(totalReturnAmount, 0);
-          if (totalReturnAmount > 0) {
-            totalReturnElement.classList.add('text-red-500');
-            totalReturnElement.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElement.classList.add('text-green-500');
-            totalReturnElement.classList.remove('text-red-500');
-          } else {
-            totalReturnElement.classList.remove('text-red-500', 'text-green-500');
-          }
-          
+          document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
+          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
           let roi = 0;
           if (!isNaN(initialCapital) && initialCapital > 0) {
             roi = ((currentCapital - initialCapital) / initialCapital) * 100;
@@ -1742,6 +1717,56 @@
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
+        
+        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
+        var profitAchievementRate = 0;
+        if(avgMFE !== 0) {
+          profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
+        }
+        document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
+        
+        // 新增：計算最大交易回落 (MDD)
+        let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
+        document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
+
+        // 新增：計算平均達到MFE天數與平均MFE到出場天數
+        let mfedaysArray = [];
+        let mfeToExitDaysArray = [];
+        closedTrades.forEach(trade => {
+          if (trade.openDate && trade.mfeDate) {
+            let open = new Date(trade.openDate);
+            let mfe = new Date(trade.mfeDate);
+            if (mfe >= open) {
+              mfedaysArray.push((mfe - open) / (1000 * 60 * 60 * 24));
+            }
+          }
+          if (trade.mfeDate && trade.closeDate) {
+            let mfe = new Date(trade.mfeDate);
+            let close = new Date(trade.closeDate);
+            if (close >= mfe) {
+              mfeToExitDaysArray.push((close - mfe) / (1000 * 60 * 60 * 24));
+            }
+          }
+        });
+        let avgMFEDays = mfedaysArray.length > 0 ? mfedaysArray.reduce((a, b) => a + b, 0) / mfedaysArray.length : 0;
+        let avgMFEToExitDays = mfeToExitDaysArray.length > 0 ? mfeToExitDaysArray.reduce((a, b) => a + b, 0) / mfeToExitDaysArray.length : 0;
+        document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
+        document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
+
+        // 更新未平倉統計
+        let unclosedTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+        let unclosedTradeCount = unclosedTrades.length;
+        let unclosedPositionTotal = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
+        document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
+        document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
+
+        // 計算未平倉自由資金 = 最新資金水位 - 持倉部位
+        let unclosedFreeCapital = currentCapital - unclosedPositionTotal;
+        document.getElementById('unclosedFreeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
+
+        // 更新「各種策略的使用次數」與「大盤多空天數」
+        updateStrategyUsage();
+        updateMarketStatusUsage();
       }
 
       function updateStrategyUsage() {
