@@ -368,7 +368,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
+          附註：計算從達到最高(或最低)點（MFE）到平倉日的時間，藉此分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
         </p>
       </div>
     </div>
@@ -1399,35 +1399,26 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 不變
+      // 新的 calculateMDD 函式，計算整個資金曲線的最大回撤
       function calculateMDD(initialCapital, tradesWithPosition) {
-        let groups = {};
-        tradesWithPosition.forEach(trade => {
-          if (trade.closeDate && trade.closeDate.trim() !== '') {
-            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
-            groups[trade.closeDate].push(trade);
-          }
-        });
-        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+        // 過濾出已平倉的交易，並依照平倉日期排序
+        let sortedTrades = tradesWithPosition.filter(trade => trade.closeDate && trade.closeDate.trim() !== '')
+                                             .sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
         let equity = initialCapital;
-        let maxDrawdownPercent = 0;
-        dates.forEach(date => {
-          let groupTrades = groups[date];
-          let profitSum = 0, lossSum = 0;
-          groupTrades.forEach(trade => {
-            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
-            if (p > 0) profitSum += p;
-            else lossSum += p;
-          });
-          let dayPeak = equity + profitSum;
-          let dayEnd = dayPeak + lossSum;
-          let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
-          if (dayDrawdownPercent > maxDrawdownPercent) {
-            maxDrawdownPercent = dayDrawdownPercent;
+        let peak = initialCapital;
+        let maxDrawdown = 0;
+        sortedTrades.forEach(trade => {
+          let profit = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
+          equity += profit;
+          if(equity > peak) {
+            peak = equity;
           }
-          equity = dayEnd;
+          let drawdown = (peak - equity) / peak;
+          if(drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
         });
-        return maxDrawdownPercent;
+        return maxDrawdown;
       }
 
       // calculateStats() 更新統計數據
@@ -1523,7 +1514,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 修改部分：直接平均交易部位（不乘以報酬率）
+          // 直接平均交易部位
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
