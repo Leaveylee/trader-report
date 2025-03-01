@@ -313,7 +313,7 @@
           <span id="avgMFEDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉後到完全出場前曾出現的最大有利漲幅，計算從開倉日到 MFE 日期的天數。
+          MFE統計: 開倉後到完全出場前曾出現的最大有利漲幅。目標是分析「獲利交易」的MFE，讓策略的平均獲利%更加接近MFE。
         </p>
       </div>
       <div class="border p-4 rounded">
@@ -339,7 +339,7 @@
           <span id="kurtosisMAE" class="font-bold">0</span>
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：開倉當天建倉後出現的最大不利幅度，計算方式根據進場當天不利價格。
+          MAE統計: 開倉當天在建倉後出現的最大不利幅度。目標是分析「獲利交易」的MAE，來找出開倉當天最適停損範圍，盡快排除會賠錢的交易。
         </p>
       </div>
       <div class="border p-4 rounded">
@@ -369,7 +369,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：從 MFE 日期到平倉日的天數平均值。
+          ERD統計 : 波段最高(低)點回撤到完全平倉價的距離。目標是分析「獲利交易」在回撤多少%後容易觸發出場條件，用來找出分批減碼的範圍。
         </p>
       </div>
     </div>
