@@ -368,7 +368,7 @@
           <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
-          附註：計算從達到 MFE（最高/最低點）到平倉日的天數。目標是了解在達到高點後，平均多久會出場，進而協助調整出場策略與分批減碼範圍。
+          附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
         </p>
       </div>
     </div>
@@ -1529,46 +1529,10 @@
           const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
           const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
           const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
-          
-          // 新增計算獲利／虧損交易的平均部位
-          const avgWinningPosition = winsWithPosition.length > 0 ?
-            winsWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winsWithPosition.length : 0;
-          const avgLosingPosition = lossesWithPosition.length > 0 ?
-            lossesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / lossesWithPosition.length : 0;
-          document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
-          document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
-
-          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          
-          // 補上 expectedValueAmount 的計算與 DOM 更新
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
+
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
-          const expectedValueElem = document.getElementById('expectedValue');
-          if (expectedValueAmount > 0) {
-            expectedValueElem.classList.add('text-red-500');
-            expectedValueElem.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElem.classList.add('text-green-500');
-            expectedValueElem.classList.remove('text-red-500');
-          } else {
-            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          
-          const totalReturnElem = document.getElementById('totalReturn');
-          if (totalReturnAmount > 0) {
-            totalReturnElem.classList.add('text-red-500');
-            totalReturnElem.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElem.classList.add('text-green-500');
-            totalReturnElem.classList.remove('text-red-500');
-          } else {
-            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-          }
+          document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
           let roi = 0;
           if (!isNaN(initialCapital) && initialCapital > 0) {
             roi = ((currentCapital - initialCapital) / initialCapital) * 100;
@@ -1583,6 +1547,36 @@
             analysisROI.classList.remove('text-red-500');
           } else {
             analysisROI.classList.remove('text-red-500', 'text-green-500');
+          }
+          
+          var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
+          document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
+          
+          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
+          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
+          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
+          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
+          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+          const expectedValueElem = document.getElementById('expectedValue');
+          if (expectedValueAmount > 0) {
+            expectedValueElem.classList.add('text-red-500');
+            expectedValueElem.classList.remove('text-green-500');
+          } else if (expectedValueAmount < 0) {
+            expectedValueElem.classList.add('text-green-500');
+            expectedValueElem.classList.remove('text-red-500');
+          } else {
+            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
+          }
+          const totalReturnElem = document.getElementById('totalReturn');
+          if (totalReturnAmount > 0) {
+            totalReturnElem.classList.add('text-red-500');
+            totalReturnElem.classList.remove('text-green-500');
+          } else if (totalReturnAmount < 0) {
+            totalReturnElem.classList.add('text-green-500');
+            totalReturnElem.classList.remove('text-red-500');
+          } else {
+            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
           }
           const maxDrawdownElem = document.getElementById('maxDrawdown');
           maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
