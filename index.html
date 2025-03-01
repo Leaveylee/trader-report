@@ -1523,14 +1523,30 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
+          // 修改部分：直接平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
+          const avgWinningPosition = winsWithPosition.length > 0 
+            ? winsWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / winsWithPosition.length 
+            : 0;
+          const avgLosingPosition = lossesWithPosition.length > 0 
+            ? lossesWithPosition.reduce((sum, trade) => sum + parseFloat(trade.position), 0) / lossesWithPosition.length 
+            : 0;
+
+          document.getElementById('avgWinningPosition').textContent = formatMoney(avgWinningPosition, 0);
+          document.getElementById('avgLosingPosition').textContent = formatMoney(avgLosingPosition, 0);
+
           const avgWinAmount = winsWithPosition.length > 0 ? winsWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / winsWithPosition.length : 0;
           const avgLossAmount = lossesWithPosition.length > 0 ? lossesWithPosition.reduce((sum, trade) => sum + (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)), 0) / lossesWithPosition.length : 0;
-          const maxWinAmount = winsWithPosition.length > 0 ? Math.max(...winsWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
-          const maxLossAmount = lossesWithPosition.length > 0 ? Math.min(...lossesWithPosition.map(trade => (parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)))) : 0;
+          
+          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
+          document.getElementById('maxWin').textContent = formatMoney(Math.max(...winsWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
+          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
+          document.getElementById('maxLoss').textContent = formatMoney(Math.min(...lossesWithPosition.map(trade => parseFloat(trade.returnRate) / 100 * parseFloat(trade.position)) || [0]), 0);
+          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
+          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
+          const expectedValueElem = document.getElementById('expectedValue');
           const expectedValueAmount = closedTradesWithPosition.length > 0 ? totalReturnAmount / closedTradesWithPosition.length : 0;
-
           document.getElementById('expectedValue').textContent = formatMoney(expectedValueAmount, 0);
           document.getElementById('totalReturn').textContent = formatMoney(totalReturnAmount, 0);
           let roi = 0;
@@ -1551,41 +1567,6 @@
           
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
-          
-          document.getElementById('avgWin').textContent = formatMoney(avgWinAmount, 0);
-          document.getElementById('maxWin').textContent = formatMoney(maxWinAmount, 0);
-          document.getElementById('avgLoss').textContent = formatMoney(avgLossAmount, 0);
-          document.getElementById('maxLoss').textContent = formatMoney(maxLossAmount, 0);
-          document.getElementById('totalTrades').textContent = formatTradeCount(results.length);
-          document.getElementById('winRate').textContent = `${formatNumber(winRate.toFixed(2))}% (${wins.length}勝${losses.length}敗)`;
-          const expectedValueElem = document.getElementById('expectedValue');
-          if (expectedValueAmount > 0) {
-            expectedValueElem.classList.add('text-red-500');
-            expectedValueElem.classList.remove('text-green-500');
-          } else if (expectedValueAmount < 0) {
-            expectedValueElem.classList.add('text-green-500');
-            expectedValueElem.classList.remove('text-red-500');
-          } else {
-            expectedValueElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const totalReturnElem = document.getElementById('totalReturn');
-          if (totalReturnAmount > 0) {
-            totalReturnElem.classList.add('text-red-500');
-            totalReturnElem.classList.remove('text-green-500');
-          } else if (totalReturnAmount < 0) {
-            totalReturnElem.classList.add('text-green-500');
-            totalReturnElem.classList.remove('text-red-500');
-          } else {
-            totalReturnElem.classList.remove('text-red-500', 'text-green-500');
-          }
-          const maxDrawdownElem = document.getElementById('maxDrawdown');
-          maxDrawdownElem.textContent = formatNumberNoSign(mddPercent, 2) + "%";
-          if (mddPercent > 0) {
-            maxDrawdownElem.classList.add('text-green-500');
-            maxDrawdownElem.classList.remove('text-red-500');
-          } else {
-            maxDrawdownElem.classList.remove('text-red-500', 'text-green-500');
-          }
           
           // 持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
