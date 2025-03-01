@@ -363,10 +363,9 @@
           <span>EDR 峰度:</span>
           <span id="kurtosisEDR" class="font-bold">0</span>
         </div>
-        <!-- 新增平均高點到出場天數至EDR區塊 -->
         <div class="flex justify-between mt-2">
-          <span>平均高點到出場天數:</span>
-          <span id="avgHighToExitDays" class="font-bold">0</span> 天
+          <span>平均MFE到出場天數:</span>
+          <span id="avgMFEToExitDays" class="font-bold">0</span> 天
         </div>
         <p class="text-xs text-gray-500 mt-2">
           附註：波段最高(或最低)點回撤到完全平倉價的距離。目標是分析在回撤多少%後容易觸發出場條件，以便規劃分批減碼範圍。
@@ -1431,7 +1430,7 @@
         return maxDrawdownPercent;
       }
 
-      // calculateStats() 更新統計數據，包括新增「平均高點到出場天數」計算（從 mfeDate 到 closeDate）
+      // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1620,18 +1619,18 @@
           let avgMFEDays = mfeDays.length > 0 ? mfeDays.reduce((sum, d) => sum + d, 0) / mfeDays.length : 0;
           document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
 
-          // 平均高點到出場天數：從 mfeDate 到 closeDate
-          let highToExitDays = [];
+          // 平均MFE到出場天數：從 mfeDate 到 closeDate
+          let mFETODays = [];
           closedTrades.forEach(trade => {
             if (trade.mfeDate && trade.closeDate) {
               let mfe = new Date(trade.mfeDate);
               let close = new Date(trade.closeDate);
               let diffDays = (close - mfe) / (1000 * 60 * 60 * 24);
-              if (diffDays >= 0) highToExitDays.push(diffDays);
+              if (diffDays >= 0) mFETODays.push(diffDays);
             }
           });
-          let avgHighToExitDays = highToExitDays.length > 0 ? highToExitDays.reduce((sum, d) => sum + d, 0) / highToExitDays.length : 0;
-          document.getElementById('avgHighToExitDays').textContent = formatNumberNoSign(avgHighToExitDays, 2);
+          let avgMFEToExitDays = mFETODays.length > 0 ? mFETODays.reduce((sum, d) => sum + d, 0) / mFETODays.length : 0;
+          document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
         }
 
         // MFE 統計（保持原有邏輯）
