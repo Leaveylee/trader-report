@@ -1762,6 +1762,13 @@
         document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
 
+        // 新增：更新未平倉統計
+        let unclosedTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+        let unclosedTradeCount = unclosedTrades.length;
+        let unclosedPositionTotal = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
+        document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
+        document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
+
         // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
