@@ -213,13 +213,6 @@
             <span id="riskRewardRatio" class="font-medium">0</span>
           </div>
         </div>
-        <!-- 獲利達成率 -->
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">獲利達成率：</span>
-            <span id="profitAchievementRate" class="font-medium">0%</span>
-          </div>
-        </div>
         <!-- 期望值、總報酬、ROI -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
@@ -1431,7 +1424,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateStats() 更新統計數據（重新加入 MDD 計算）
+      // calculateStats() 更新統計數據（包含 MDD 計算）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
