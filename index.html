@@ -239,6 +239,13 @@
             <span id="analysisROI" class="font-bold text-lg">0%</span>
           </div>
         </div>
+        <!-- 新增 MDD 顯示 -->
+        <div class="flex justify-between font-bold text-lg mt-2">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">最大交易回落 (MDD)：</span>
+            <span id="maxDrawdown" class="font-bold text-lg">0%</span>
+          </div>
+        </div>
       </div>
       <!-- 策略使用次數與大盤多空天數 -->
       <div class="mt-4 grid grid-cols-2 gap-4">
@@ -659,6 +666,37 @@
     </div>
 
     <script>
+      // 新增 calculateMDD 函式（計算最大交易回落）
+      function calculateMDD(initialCapital, tradesWithPosition) {
+        let groups = {};
+        tradesWithPosition.forEach(trade => {
+          if (trade.closeDate && trade.closeDate.trim() !== '') {
+            if (!groups[trade.closeDate]) groups[trade.closeDate] = [];
+            groups[trade.closeDate].push(trade);
+          }
+        });
+        let dates = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+        let equity = initialCapital;
+        let maxDrawdownPercent = 0;
+        dates.forEach(date => {
+          let groupTrades = groups[date];
+          let profitSum = 0, lossSum = 0;
+          groupTrades.forEach(trade => {
+            let p = parseFloat(trade.returnRate) / 100 * parseFloat(trade.position);
+            if (p > 0) profitSum += p;
+            else lossSum += p;
+          });
+          let dayPeak = equity + profitSum;
+          let dayEnd = dayPeak + lossSum;
+          let dayDrawdownPercent = (dayPeak - dayEnd) / dayPeak;
+          if (dayDrawdownPercent > maxDrawdownPercent) {
+            maxDrawdownPercent = dayDrawdownPercent;
+          }
+          equity = dayEnd;
+        });
+        return maxDrawdownPercent;
+      }
+
       // 策略列表
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 大盤多空列表
@@ -1393,9 +1431,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateMDD() 已刪除
-
-      // calculateStats() 更新統計數據（已移除 MDD 計算）
+      // calculateStats() 更新統計數據（重新加入 MDD 計算）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1441,8 +1477,12 @@
         const currentCapital = initialCapital + totalReturnAmount;
         document.getElementById('currentCapitalDisplay').textContent = "最新資金水位：" + formatMoney(currentCapital, 0);
         
-        // MDD 計算及顯示已移除
-
+        // 計算 MDD
+        let mddPercent = 0;
+        if (closedTradesWithPosition.length > 0) {
+          mddPercent = calculateMDD(initialCapital, closedTradesWithPosition) * 100;
+        }
+        
         if (closedTrades.length === 0) {
           document.getElementById('totalTrades').textContent = '0';
           document.getElementById('winRate').textContent = '0% (0勝0敗)';
@@ -1454,6 +1494,7 @@
           document.getElementById('expectedValue').textContent = formatMoney(0, 0);
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('analysisROI').textContent = "0%";
+          document.getElementById('maxDrawdown').textContent = "0%";
           document.getElementById('avgMFE').textContent = "0%";
           document.getElementById('sdMFE').textContent = "0%";
           document.getElementById('cvMFE').textContent = "0";
@@ -1575,6 +1616,9 @@
           });
           let avgMFEToExitDays = mFETODays.length > 0 ? mFETODays.reduce((sum, d) => sum + d, 0) / mFETODays.length : 0;
           document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
+          
+          // 更新 MDD 顯示
+          document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mddPercent, 2) + "%";
         }
 
         // MFE 統計（保持原有邏輯）
