@@ -1552,7 +1552,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
+        // MFE 統計（修正偏度與峰度計算，使用樣本不偏估計式）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1581,10 +1581,10 @@
           var cvMFE = avgMFE !== 0 ? stdMFE / avgMFE : 0;
           let sumCubeMFE = 0;
           mfeValues.forEach(val => { sumCubeMFE += Math.pow(val - avgMFE, 3); });
-          skewMFE = stdMFE !== 0 ? (sumCubeMFE / tradesForMFE.length) / Math.pow(stdMFE, 3) : 0;
+          skewMFE = (stdMFE !== 0 && nMFE > 2) ? (nMFE * sumCubeMFE) / ((nMFE - 1) * (nMFE - 2) * Math.pow(stdMFE, 3)) : 0;
           let sumFourthMFE = 0;
           mfeValues.forEach(val => { sumFourthMFE += Math.pow(val - avgMFE, 4); });
-          kurtosisMFE = stdMFE !== 0 ? (sumFourthMFE / tradesForMFE.length) / Math.pow(stdMFE, 4) : 0;
+          kurtosisMFE = (stdMFE !== 0 && nMFE > 3) ? ((nMFE * (nMFE + 1) * sumFourthMFE) / ((nMFE - 1) * (nMFE - 2) * (nMFE - 3) * Math.pow(stdMFE, 4)) - (3 * Math.pow(nMFE - 1, 2)) / ((nMFE - 2) * (nMFE - 3))) : 0;
         } else {
           avgMFE = 0; var stdMFE = 0; var cvMFE = 0; skewMFE = 0; kurtosisMFE = 0;
         }
@@ -1594,7 +1594,7 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
+        // MAE 統計（修正偏度與峰度計算）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
@@ -1622,10 +1622,10 @@
           var cvMAE = avgMAE !== 0 ? stdMAE / avgMAE : 0;
           let sumCubeMAE = 0;
           maeValues.forEach(val => { sumCubeMAE += Math.pow(val - avgMAE, 3); });
-          skewMAE = stdMAE !== 0 ? (sumCubeMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 3) : 0;
+          skewMAE = (stdMAE !== 0 && nMAE > 2) ? (nMAE * sumCubeMAE) / ((nMAE - 1) * (nMAE - 2) * Math.pow(stdMAE, 3)) : 0;
           let sumFourthMAE = 0;
           maeValues.forEach(val => { sumFourthMAE += Math.pow(val - avgMAE, 4); });
-          kurtosisMAE = stdMAE !== 0 ? (sumFourthMAE / tradesForNewMAE.length) / Math.pow(stdMAE, 4) : 0;
+          kurtosisMAE = (stdMAE !== 0 && nMAE > 3) ? ((nMAE * (nMAE + 1) * sumFourthMAE) / ((nMAE - 1) * (nMAE - 2) * (nMAE - 3) * Math.pow(stdMAE, 4)) - (3 * Math.pow(nMAE - 1, 2)) / ((nMAE - 2) * (nMAE - 3))) : 0;
         } else {
           avgMAE = 0; var stdMAE = 0; var cvMAE = 0; skewMAE = 0; kurtosisMAE = 0;
         }
@@ -1635,7 +1635,7 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // EDR 統計計算（採用樣本標準差公式）
+        // EDR 統計（修正偏度與峰度計算）
         let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1664,10 +1664,10 @@
           cvEDR = avgEDR !== 0 ? stdEDR / avgEDR : 0;
           let sumCubeEDR = 0;
           edrValues.forEach(val => { sumCubeEDR += Math.pow(val - avgEDR, 3); });
-          skewEDR = stdEDR !== 0 ? (sumCubeEDR / edrValues.length) / Math.pow(stdEDR, 3) : 0;
+          skewEDR = (stdEDR !== 0 && nEDR > 2) ? (nEDR * sumCubeEDR) / ((nEDR - 1) * (nEDR - 2) * Math.pow(stdEDR, 3)) : 0;
           let sumFourthEDR = 0;
           edrValues.forEach(val => { sumFourthEDR += Math.pow(val - avgEDR, 4); });
-          kurtosisEDR = stdEDR !== 0 ? (sumFourthEDR / edrValues.length) / Math.pow(stdEDR, 4) : 0;
+          kurtosisEDR = (stdEDR !== 0 && nEDR > 3) ? ((nEDR * (nEDR + 1) * sumFourthEDR) / ((nEDR - 1) * (nEDR - 2) * (nEDR - 3) * Math.pow(stdEDR, 4)) - (3 * Math.pow(nEDR - 1, 2)) / ((nEDR - 2) * (nEDR - 3))) : 0;
         }
         document.getElementById('avgEDR').textContent = formatNumberNoSign(avgEDR, 2) + "%";
         document.getElementById('sdEDR').textContent = formatNumberNoSign(stdEDR, 2) + "%";
