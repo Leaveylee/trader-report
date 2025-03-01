@@ -483,21 +483,6 @@
       </div>
     </div>
 
-    <!-- 資金績效統計區塊 -->
-    <div id="capitalStats" class="bg-gray-50 p-4 rounded mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-4">資金績效統計</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="flex justify-between">
-          <span class="text-gray-600">總資金回報率 (ROI)：</span>
-          <span id="roi" class="font-medium">0</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">自由資金：</span>
-          <span id="freeCapital" class="font-medium">$0</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 策略管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
@@ -1768,23 +1753,20 @@
         document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
 
-        // 新增：更新未平倉統計
+        // 更新未平倉統計
         let unclosedTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
         let unclosedTradeCount = unclosedTrades.length;
         let unclosedPositionTotal = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
 
-        // 新增：計算未平倉自由資金 = 最新資金水位 - 持倉部位
+        // 計算未平倉自由資金 = 最新資金水位 - 持倉部位
         let unclosedFreeCapital = currentCapital - unclosedPositionTotal;
         document.getElementById('unclosedFreeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
 
         // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
-
-        // 同時更新資金績效區塊中的自由資金（如果有需要）
-        document.getElementById('freeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
       }
 
       function updateStrategyUsage() {
