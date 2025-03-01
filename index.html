@@ -232,6 +232,13 @@
             <span id="analysisROI" class="font-bold text-lg">0%</span>
           </div>
         </div>
+        <!-- 新增獲利達成率 -->
+        <div class="flex justify-between font-bold text-lg mt-2">
+          <div class="flex-1 text-center">
+            <span class="text-gray-700">獲利達成率：</span>
+            <span id="profitAchievementRate" class="font-bold text-lg">0%</span>
+          </div>
+        </div>
         <!-- 新增 MDD 顯示 -->
         <div class="flex justify-between font-bold text-lg mt-2">
           <div class="flex-1 text-center">
@@ -1424,7 +1431,7 @@
         return date.toISOString().split('T')[0];
       }
 
-      // calculateStats() 更新統計數據（包含 MDD 計算）
+      // calculateStats() 更新統計數據（包含 MDD 與獲利達成率計算）
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -1488,29 +1495,6 @@
           document.getElementById('totalReturn').textContent = formatMoney(0, 0);
           document.getElementById('analysisROI').textContent = "0%";
           document.getElementById('maxDrawdown').textContent = "0%";
-          document.getElementById('avgMFE').textContent = "0%";
-          document.getElementById('sdMFE').textContent = "0%";
-          document.getElementById('cvMFE').textContent = "0";
-          document.getElementById('avgMAE').textContent = "0%";
-          document.getElementById('sdMAE').textContent = "0%";
-          document.getElementById('cvMAE').textContent = "0";
-          document.getElementById('skewMAE').textContent = "0";
-          document.getElementById('kurtosisMAE').textContent = "0";
-          document.getElementById('avgEDR').textContent = "0%";
-          document.getElementById('sdEDR').textContent = "0%";
-          document.getElementById('cvEDR').textContent = "0";
-          document.getElementById('skewEDR').textContent = "0";
-          document.getElementById('kurtosisEDR').textContent = "0";
-          document.getElementById('avgWinPercent').textContent = "0%";
-          document.getElementById('sdWinPercent').textContent = "0%";
-          document.getElementById('cvWinPercent').textContent = "0";
-          document.getElementById('skewWinPercent').textContent = "0";
-          document.getElementById('kurtosisWinPercent').textContent = "0";
-          document.getElementById('avgLossPercentDisplay').textContent = "0%";
-          document.getElementById('sdLossPercent').textContent = "0%";
-          document.getElementById('cvLossPercent').textContent = "0";
-          document.getElementById('skewLossPercent').textContent = "0";
-          document.getElementById('kurtosisLossPercent').textContent = "0";
         } else {
           const results = closedTrades.map(trade => parseFloat(trade.returnRate));
           const wins = results.filter(result => result > 0);
@@ -1521,7 +1505,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 直接平均交易部位（不乘以報酬率）
+          // 平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
@@ -1583,35 +1567,6 @@
           let avgLossHoldingDays = lossHoldingDays.length > 0 ? lossHoldingDays.reduce((sum, d) => sum + d, 0) / lossHoldingDays.length : 0;
           document.getElementById('avgWinHoldingDays').textContent = formatNumberNoSign(avgWinHoldingDays, 2);
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
-
-          // 平均達到MFE天數：從開倉日到 mfeDate
-          let mfeDays = [];
-          closedTrades.forEach(trade => {
-            if (trade.openDate && trade.mfeDate) {
-              let open = new Date(trade.openDate);
-              let mfe = new Date(trade.mfeDate);
-              let diffDays = (mfe - open) / (1000 * 60 * 60 * 24);
-              if (diffDays >= 0) mfeDays.push(diffDays);
-            }
-          });
-          let avgMFEDays = mfeDays.length > 0 ? mfeDays.reduce((sum, d) => sum + d, 0) / mfeDays.length : 0;
-          document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
-
-          // 平均MFE到出場天數：從 mfeDate 到 closeDate
-          let mFETODays = [];
-          closedTrades.forEach(trade => {
-            if (trade.mfeDate && trade.closeDate) {
-              let mfe = new Date(trade.mfeDate);
-              let close = new Date(trade.closeDate);
-              let diffDays = (close - mfe) / (1000 * 60 * 60 * 24);
-              if (diffDays >= 0) mFETODays.push(diffDays);
-            }
-          });
-          let avgMFEToExitDays = mFETODays.length > 0 ? mFETODays.reduce((sum, d) => sum + d, 0) / mFETODays.length : 0;
-          document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
-          
-          // 更新 MDD 顯示
-          document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mddPercent, 2) + "%";
         }
 
         // MFE 統計（保持原有邏輯）
@@ -1781,6 +1736,13 @@
         document.getElementById('cvLossPercent').textContent = formatNumberNoSign(cvLossPercent, 2);
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
+
+        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
+        var profitAchievementRate = 0;
+        if(avgMFE !== 0) {
+          profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
+        }
+        document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
       }
 
       function updateStrategyUsage() {
