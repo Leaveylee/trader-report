@@ -184,14 +184,38 @@
       </div>
     </div>
 
-    <!-- 初始資金及最新資金水位 -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">初始資金</label>
-      <div class="flex items-center space-x-4">
-        <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
-        <span id="currentCapitalDisplay" class="font-bold text-lg text-blue-500">最新資金水位：$0</span>
+    <!-- 資金狀態與持倉統計 -->
+    <div class="mb-6 bg-gray-50 p-4 rounded">
+      <h2 class="text-xl font-bold text-gray-700 mb-4 text-center">資金狀態與持倉統計</h2>
+      <!-- 初始資金及最新資金水位 -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">初始資金</label>
+        <div class="flex items-center space-x-4">
+          <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
+          <span id="currentCapitalDisplay" class="font-bold text-lg text-blue-500">最新資金水位：$0</span>
+        </div>
+        <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
       </div>
-      <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
+      <!-- 未平倉統計 -->
+      <div>
+        <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 持倉數量獨占一行 -->
+          <div class="flex justify-between col-span-2">
+            <span class="text-gray-600">持倉數量：</span>
+            <span id="unclosedTradeCount" class="font-medium">0</span>
+          </div>
+          <!-- 持倉部位與自由資金並排 -->
+          <div class="flex justify-between">
+            <span class="text-gray-600">持倉部位：</span>
+            <span id="unclosedPositionTotal" class="font-medium">$0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">自由資金：</span>
+            <span id="unclosedFreeCapital" class="font-medium">$0</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 分析結果區塊 -->
@@ -443,27 +467,6 @@
       </div>
     </div>
 
-    <!-- 未平倉統計區塊 -->
-    <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <!-- 持倉數量獨占一行 -->
-        <div class="flex justify-between col-span-2">
-          <span class="text-gray-600">持倉數量：</span>
-          <span id="unclosedTradeCount" class="font-medium">0</span>
-        </div>
-        <!-- 持倉部位與自由資金並排 -->
-        <div class="flex justify-between">
-          <span class="text-gray-600">持倉部位：</span>
-          <span id="unclosedPositionTotal" class="font-medium">$0</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">自由資金：</span>
-          <span id="unclosedFreeCapital" class="font-medium">$0</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 策略管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
@@ -588,7 +591,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易記錄 -->
+    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易紀錄 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
