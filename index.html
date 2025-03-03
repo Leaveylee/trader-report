@@ -425,7 +425,6 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">獲利% SD：</span>
-            <!-- 使用樣本標準差公式 -->
             <span id="sdWinPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -449,7 +448,6 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">虧損% SD：</span>
-            <!-- 使用樣本標準差公式 -->
             <span id="sdLossPercent" class="font-medium">0%</span>
           </div>
           <div class="flex justify-between">
@@ -599,6 +597,8 @@
         <div class="flex space-x-2">
           <button class="button" onclick="addTrade()">添加交易</button>
           <button class="button" onclick="exportToExcel()">匯出</button>
+          <!-- 新增生成報告按鈕 -->
+          <button class="button" onclick="generateReport()">生成報告</button>
           <button class="button" onclick="document.getElementById('importExcelInput').click()">匯入</button>
           <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
         </div>
@@ -2167,6 +2167,110 @@
         };
         reader.readAsBinaryString(file);
       }
+
+      // ──────────── 新增：生成完整報告功能 ────────────
+      function generateReport() {
+        // 收集篩選條件的目前選擇值
+        const filters = {
+          values: {
+            strategyFilter: document.getElementById('strategyFilter').value,
+            externalConditionFilter: document.getElementById('externalConditionFilter').value,
+            directionFilter: document.getElementById('directionFilter').value,
+            closeStatusFilter: document.getElementById('closeStatusFilter').value,
+            profitLossFilter: document.getElementById('profitLossFilter').value,
+            startDateFilter: document.getElementById('startDateFilter').value,
+            endDateFilter: document.getElementById('endDateFilter').value
+          },
+          options: {
+            strategyOptions: Array.from(document.getElementById('strategyFilter').options).map(opt => ({ value: opt.value, text: opt.text })),
+            externalConditionOptions: Array.from(document.getElementById('externalConditionFilter').options).map(opt => ({ value: opt.value, text: opt.text })),
+            directionOptions: [
+              { value: "", text: "全部方向" },
+              { value: "多", text: "多" },
+              { value: "空", text: "空" }
+            ],
+            closeStatusOptions: [
+              { value: "", text: "全部" },
+              { value: "closed", text: "已平倉" },
+              { value: "open", text: "未平倉" }
+            ],
+            profitLossOptions: [
+              { value: "", text: "全部" },
+              { value: "profit", text: "獲利的交易" },
+              { value: "loss", text: "虧損的交易" }
+            ]
+          }
+        };
+
+        // 收集統計數據，從 DOM 中取得現有文字
+        const statistics = {
+          currentCapital: document.getElementById('currentCapitalDisplay').textContent,
+          totalTrades: document.getElementById('totalTrades').textContent,
+          winRate: document.getElementById('winRate').textContent,
+          riskRewardRatio: document.getElementById('riskRewardRatio').textContent,
+          expectedValue: document.getElementById('expectedValue').textContent,
+          totalReturn: document.getElementById('totalReturn').textContent,
+          analysisROI: document.getElementById('analysisROI').textContent,
+          profitAchievementRate: document.getElementById('profitAchievementRate').textContent,
+          maxDrawdown: document.getElementById('maxDrawdown').textContent,
+          avgWinHoldingDays: document.getElementById('avgWinHoldingDays').textContent,
+          avgLossHoldingDays: document.getElementById('avgLossHoldingDays').textContent,
+          avgMFE: document.getElementById('avgMFE').textContent,
+          sdMFE: document.getElementById('sdMFE').textContent,
+          cvMFE: document.getElementById('cvMFE').textContent,
+          skewMFE: document.getElementById('skewMFE').textContent,
+          kurtosisMFE: document.getElementById('kurtosisMFE').textContent,
+          avgMAE: document.getElementById('avgMAE').textContent,
+          sdMAE: document.getElementById('sdMAE').textContent,
+          cvMAE: document.getElementById('cvMAE').textContent,
+          skewMAE: document.getElementById('skewMAE').textContent,
+          kurtosisMAE: document.getElementById('kurtosisMAE').textContent,
+          avgEDR: document.getElementById('avgEDR').textContent,
+          sdEDR: document.getElementById('sdEDR').textContent,
+          cvEDR: document.getElementById('cvEDR').textContent,
+          skewEDR: document.getElementById('skewEDR').textContent,
+          kurtosisEDR: document.getElementById('kurtosisEDR').textContent,
+          avgWinPercent: document.getElementById('avgWinPercent').textContent,
+          sdWinPercent: document.getElementById('sdWinPercent').textContent,
+          cvWinPercent: document.getElementById('cvWinPercent').textContent,
+          skewWinPercent: document.getElementById('skewWinPercent').textContent,
+          kurtosisWinPercent: document.getElementById('kurtosisWinPercent').textContent,
+          avgLossPercent: document.getElementById('avgLossPercentDisplay').textContent,
+          sdLossPercent: document.getElementById('sdLossPercent').textContent,
+          cvLossPercent: document.getElementById('cvLossPercent').textContent,
+          skewLossPercent: document.getElementById('skewLossPercent').textContent,
+          kurtosisLossPercent: document.getElementById('kurtosisLossPercent').textContent,
+          avgMFEDays: document.getElementById('avgMFEDays').textContent,
+          avgMFEToExitDays: document.getElementById('avgMFEToExitDays').textContent,
+          unclosedTradeCount: document.getElementById('unclosedTradeCount').textContent,
+          unclosedPositionTotal: document.getElementById('unclosedPositionTotal').textContent,
+          unclosedFreeCapital: document.getElementById('unclosedFreeCapital').textContent,
+          strategyUsage: document.getElementById('strategyUsageList') ? document.getElementById('strategyUsageList').innerText : "",
+          marketStatusUsage: document.getElementById('marketStatusUsageList') ? document.getElementById('marketStatusUsageList').innerText : ""
+        };
+
+        // 組合報告內容，包含完整交易紀錄（不受當前篩選影響）、策略、大盤多空資訊
+        const report = {
+          timestamp: new Date().toISOString(),
+          filters: filters,
+          trades: trades,
+          strategies: strategies,
+          externalConditions: externalConditions,
+          statistics: statistics
+        };
+
+        // 將報告轉為格式化 JSON 字串
+        const reportJson = JSON.stringify(report, null, 2);
+        const blob = new Blob([reportJson], { type: 'application/json' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `報告_${today}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      // ──────────── 生成報告功能結束 ────────────
     </script>
   </div>
 </body>
