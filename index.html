@@ -184,14 +184,39 @@
       </div>
     </div>
 
-    <!-- 初始資金及最新資金水位 -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2" for="totalOperatingCapital">初始資金</label>
-      <div class="flex items-center space-x-4">
-        <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
-        <span id="currentCapitalDisplay" class="font-bold text-lg text-blue-500">最新資金水位：$0</span>
+    <!-- 資金狀態與持倉統計 -->
+    <div class="mb-6 bg-gray-50 p-4 rounded">
+      <h2 class="text-xl font-bold text-gray-700 mb-4 text-center">資金狀態與持倉統計</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- 初始資金 -->
+        <div>
+          <h3 class="text-lg font-medium text-gray-700 mb-2">初始資金</h3>
+          <input type="number" id="totalOperatingCapital" class="w-full p-2 border rounded" placeholder="請輸入初始資金" oninput="calculateStats(); saveTotalOperatingCapital()" onchange="calculateStats(); saveTotalOperatingCapital()">
+          <p class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</p>
+        </div>
+        <!-- 最新資金水位 -->
+        <div class="flex flex-col justify-center">
+          <h3 class="text-lg font-medium text-gray-700 mb-2 text-center">最新資金水位</h3>
+          <div id="currentCapitalDisplay" class="font-bold text-lg text-blue-500 text-center">$0</div>
+        </div>
       </div>
-      <div class="text-sm text-gray-500 mt-1">初始資金作為期初資金，後續每筆閉倉交易盈虧會累計更新最新資金水位。</div>
+      <div class="mt-6">
+        <h3 class="text-lg font-medium text-gray-700 mb-2">未平倉統計</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-2 bg-white rounded shadow text-center">
+            <span class="block text-gray-600">持倉數量</span>
+            <span id="unclosedTradeCount" class="font-medium">0</span>
+          </div>
+          <div class="p-2 bg-white rounded shadow text-center">
+            <span class="block text-gray-600">持倉部位</span>
+            <span id="unclosedPositionTotal" class="font-medium">$0</span>
+          </div>
+          <div class="p-2 bg-white rounded shadow text-center">
+            <span class="block text-gray-600">自由資金</span>
+            <span id="unclosedFreeCapital" class="font-medium">$0</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 分析結果區塊 -->
@@ -443,27 +468,6 @@
       </div>
     </div>
 
-    <!-- 未平倉統計區塊 -->
-    <div id="unclosedStats" class="bg-gray-50 p-4 rounded mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-4">未平倉統計</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <!-- 持倉數量獨占一行 -->
-        <div class="flex justify-between col-span-2">
-          <span class="text-gray-600">持倉數量：</span>
-          <span id="unclosedTradeCount" class="font-medium">0</span>
-        </div>
-        <!-- 持倉部位與自由資金並排 -->
-        <div class="flex justify-between">
-          <span class="text-gray-600">持倉部位：</span>
-          <span id="unclosedPositionTotal" class="font-medium">$0</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">自由資金：</span>
-          <span id="unclosedFreeCapital" class="font-medium">$0</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 策略管理區塊 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
@@ -588,7 +592,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易記錄 -->
+    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易紀錄 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -606,117 +610,6 @@
         <!-- 交易記錄卡片動態生成 -->
       </div>
     </div>
-
-    <!--
-      ===========================================================================
-      新增：日常市場數據管理區塊
-      ===========================================================================
-    -->
-    <div class="mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-medium text-gray-700">日常市場數據管理</h2>
-        <div class="flex space-x-2">
-          <button class="button" onclick="toggleDailyMarketDataManagement()">
-            <i id="dailyMarketDataToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>
-            收合
-          </button>
-          <button class="button" onclick="openAddDailyDataModal()">新增</button>
-          <button class="button" onclick="exportDailyMarketDataToExcel()">匯出</button>
-          <button class="button" onclick="document.getElementById('importDailyMarketDataInput').click()">匯入</button>
-          <input type="file" id="importDailyMarketDataInput" accept=".xlsx, .xls" class="hidden" onchange="importDailyMarketDataFromExcel(event)">
-        </div>
-      </div>
-      <div id="dailyMarketDataManagementContent" class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 min-w-[120px]">日期</th>
-              <th class="px-4 py-2 min-w-[100px]">Open</th>
-              <th class="px-4 py-2 min-w-[100px]">High</th>
-              <th class="px-4 py-2 min-w-[100px]">Low</th>
-              <th class="px-4 py-2 min-w-[100px]">Close</th>
-              <th class="px-4 py-2 min-w-[100px]">Volume</th>
-              <th class="px-4 py-2 min-w-[100px]">波動率(%)</th>
-              <th class="px-4 py-2">操作</th>
-            </tr>
-          </thead>
-          <tbody id="dailyMarketDataList">
-            <!-- 日常市場數據紀錄 -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 新增日常市場數據模態框 -->
-    <div id="addDailyDataModal" class="modal hidden">
-      <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-medium mb-4">新增日常市場數據</h3>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="newDailyDate">日期</label>
-        <input type="date" id="newDailyDate" class="w-full p-2 border rounded mb-4">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Open</label>
-        <input type="number" id="newDailyOpen" class="w-full p-2 border rounded mb-4" placeholder="開盤價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">High</label>
-        <input type="number" id="newDailyHigh" class="w-full p-2 border rounded mb-4" placeholder="最高價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Low</label>
-        <input type="number" id="newDailyLow" class="w-full p-2 border rounded mb-4" placeholder="最低價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Close</label>
-        <input type="number" id="newDailyClose" class="w-full p-2 border rounded mb-4" placeholder="收盤價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Volume</label>
-        <input type="number" id="newDailyVolume" class="w-full p-2 border rounded mb-4" placeholder="成交量">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">波動率(%)</label>
-        <input type="number" id="newDailyVolatility" class="w-full p-2 border rounded mb-4" placeholder="(High-Low)/Close * 100">
-        
-        <div class="flex justify-end">
-          <button class="button mr-2" onclick="closeAddDailyDataModal()">取消</button>
-          <button class="button" onclick="addDailyData()">新增</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 編輯日常市場數據模態框 -->
-    <div id="editDailyDataModal" class="modal hidden">
-      <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-medium mb-4">編輯日常市場數據</h3>
-        <input type="hidden" id="editDailyDataId">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">日期</label>
-        <input type="date" id="editDailyDate" class="w-full p-2 border rounded mb-4">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Open</label>
-        <input type="number" id="editDailyOpen" class="w-full p-2 border rounded mb-4" placeholder="開盤價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">High</label>
-        <input type="number" id="editDailyHigh" class="w-full p-2 border rounded mb-4" placeholder="最高價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Low</label>
-        <input type="number" id="editDailyLow" class="w-full p-2 border rounded mb-4" placeholder="最低價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Close</label>
-        <input type="number" id="editDailyClose" class="w-full p-2 border rounded mb-4" placeholder="收盤價">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">Volume</label>
-        <input type="number" id="editDailyVolume" class="w-full p-2 border rounded mb-4" placeholder="成交量">
-        
-        <label class="block text-sm font-medium text-gray-700 mb-2">波動率(%)</label>
-        <input type="number" id="editDailyVolatility" class="w-full p-2 border rounded mb-4" placeholder="(High-Low)/Close * 100">
-        
-        <div class="flex justify-end">
-          <button class="button mr-2" onclick="closeEditDailyDataModal()">取消</button>
-          <button class="button" onclick="updateDailyData()">更新</button>
-        </div>
-      </div>
-    </div>
-    <!--
-      ===========================================================================
-      日常市場數據管理區塊結束
-      ===========================================================================
-    -->
 
     <script>
       // 更新後的 calculateMDD 函式：計算累積權益曲線上的最大回撤百分比
@@ -746,9 +639,6 @@
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
       // 交易記錄列表，新增欄位：direction、entryPrice、exitPrice、entryDayAdversePrice、mfeDate、highestPrice、lowestPrice
       let trades = [];
-      // 日常市場數據列表
-      let dailyMarketData = [];
-
       // 當前篩選條件
       let selectedStrategyFilter = null;
       let selectedExternalConditionFilter = null;
@@ -757,8 +647,7 @@
       let selectedDirectionFilter = null;
       let selectedCloseStatusFilter = null;
       let selectedProfitLossFilter = null;
-
-      // 全域變數：下一個通用ID
+      // 全域變數：下一個交易ID
       let nextTradeId = 1;
 
       function formatNumber(value, isMoneyAmount = false, decimalPlaces = 2) {
@@ -795,7 +684,6 @@
         localStorage.setItem('trades', JSON.stringify(trades));
         saveStrategies();
         saveExternalConditions();
-        saveDailyMarketData();
         saveCollapseState();
       }
 
@@ -807,18 +695,11 @@
         localStorage.setItem('externalConditions', JSON.stringify(externalConditions));
       }
 
-      // 新增：儲存日常市場數據
-      function saveDailyMarketData() {
-        localStorage.setItem('dailyMarketData', JSON.stringify(dailyMarketData));
-      }
-
       function saveCollapseState() {
         const strategyCollapsed = document.getElementById('strategyManagementContent').classList.contains('hidden');
         const externalConditionCollapsed = document.getElementById('externalConditionManagementContent').classList.contains('hidden');
-        const dailyMarketDataCollapsed = document.getElementById('dailyMarketDataManagementContent').classList.contains('hidden');
         localStorage.setItem('strategyManagementCollapsed', strategyCollapsed);
         localStorage.setItem('externalConditionManagementCollapsed', externalConditionCollapsed);
-        localStorage.setItem('dailyMarketDataCollapsed', dailyMarketDataCollapsed);
       }
 
       function saveTotalOperatingCapital() {
@@ -861,30 +742,10 @@
         }
       }
 
-      // 新增：讀取日常市場數據
-      function loadDailyMarketData() {
-        const savedDailyData = JSON.parse(localStorage.getItem('dailyMarketData'));
-        if (savedDailyData && Array.isArray(savedDailyData)) {
-          dailyMarketData = savedDailyData.map(item => {
-            if (!item.id) {
-              item.id = nextTradeId++;
-            } else {
-              if (item.id >= nextTradeId) {
-                nextTradeId = item.id + 1;
-              }
-            }
-            return item;
-          });
-        } else {
-          dailyMarketData = [];
-        }
-      }
-
       function loadData() {
         const savedTrades = JSON.parse(localStorage.getItem('trades'));
         const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
         const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
-        const dailyMarketDataCollapsed = localStorage.getItem('dailyMarketDataCollapsed') === 'true';
         
         if (savedTrades && Array.isArray(savedTrades)) {
           trades = savedTrades.map(trade => {
@@ -943,19 +804,15 @@
         document.getElementById('profitLossFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
-
-        // 載入並渲染
         renderStrategies();
         renderExternalConditions();
         renderTrades();
-        renderDailyMarketData();
-
         loadTotalOperatingCapital();
         calculateStats();
-        applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed, dailyMarketDataCollapsed);
+        applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
       }
 
-      function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed, dailyMarketDataCollapsed) {
+      function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
         if (strategyCollapsed) {
           document.getElementById('strategyManagementContent').classList.add('hidden');
           document.getElementById('strategyToggleIcon').setAttribute('data-lucide', 'chevron-right');
@@ -968,18 +825,9 @@
           const externalConditionToggleButton = document.querySelector('#externalConditionToggleIcon').parentElement;
           externalConditionToggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
         }
-        if (dailyMarketDataCollapsed) {
-          document.getElementById('dailyMarketDataManagementContent').classList.add('hidden');
-          document.getElementById('dailyMarketDataToggleIcon').setAttribute('data-lucide', 'chevron-right');
-          const dailyDataToggleButton = document.querySelector('#dailyMarketDataToggleIcon').parentElement;
-          dailyDataToggleButton.innerHTML = `<i id="dailyMarketDataToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
         lucide.createIcons();
       }
 
-      // -------------------------
-      // 策略管理
-      // -------------------------
       function renderStrategies() {
         const strategiesList = document.getElementById('strategiesList');
         strategiesList.innerHTML = strategies.map(strategy => `
@@ -1010,196 +858,6 @@
         `;
       }
 
-      function openAddStrategyModal() {
-        openModal('addStrategyModal');
-      }
-
-      function closeAddStrategyModal() {
-        closeModal('addStrategyModal');
-      }
-
-      function addStrategy() {
-        const nameInput = document.getElementById('newStrategyName');
-        const descriptionInput = document.getElementById('newStrategyDescription');
-        const name = nameInput.value.trim();
-        const description = descriptionInput.value.trim();
-        if (name === '') {
-          alert('策略名稱不能為空。');
-          return;
-        }
-        const existingStrategy = strategies.find(strategy => strategy.name === name);
-        if (existingStrategy) {
-          alert('策略名稱已存在，請選擇其他名稱。');
-          return;
-        }
-        const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
-        strategies.push({ id: newId, name, description });
-        saveStrategies();
-        renderStrategies();
-        renderTrades();
-        calculateStats();
-        closeAddStrategyModal();
-      }
-
-      function openEditStrategyModal(strategyId) {
-        const strategy = strategies.find(s => s.id === strategyId);
-        if (!strategy) return;
-        document.getElementById('editStrategyId').value = strategy.id;
-        document.getElementById('editStrategyName').value = strategy.name;
-        document.getElementById('editStrategyDescription').value = strategy.description;
-        openModal('editStrategyModal');
-      }
-
-      function closeEditStrategyModal() {
-        closeModal('editStrategyModal');
-      }
-
-      function updateStrategy() {
-        const id = parseInt(document.getElementById('editStrategyId').value, 10);
-        const name = document.getElementById('editStrategyName').value.trim();
-        const description = document.getElementById('editStrategyDescription').value.trim();
-        if (name === '') {
-          alert('策略名稱不能為空。');
-          return;
-        }
-        const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
-        if (existingStrategy) {
-          alert('策略名稱已存在，請選擇其他名稱。');
-          return;
-        }
-        const strategyIndex = strategies.findIndex(s => s.id === id);
-        if (strategyIndex === -1) return;
-        strategies[strategyIndex].name = name;
-        strategies[strategyIndex].description = description;
-        saveStrategies();
-        renderStrategies();
-        renderTrades();
-        calculateStats();
-        closeEditStrategyModal();
-      }
-
-      function deleteStrategy(strategyId) {
-        const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
-        if (tradesUsingStrategy.length > 0) {
-          alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
-          return;
-        }
-        if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
-          return;
-        }
-        strategies = strategies.filter(strategy => strategy.id !== strategyId);
-        saveStrategies();
-        renderStrategies();
-        renderTrades();
-        calculateStats();
-      }
-
-      function exportStrategiesToExcel() {
-        if (strategies.length === 0) {
-          alert('目前沒有策略資料可供匯出。');
-          return;
-        }
-        const exportData = strategies.map(strategy => ({
-          "策略ID": strategy.id,
-          "策略名稱": strategy.name,
-          "描述": strategy.description
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `策略管理_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function importStrategiesFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const requiredFields = ["策略ID", "策略名稱", "描述"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedStrategies = jsonData.map(item => {
-            const name = item["策略名稱"].trim();
-            const description = item["描述"].trim();
-            const existingStrategy = strategies.find(s => s.name === name);
-            if (existingStrategy) {
-              alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
-              return null;
-            }
-            const newStrategyId = nextTradeId++;
-            return {
-              id: newStrategyId,
-              name: name,
-              description: description
-            };
-          }).filter(strategy => strategy !== null);
-          if (importedStrategies.length === 0) {
-            alert('沒有有效的策略紀錄被匯入。');
-            return;
-          }
-          strategies = strategies.concat(importedStrategies);
-          renderStrategies();
-          renderTrades();
-          calculateStats();
-          saveStrategies();
-          saveData();
-          alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
-          document.getElementById('importStrategiesInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-
-      function toggleStrategyManagement() {
-        const content = document.getElementById('strategyManagementContent');
-        const toggleIcon = document.getElementById('strategyToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      // -------------------------
-      // 大盤多空管理
-      // -------------------------
       function renderExternalConditions() {
         const externalConditionsList = document.getElementById('externalConditionsList');
         externalConditionsList.innerHTML = externalConditions.map(condition => `
@@ -1230,196 +888,7 @@
         `;
       }
 
-      function openAddExternalConditionModal() {
-        openModal('addExternalConditionModal');
-      }
-
-      function closeAddExternalConditionModal() {
-        closeModal('addExternalConditionModal');
-      }
-
-      function addExternalCondition() {
-        const nameInput = document.getElementById('newExternalConditionName');
-        const descriptionInput = document.getElementById('newExternalConditionDescription');
-        const name = nameInput.value.trim();
-        const description = descriptionInput.value.trim();
-        if (name === '') {
-          alert('大盤多空名稱不能為空。');
-          return;
-        }
-        const existingCondition = externalConditions.find(condition => condition.name === name);
-        if (existingCondition) {
-          alert('大盤多空名稱已存在，請選擇其他名稱。');
-          return;
-        }
-        const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
-        externalConditions.push({ id: newId, name, description });
-        saveExternalConditions();
-        renderExternalConditions();
-        renderTrades();
-        calculateStats();
-        closeAddExternalConditionModal();
-      }
-
-      function openEditExternalConditionModal(conditionId) {
-        const condition = externalConditions.find(c => c.id === conditionId);
-        if (!condition) return;
-        document.getElementById('editExternalConditionId').value = condition.id;
-        document.getElementById('editExternalConditionName').value = condition.name;
-        document.getElementById('editExternalConditionDescription').value = condition.description;
-        openModal('editExternalConditionModal');
-      }
-
-      function closeEditExternalConditionModal() {
-        closeModal('editExternalConditionModal');
-      }
-
-      function updateExternalCondition() {
-        const id = parseInt(document.getElementById('editExternalConditionId').value, 10);
-        const name = document.getElementById('editExternalConditionName').value.trim();
-        const description = document.getElementById('editExternalConditionDescription').value.trim();
-        if (name === '') {
-          alert('大盤多空名稱不能為空。');
-          return;
-        }
-        const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
-        if (existingCondition) {
-          alert('大盤多空名稱已存在，請選擇其他名稱。');
-          return;
-        }
-        const conditionIndex = externalConditions.findIndex(c => c.id === id);
-        if (conditionIndex === -1) return;
-        externalConditions[conditionIndex].name = name;
-        externalConditions[conditionIndex].description = description;
-        saveExternalConditions();
-        renderExternalConditions();
-        renderTrades();
-        calculateStats();
-        closeEditExternalConditionModal();
-      }
-
-      function deleteExternalCondition(conditionId) {
-        const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
-        if (tradesUsingCondition.length > 0) {
-          alert('有交易紀錄正在使用此大盤多空，請先移除或更改相關交易紀錄。');
-          return;
-        }
-        if (!confirm('您確定要刪除此大盤多空嗎？此操作無法撤銷。')) {
-          return;
-        }
-        externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
-        saveExternalConditions();
-        renderExternalConditions();
-        renderTrades();
-        calculateStats();
-      }
-
-      function exportExternalConditionsToExcel() {
-        if (externalConditions.length === 0) {
-          alert('目前沒有大盤多空資料可供匯出。');
-          return;
-        }
-        const exportData = externalConditions.map(condition => ({
-          "大盤多空ID": condition.id,
-          "大盤多空名稱": condition.name,
-          "描述": condition.description
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "大盤多空管理");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `大盤多空管理_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function importExternalConditionsFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const requiredFields = ["大盤多空ID", "大盤多空名稱", "描述"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedExternalConditions = jsonData.map(item => {
-            const name = item["大盤多空名稱"].trim();
-            const description = item["描述"].trim();
-            const existingCondition = externalConditions.find(c => c.name === name);
-            if (existingCondition) {
-              alert(`大盤多空名稱 "${name}" 已存在。請避免重複新增。`);
-              return null;
-            }
-            const newConditionId = nextTradeId++;
-            return {
-              id: newConditionId,
-              name: name,
-              description: description
-            };
-          }).filter(condition => condition !== null);
-          if (importedExternalConditions.length === 0) {
-            alert('沒有有效的大盤多空紀錄被匯入。');
-            return;
-          }
-          externalConditions = externalConditions.concat(importedExternalConditions);
-          renderExternalConditions();
-          renderTrades();
-          calculateStats();
-          saveExternalConditions();
-          saveData();
-          alert(`成功匯入 ${importedExternalConditions.length} 筆大盤多空紀錄。`);
-          document.getElementById('importExternalConditionsInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-
-      function toggleExternalConditionManagement() {
-        const content = document.getElementById('externalConditionManagementContent');
-        const toggleIcon = document.getElementById('externalConditionToggleIcon');
-        const toggleButton = toggleIcon.parentElement;
-        if (content.classList.contains('hidden')) {
-          content.classList.remove('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
-        } else {
-          content.classList.add('hidden');
-          toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
-        }
-        lucide.createIcons();
-        saveCollapseState();
-      }
-
-      // -------------------------
-      // 交易紀錄管理
-      // -------------------------
+      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
@@ -1577,6 +1046,16 @@
         lucide.createIcons();
       }
 
+      function getStrategyName(strategyId) {
+        const strategy = strategies.find(s => s.id === strategyId);
+        return strategy ? strategy.name : '';
+      }
+
+      function getExternalConditionName(conditionId) {
+        const condition = externalConditions.find(c => c.id === conditionId);
+        return condition ? condition.name : '';
+      }
+
       function handleTradeChange(index, field, value) {
         if (field === 'returnRate') {
           const cleanedValue = value.replace('%', '').trim();
@@ -1682,149 +1161,174 @@
         saveData();
       }
 
-      function exportToExcel() {
-        if (trades.length === 0) {
-          alert('目前沒有交易紀錄可供匯出。');
+      function openAddStrategyModal() {
+        openModal('addStrategyModal');
+      }
+
+      function closeAddStrategyModal() {
+        closeModal('addStrategyModal');
+      }
+
+      function addStrategy() {
+        const nameInput = document.getElementById('newStrategyName');
+        const descriptionInput = document.getElementById('newStrategyDescription');
+        const name = nameInput.value.trim();
+        const description = descriptionInput.value.trim();
+        if (name === '') {
+          alert('策略名稱不能為空。');
           return;
         }
-        const exportData = trades.map(trade => ({
-          "交易ID": trade.id,
-          "報酬率 (%)": trade.returnRate,
-          "部位金額": trade.position,
-          "進場價格": trade.entryPrice,
-          "出場價格": trade.exitPrice,
-          "進場當天不利價格": trade.entryDayAdversePrice,
-          "MFE日期": trade.mfeDate,
-          "最高價格": trade.highestPrice,
-          "最低價格": trade.lowestPrice,
-          "交易方向": trade.direction,
-          "標的名稱": trade.assetName,
-          "策略名稱": getStrategyName(trade.strategyId),
-          "大盤多空": getExternalConditionName(trade.externalConditionId),
-          "開倉日": trade.openDate,
-          "平倉日": trade.closeDate,
-          "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
-          "文字說明": trade.description,
-          "圖片URL": trade.imageUrl
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "交易紀錄");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `交易紀錄_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function calculateHoldingDays(openDate, closeDate) {
-        if (openDate === '' && closeDate === '') return '';
-        if (openDate === '' || closeDate === '') return '未平倉';
-        const open = new Date(openDate);
-        const close = new Date(closeDate);
-        const diffTime = close - open;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 ? diffDays : '';
-      }
-
-      function importFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
+        const existingStrategy = strategies.find(strategy => strategy.name === name);
+        if (existingStrategy) {
+          alert('策略名稱已存在，請選擇其他名稱。');
           return;
         }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "MFE日期", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedTrades = jsonData.map(item => {
-            const strategy = strategies.find(s => s.name === item["策略名稱"]);
-            const externalCondition = externalConditions.find(c => c.name === item["大盤多空"]);
-            if (!strategy) {
-              alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
-              return null;
-            }
-            if (!externalCondition) {
-              alert(`大盤多空名稱 "${item["大盤多空"]}" 不存在。請先新增該大盤多空後再匯入。`);
-              return null;
-            }
-            const newTradeId = nextTradeId++;
-            let holdingDays = item["持倉天數"];
-            if (holdingDays === '' || holdingDays === '未平倉') {
-              holdingDays = '未平倉';
-            }
-            return {
-              id: newTradeId,
-              returnRate: item["報酬率 (%)"],
-              position: item["部位金額"],
-              entryPrice: item["進場價格"],
-              exitPrice: item["出場價格"] || '',
-              entryDayAdversePrice: item["進場當天不利價格"] || '',
-              mfeDate: item["MFE日期"] || '',
-              highestPrice: item["最高價格"],
-              lowestPrice: item["最低價格"],
-              direction: item["交易方向"] || "多",
-              assetName: item["標的名稱"],
-              strategyId: strategy.id,
-              externalConditionId: externalCondition.id,
-              openDate: item["開倉日"],
-              closeDate: item["平倉日"],
-              description: item["文字說明"],
-              imageUrl: item["圖片URL"]
-            };
-          }).filter(trade => trade !== null);
-          if (importedTrades.length === 0) {
-            alert('沒有有效的交易紀錄被匯入。');
-            return;
-          }
-          trades = trades.concat(importedTrades);
-          renderTrades();
-          calculateStats();
-          saveData();
-          alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
-          document.getElementById('importExcelInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
+        const newId = strategies.length > 0 ? Math.max(...strategies.map(s => s.id)) + 1 : 1;
+        strategies.push({ id: newId, name, description });
+        saveStrategies();
+        renderStrategies();
+        renderTrades();
+        calculateStats();
+        closeAddStrategyModal();
       }
 
-      function getStrategyName(strategyId) {
+      function openEditStrategyModal(strategyId) {
         const strategy = strategies.find(s => s.id === strategyId);
-        return strategy ? strategy.name : '';
+        if (!strategy) return;
+        document.getElementById('editStrategyId').value = strategy.id;
+        document.getElementById('editStrategyName').value = strategy.name;
+        document.getElementById('editStrategyDescription').value = strategy.description;
+        openModal('editStrategyModal');
       }
 
-      function getExternalConditionName(conditionId) {
+      function closeEditStrategyModal() {
+        closeModal('editStrategyModal');
+      }
+
+      function updateStrategy() {
+        const id = parseInt(document.getElementById('editStrategyId').value, 10);
+        const name = document.getElementById('editStrategyName').value.trim();
+        const description = document.getElementById('editStrategyDescription').value.trim();
+        if (name === '') {
+          alert('策略名稱不能為空。');
+          return;
+        }
+        const existingStrategy = strategies.find(strategy => strategy.name === name && strategy.id !== id);
+        if (existingStrategy) {
+          alert('策略名稱已存在，請選擇其他名稱。');
+          return;
+        }
+        const strategyIndex = strategies.findIndex(s => s.id === id);
+        if (strategyIndex === -1) return;
+        strategies[strategyIndex].name = name;
+        strategies[strategyIndex].description = description;
+        saveStrategies();
+        renderStrategies();
+        renderTrades();
+        calculateStats();
+        closeEditStrategyModal();
+      }
+
+      function deleteStrategy(strategyId) {
+        const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
+        if (tradesUsingStrategy.length > 0) {
+          alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
+          return;
+        }
+        if (!confirm('您確定要刪除此策略嗎？此操作無法撤銷。')) {
+          return;
+        }
+        strategies = strategies.filter(strategy => strategy.id !== strategyId);
+        saveStrategies();
+        renderStrategies();
+        renderTrades();
+        calculateStats();
+      }
+
+      function openAddExternalConditionModal() {
+        openModal('addExternalConditionModal');
+      }
+
+      function closeAddExternalConditionModal() {
+        closeModal('addExternalConditionModal');
+      }
+
+      function addExternalCondition() {
+        const nameInput = document.getElementById('newExternalConditionName');
+        const descriptionInput = document.getElementById('newExternalConditionDescription');
+        const name = nameInput.value.trim();
+        const description = descriptionInput.value.trim();
+        if (name === '') {
+          alert('大盤多空名稱不能為空。');
+          return;
+        }
+        const existingCondition = externalConditions.find(condition => condition.name === name);
+        if (existingCondition) {
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
+          return;
+        }
+        const newId = externalConditions.length > 0 ? Math.max(...externalConditions.map(c => c.id)) + 1 : 1;
+        externalConditions.push({ id: newId, name, description });
+        saveExternalConditions();
+        renderExternalConditions();
+        renderTrades();
+        calculateStats();
+        closeAddExternalConditionModal();
+      }
+
+      function openEditExternalConditionModal(conditionId) {
         const condition = externalConditions.find(c => c.id === conditionId);
-        return condition ? condition.name : '';
+        if (!condition) return;
+        document.getElementById('editExternalConditionId').value = condition.id;
+        document.getElementById('editExternalConditionName').value = condition.name;
+        document.getElementById('editExternalConditionDescription').value = condition.description;
+        openModal('editExternalConditionModal');
       }
 
-      // -------------------------
-      // 計算與統計
-      // -------------------------
+      function closeEditExternalConditionModal() {
+        closeModal('editExternalConditionModal');
+      }
+
+      function updateExternalCondition() {
+        const id = parseInt(document.getElementById('editExternalConditionId').value, 10);
+        const name = document.getElementById('editExternalConditionName').value.trim();
+        const description = document.getElementById('editExternalConditionDescription').value.trim();
+        if (name === '') {
+          alert('大盤多空名稱不能為空。');
+          return;
+        }
+        const existingCondition = externalConditions.find(condition => condition.name === name && condition.id !== id);
+        if (existingCondition) {
+          alert('大盤多空名稱已存在，請選擇其他名稱。');
+          return;
+        }
+        const conditionIndex = externalConditions.findIndex(c => c.id === id);
+        if (conditionIndex === -1) return;
+        externalConditions[conditionIndex].name = name;
+        externalConditions[conditionIndex].description = description;
+        saveExternalConditions();
+        renderExternalConditions();
+        renderTrades();
+        calculateStats();
+        closeEditExternalConditionModal();
+      }
+
+      function deleteExternalCondition(conditionId) {
+        const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
+        if (tradesUsingCondition.length > 0) {
+          alert('有交易紀錄正在使用此大盤多空，請先移除或更改相關交易紀錄。');
+          return;
+        }
+        if (!confirm('您確定要刪除此大盤多空嗎？此操作無法撤銷。')) {
+          return;
+        }
+        externalConditions = externalConditions.filter(condition => condition.id !== conditionId);
+        saveExternalConditions();
+        renderExternalConditions();
+        renderTrades();
+        calculateStats();
+      }
+
       function applyFilters() {
         const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
@@ -1868,6 +1372,7 @@
         return date.toISOString().split('T')[0];
       }
 
+      // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
@@ -2173,9 +1678,8 @@
         
         // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
         var profitAchievementRate = 0;
-        let avgWinPercentVal = parseFloat(avgWinPercentValue);
         if(avgMFE !== 0) {
-          profitAchievementRate = (avgWinPercentVal / avgMFE) * 100;
+          profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
         }
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
         
@@ -2298,231 +1802,44 @@
         }
       }
 
-      // -------------------------
-      // 日常市場數據管理
-      // -------------------------
-      function renderDailyMarketData() {
-        const dataList = document.getElementById('dailyMarketDataList');
-        if(!dataList) return;
-        dataList.innerHTML = dailyMarketData.map(item => `
-          <tr>
-            <td class="border px-4 py-2">${escapeHtml(item.date || '')}</td>
-            <td class="border px-4 py-2">${item.open || ''}</td>
-            <td class="border px-4 py-2">${item.high || ''}</td>
-            <td class="border px-4 py-2">${item.low || ''}</td>
-            <td class="border px-4 py-2">${item.close || ''}</td>
-            <td class="border px-4 py-2">${item.volume || ''}</td>
-            <td class="border px-4 py-2">${item.volatility || ''}</td>
-            <td class="border px-4 py-2 text-center">
-              <button onclick="openEditDailyDataModal(${item.id})" class="mr-2">
-                <i data-lucide="edit"></i>
-              </button>
-              <button onclick="deleteDailyData(${item.id})" class="delete-button">
-                <i data-lucide="trash-2"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
-        lucide.createIcons();
-      }
+      loadStrategies();
+      loadExternalConditions();
+      loadData();
 
-      function toggleDailyMarketDataManagement() {
-        const content = document.getElementById('dailyMarketDataManagementContent');
-        const toggleIcon = document.getElementById('dailyMarketDataToggleIcon');
+      function toggleStrategyManagement() {
+        const content = document.getElementById('strategyManagementContent');
+        const toggleIcon = document.getElementById('strategyToggleIcon');
         const toggleButton = toggleIcon.parentElement;
         if (content.classList.contains('hidden')) {
           content.classList.remove('hidden');
           toggleIcon.setAttribute('data-lucide', 'chevron-down');
-          toggleButton.innerHTML = `<i id="dailyMarketDataToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
         } else {
           content.classList.add('hidden');
           toggleIcon.setAttribute('data-lucide', 'chevron-right');
-          toggleButton.innerHTML = `<i id="dailyMarketDataToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
         }
         lucide.createIcons();
         saveCollapseState();
       }
 
-      function openAddDailyDataModal() {
-        openModal('addDailyDataModal');
-      }
-
-      function closeAddDailyDataModal() {
-        closeModal('addDailyDataModal');
-      }
-
-      function addDailyData() {
-        const dateVal = document.getElementById('newDailyDate').value;
-        if (!dateVal) {
-          alert('請輸入日期');
-          return;
+      function toggleExternalConditionManagement() {
+        const content = document.getElementById('externalConditionManagementContent');
+        const toggleIcon = document.getElementById('externalConditionToggleIcon');
+        const toggleButton = toggleIcon.parentElement;
+        if (content.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-down');
+          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+        } else {
+          content.classList.add('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-right');
+          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
         }
-        const openVal = document.getElementById('newDailyOpen').value.trim();
-        const highVal = document.getElementById('newDailyHigh').value.trim();
-        const lowVal = document.getElementById('newDailyLow').value.trim();
-        const closeVal = document.getElementById('newDailyClose').value.trim();
-        const volumeVal = document.getElementById('newDailyVolume').value.trim();
-        const volVal = document.getElementById('newDailyVolatility').value.trim();
-
-        const newData = {
-          id: nextTradeId++,
-          date: dateVal,
-          open: openVal,
-          high: highVal,
-          low: lowVal,
-          close: closeVal,
-          volume: volumeVal,
-          volatility: volVal
-        };
-        dailyMarketData.unshift(newData);
-        renderDailyMarketData();
-        saveData();
-        closeAddDailyDataModal();
+        lucide.createIcons();
+        saveCollapseState();
       }
 
-      function openEditDailyDataModal(id) {
-        const item = dailyMarketData.find(d => d.id === id);
-        if (!item) return;
-        document.getElementById('editDailyDataId').value = item.id;
-        document.getElementById('editDailyDate').value = item.date || '';
-        document.getElementById('editDailyOpen').value = item.open || '';
-        document.getElementById('editDailyHigh').value = item.high || '';
-        document.getElementById('editDailyLow').value = item.low || '';
-        document.getElementById('editDailyClose').value = item.close || '';
-        document.getElementById('editDailyVolume').value = item.volume || '';
-        document.getElementById('editDailyVolatility').value = item.volatility || '';
-        openModal('editDailyDataModal');
-      }
-
-      function closeEditDailyDataModal() {
-        closeModal('editDailyDataModal');
-      }
-
-      function updateDailyData() {
-        const idVal = parseInt(document.getElementById('editDailyDataId').value, 10);
-        const itemIndex = dailyMarketData.findIndex(d => d.id === idVal);
-        if (itemIndex === -1) return;
-        const dateVal = document.getElementById('editDailyDate').value;
-        if (!dateVal) {
-          alert('請輸入日期');
-          return;
-        }
-        dailyMarketData[itemIndex].date = dateVal;
-        dailyMarketData[itemIndex].open = document.getElementById('editDailyOpen').value.trim();
-        dailyMarketData[itemIndex].high = document.getElementById('editDailyHigh').value.trim();
-        dailyMarketData[itemIndex].low = document.getElementById('editDailyLow').value.trim();
-        dailyMarketData[itemIndex].close = document.getElementById('editDailyClose').value.trim();
-        dailyMarketData[itemIndex].volume = document.getElementById('editDailyVolume').value.trim();
-        dailyMarketData[itemIndex].volatility = document.getElementById('editDailyVolatility').value.trim();
-
-        renderDailyMarketData();
-        saveData();
-        closeEditDailyDataModal();
-      }
-
-      function deleteDailyData(id) {
-        if (!confirm('您確定要刪除這筆日常市場數據嗎？')) {
-          return;
-        }
-        dailyMarketData = dailyMarketData.filter(d => d.id !== id);
-        renderDailyMarketData();
-        saveData();
-      }
-
-      function exportDailyMarketDataToExcel() {
-        if (dailyMarketData.length === 0) {
-          alert('目前沒有日常市場數據可供匯出。');
-          return;
-        }
-        const exportData = dailyMarketData.map(item => ({
-          "ID": item.id,
-          "日期": item.date,
-          "Open": item.open,
-          "High": item.high,
-          "Low": item.low,
-          "Close": item.close,
-          "Volume": item.volume,
-          "波動率(%)": item.volatility
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "日常市場數據");
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        link.href = URL.createObjectURL(blob);
-        link.download = `日常市場數據_${today}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function importDailyMarketDataFromExcel(event) {
-        const file = event.target.files[0];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const data = e.target.result;
-          let workbook;
-          try {
-            workbook = XLSX.read(data, { type: 'binary' });
-          } catch (error) {
-            alert('無法解析該文件。請確認文件為有效的Excel格式。');
-            return;
-          }
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-          if (jsonData.length === 0) {
-            alert('Excel文件中沒有任何數據。');
-            return;
-          }
-          // 檢查必要欄位
-          const requiredFields = ["ID", "日期", "Open", "High", "Low", "Close", "Volume", "波動率(%)"];
-          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
-          if (missingFields.length > 0) {
-            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
-            return;
-          }
-          const importedData = jsonData.map(item => {
-            const existingItem = dailyMarketData.find(d => d.id === parseInt(item["ID"], 10));
-            if (existingItem) {
-              alert(`ID 重複，"${item["ID"]}" 已存在，請手動處理或更改後再匯入。`);
-              return null;
-            }
-            const newId = nextTradeId++;
-            return {
-              id: newId,
-              date: item["日期"],
-              open: item["Open"],
-              high: item["High"],
-              low: item["Low"],
-              close: item["Close"],
-              volume: item["Volume"],
-              volatility: item["波動率(%)"]
-            };
-          }).filter(d => d !== null);
-          if (importedData.length === 0) {
-            alert('沒有有效的日常市場數據被匯入。');
-            return;
-          }
-          dailyMarketData = dailyMarketData.concat(importedData);
-          renderDailyMarketData();
-          saveData();
-          alert(`成功匯入 ${importedData.length} 筆日常市場數據。`);
-          document.getElementById('importDailyMarketDataInput').value = '';
-        };
-        reader.onerror = function() {
-          alert('讀取文件時發生錯誤。');
-        };
-        reader.readAsBinaryString(file);
-      }
-      // -------------------------
-      // 公用函式 (Modal / Escape)
-      // -------------------------
       function openModal(modalId) {
         document.getElementById(modalId).classList.remove('hidden');
       }
@@ -2549,13 +1866,307 @@
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
 
-      // -------------------------
-      // 初始化
-      // -------------------------
-      loadStrategies();
-      loadExternalConditions();
-      loadDailyMarketData();
-      loadData();
+      function exportToExcel() {
+        if (trades.length === 0) {
+          alert('目前沒有交易紀錄可供匯出。');
+          return;
+        }
+        const exportData = trades.map(trade => ({
+          "交易ID": trade.id,
+          "報酬率 (%)": trade.returnRate,
+          "部位金額": trade.position,
+          "進場價格": trade.entryPrice,
+          "出場價格": trade.exitPrice,
+          "進場當天不利價格": trade.entryDayAdversePrice,
+          "MFE日期": trade.mfeDate,
+          "最高價格": trade.highestPrice,
+          "最低價格": trade.lowestPrice,
+          "交易方向": trade.direction,
+          "標的名稱": trade.assetName,
+          "策略名稱": getStrategyName(trade.strategyId),
+          "大盤多空": getExternalConditionName(trade.externalConditionId),
+          "開倉日": trade.openDate,
+          "平倉日": trade.closeDate,
+          "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
+          "文字說明": trade.description,
+          "圖片URL": trade.imageUrl
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "交易紀錄");
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `交易紀錄_${today}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      function calculateHoldingDays(openDate, closeDate) {
+        if (openDate === '' && closeDate === '') return '';
+        if (openDate === '' || closeDate === '') return '未平倉';
+        const open = new Date(openDate);
+        const close = new Date(closeDate);
+        const diffTime = close - open;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 ? diffDays : '';
+      }
+      
+      function importFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const requiredFields = ["交易ID", "報酬率 (%)", "部位金額", "進場價格", "出場價格", "進場當天不利價格", "MFE日期", "最高價格", "最低價格", "交易方向", "標的名稱", "策略名稱", "大盤多空", "開倉日", "平倉日", "持倉天數", "文字說明", "圖片URL"];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedTrades = jsonData.map(item => {
+            const strategy = strategies.find(s => s.name === item["策略名稱"]);
+            const externalCondition = externalConditions.find(c => c.name === item["大盤多空"]);
+            if (!strategy) {
+              alert(`策略名稱 "${item["策略名稱"]}" 不存在。請先新增該策略後再匯入。`);
+              return null;
+            }
+            if (!externalCondition) {
+              alert(`大盤多空名稱 "${item["大盤多空"]}" 不存在。請先新增該大盤多空後再匯入。`);
+              return null;
+            }
+            const newTradeId = nextTradeId++;
+            let holdingDays = item["持倉天數"];
+            if (holdingDays === '' || holdingDays === '未平倉') {
+              holdingDays = '未平倉';
+            }
+            return {
+              id: newTradeId,
+              returnRate: item["報酬率 (%)"],
+              position: item["部位金額"],
+              entryPrice: item["進場價格"],
+              exitPrice: item["出場價格"] || '',
+              entryDayAdversePrice: item["進場當天不利價格"] || '',
+              mfeDate: item["MFE日期"] || '',
+              highestPrice: item["最高價格"],
+              lowestPrice: item["最低價格"],
+              direction: item["交易方向"] || "多",
+              assetName: item["標的名稱"],
+              strategyId: strategy.id,
+              externalConditionId: externalCondition.id,
+              openDate: item["開倉日"],
+              closeDate: item["平倉日"],
+              description: item["文字說明"],
+              imageUrl: item["圖片URL"]
+            };
+          }).filter(trade => trade !== null);
+          if (importedTrades.length === 0) {
+            alert('沒有有效的交易紀錄被匯入。');
+            return;
+          }
+          trades = trades.concat(importedTrades);
+          renderTrades();
+          calculateStats();
+          saveData();
+          alert(`成功匯入 ${importedTrades.length} 筆交易紀錄。`);
+          document.getElementById('importExcelInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
+      
+      function exportStrategiesToExcel() {
+        if (strategies.length === 0) {
+          alert('目前沒有策略資料可供匯出。');
+          return;
+        }
+        const exportData = strategies.map(strategy => ({
+          "策略ID": strategy.id,
+          "策略名稱": strategy.name,
+          "描述": strategy.description
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "策略管理");
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `策略管理_${today}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      function importStrategiesFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const requiredFields = ["策略ID", "策略名稱", "描述"];
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedStrategies = jsonData.map(item => {
+            const name = item["策略名稱"].trim();
+            const description = item["描述"].trim();
+            const existingStrategy = strategies.find(s => s.name === name);
+            if (existingStrategy) {
+              alert(`策略名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
+            const newStrategyId = nextTradeId++;
+            return {
+              id: newStrategyId,
+              name: name,
+              description: description
+            };
+          }).filter(strategy => strategy !== null);
+          if (importedStrategies.length === 0) {
+            alert('沒有有效的策略紀錄被匯入。');
+            return;
+          }
+          strategies = strategies.concat(importedStrategies);
+          renderStrategies();
+          renderTrades();
+          calculateStats();
+          saveStrategies();
+          saveData();
+          alert(`成功匯入 ${importedStrategies.length} 筆策略紀錄。`);
+          document.getElementById('importStrategiesInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
+      
+      function exportExternalConditionsToExcel() {
+        if (externalConditions.length === 0) {
+          alert('目前沒有大盤多空資料可供匯出。');
+          return;
+        }
+        const exportData = externalConditions.map(condition => ({
+          "大盤多空ID": condition.id,
+          "大盤多空名稱": condition.name,
+          "描述": condition.description
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "大盤多空管理");
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        link.href = URL.createObjectURL(blob);
+        link.download = `大盤多空管理_${today}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      function importExternalConditionsFromExcel(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          let workbook;
+          try {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } catch (error) {
+            alert('無法解析該文件。請確認文件為有效的Excel格式。');
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          if (jsonData.length === 0) {
+            alert('Excel文件中沒有任何數據。');
+            return;
+          }
+          const requiredFields = ["大盤多空ID", "大盤多空名稱", "描述"];
+          const missingFields = requiredFields.filter(field => !(field in jsonData[0]));
+          if (missingFields.length > 0) {
+            alert(`缺少以下必要欄位：${missingFields.join(', ')}`);
+            return;
+          }
+          const importedExternalConditions = jsonData.map(item => {
+            const name = item["大盤多空名稱"].trim();
+            const description = item["描述"].trim();
+            const existingCondition = externalConditions.find(c => c.name === name);
+            if (existingCondition) {
+              alert(`大盤多空名稱 "${name}" 已存在。請避免重複新增。`);
+              return null;
+            }
+            const newConditionId = nextTradeId++;
+            return {
+              id: newConditionId,
+              name: name,
+              description: description
+            };
+          }).filter(condition => condition !== null);
+          if (importedExternalConditions.length === 0) {
+            alert('沒有有效的大盤多空紀錄被匯入。');
+            return;
+          }
+          externalConditions = externalConditions.concat(importedExternalConditions);
+          renderExternalConditions();
+          renderTrades();
+          calculateStats();
+          saveExternalConditions();
+          saveData();
+          alert(`成功匯入 ${importedExternalConditions.length} 筆大盤多空紀錄。`);
+          document.getElementById('importExternalConditionsInput').value = '';
+        };
+        reader.onerror = function() {
+          alert('讀取文件時發生錯誤。');
+        };
+        reader.readAsBinaryString(file);
+      }
     </script>
   </div>
 </body>
