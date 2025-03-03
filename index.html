@@ -196,61 +196,46 @@
 
     <!-- 分析結果區塊 -->
     <div class="bg-gray-50 p-4 rounded mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-4">分析結果</h2>
-      <div class="space-y-4">
-        <!-- 交易數、勝率、風報比 -->
-        <div class="flex justify-between font-bold text-lg">
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">交易數：</span>
-            <span id="totalTrades" class="font-medium">0</span>
-          </div>
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">勝率：</span>
-            <span id="winRate" class="font-medium">0% (0勝0敗)</span>
-          </div>
-          <div class="flex-1 text-center">
-            <span class="text-gray-600">風報比：</span>
-            <span id="riskRewardRatio" class="font-medium">0</span>
-          </div>
+      <h2 class="text-xl font-bold text-gray-700 mb-4 text-center">分析結果</h2>
+      <!-- 主要指標：使用網格排列 (2行4欄) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">交易數</div>
+          <div id="totalTrades" class="text-lg font-bold">0</div>
         </div>
-        <!-- 期望值、總報酬、ROI -->
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">期望值：</span>
-            <span id="expectedValue" class="font-bold text-lg">0</span>
-          </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">勝率</div>
+          <div id="winRate" class="text-lg font-bold">0% (0勝0敗)</div>
         </div>
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">總報酬：</span>
-            <span id="totalReturn" class="font-bold text-lg">0</span>
-          </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">風報比</div>
+          <div id="riskRewardRatio" class="text-lg font-bold">0</div>
         </div>
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">總資金回報率 (ROI)：</span>
-            <span id="analysisROI" class="font-bold text-lg">0%</span>
-          </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">期望值</div>
+          <div id="expectedValue" class="text-lg font-bold">0</div>
         </div>
-        <!-- 新增獲利達成率 -->
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">獲利達成率：</span>
-            <span id="profitAchievementRate" class="font-bold text-lg">0%</span>
-          </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">總報酬</div>
+          <div id="totalReturn" class="text-lg font-bold">0</div>
         </div>
-        <!-- 新增最大交易回落 (MDD) -->
-        <div class="flex justify-between font-bold text-lg mt-2">
-          <div class="flex-1 text-center">
-            <span class="text-gray-700">最大交易回落 (MDD)：</span>
-            <span id="maxDrawdown" class="font-bold text-lg">0%</span>
-          </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">資金回報率 (ROI)</div>
+          <div id="analysisROI" class="text-lg font-bold">0%</div>
+        </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">獲利達成率</div>
+          <div id="profitAchievementRate" class="text-lg font-bold">0%</div>
+        </div>
+        <div class="p-2 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">最大交易回落 (MDD)</div>
+          <div id="maxDrawdown" class="text-lg font-bold">0%</div>
         </div>
       </div>
-      <!-- 策略使用次數與大盤多空天數 -->
-      <div class="mt-4 grid grid-cols-2 gap-4">
+      <!-- 次要指標：策略使用與大盤多空 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h3 class="text-md font-medium text-gray-700 mb-2">各種策略的使用次數</h3>
+          <h3 class="text-lg font-medium text-gray-700 mb-2">各策略使用次數</h3>
           <table class="min-w-full border-collapse">
             <thead>
               <tr>
@@ -263,23 +248,19 @@
           </table>
         </div>
         <div>
-          <h3 class="text-md font-medium text-gray-700 mb-2">大盤多空天數</h3>
+          <h3 class="text-lg font-medium text-gray-700 mb-2">大盤多空天數</h3>
           <ul id="marketStatusUsageList" class="list-disc pl-5"></ul>
         </div>
       </div>
       <!-- 持倉天數 -->
-      <div class="mt-4 grid grid-cols-2 gap-4">
-        <div class="border p-4 rounded">
-          <h4 class="text-lg font-medium text-gray-700 mb-2">獲利交易平均持倉天數</h4>
-          <div class="flex justify-end">
-            <span id="avgWinHoldingDays" class="font-bold">0</span> 天
-          </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="p-4 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">獲利交易平均持倉天數</div>
+          <div id="avgWinHoldingDays" class="text-lg font-bold">0</div>
         </div>
-        <div class="border p-4 rounded">
-          <h4 class="text-lg font-medium text-gray-700 mb-2">虧損交易平均持倉天數</h4>
-          <div class="flex justify-end">
-            <span id="avgLossHoldingDays" class="font-bold">0</span> 天
-          </div>
+        <div class="p-4 bg-white rounded shadow-sm text-center">
+          <div class="text-sm text-gray-600">虧損交易平均持倉天數</div>
+          <div id="avgLossHoldingDays" class="text-lg font-bold">0</div>
         </div>
       </div>
     </div>
