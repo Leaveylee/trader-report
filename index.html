@@ -588,7 +588,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊 (新增欄位：交易方向、進場價格、出場價格、進場當天不利價格、MFE日期、最高價格、最低價格) -->
+    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易記錄 -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -602,40 +602,8 @@
       <div class="text-sm text-gray-600 mb-2">
         請輸入交易報酬率（例如：+6.66、-2.92）、部位金額、進場價格、出場價格、進場當天不利價格、MFE日期、最高價格、最低價格、標的名稱、策略名稱、大盤多空、開倉日、平倉日，以及選擇交易方向（多/空）
       </div>
-      <div class="relative">
-        <div class="overflow-x-auto scrollbar-top" id="topScrollbar">
-          <div id="topScrollbarContent"></div>
-        </div>
-        <div class="overflow-x-auto" id="bottomScrollbar">
-          <table class="min-w-full bg-white rounded">
-            <thead>
-              <tr>
-                <th class="px-4 py-2 min-w-[80px]">交易</th>
-                <th class="px-4 py-2 min-w-[100px]">開倉日</th>
-                <th class="px-4 py-2 min-w-[100px]">平倉日</th>
-                <th class="px-4 py-2 min-w-[100px]">持倉天數</th>
-                <th class="px-4 py-2 min-w-[100px]">報酬率 (%)</th>
-                <th class="px-4 py-2 min-w-[100px]">部位金額</th>
-                <th class="px-4 py-2 min-w-[100px]">進場價格</th>
-                <th class="px-4 py-2 min-w-[100px]">出場價格</th>
-                <th class="px-4 py-2 min-w-[100px]">進場當天不利價格</th>
-                <th class="px-4 py-2 min-w-[100px]">MFE日期</th>
-                <th class="px-4 py-2 min-w-[100px]">最高價格</th>
-                <th class="px-4 py-2 min-w-[100px]">最低價格</th>
-                <th class="px-4 py-2 min-w-[100px]">交易方向</th>
-                <th class="px-4 py-2 min-w-[150px]">標的名稱</th>
-                <th class="px-4 py-2 min-w-[150px]">策略名稱</th>
-                <th class="px-4 py-2 min-w-[150px]">大盤多空</th>
-                <th class="px-4 py-2 min-w-[200px]">文字說明</th>
-                <th class="px-4 py-2 min-w-[200px]">圖片</th>
-                <th class="px-4 py-2 min-w-[80px]">操作</th>
-              </tr>
-            </thead>
-            <tbody id="tradesList">
-              <!-- 交易記錄將在此動態生成 -->
-            </tbody>
-          </table>
-        </div>
+      <div id="tradesList" class="space-y-4">
+        <!-- 交易記錄卡片動態生成 -->
       </div>
     </div>
 
@@ -916,6 +884,7 @@
         `;
       }
 
+      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
@@ -974,99 +943,103 @@
             holdingDaysClass = 'text-red-500';
           }
           return `
-            <tr>
-              <td class="border px-4 py-2 text-center min-w-[80px]">${transactionNumber}</td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="date" value="${trade.openDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="openDate">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="date" value="${trade.closeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="closeDate">
-              </td>
-              <td class="border px-4 py-2 text-center ${holdingDaysClass} min-w-[100px]">
-                ${holdingDays}
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="text" value="${trade.returnRate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)" class="w-full p-1 border rounded trade-input" placeholder="+6.66 或 -2.92" data-row-index="${trades.indexOf(trade)}" data-field="returnRate" data-trade-id="${trade.id}">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.position}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${trades.indexOf(trade)}" data-field="position">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.entryPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="進場價格" data-row-index="${trades.indexOf(trade)}" data-field="entryPrice">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.exitPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'exitPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="出場價格" data-row-index="${trades.indexOf(trade)}" data-field="exitPrice">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${trades.indexOf(trade)}" data-field="entryDayAdversePrice">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="date" value="${trade.mfeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'mfeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="mfeDate">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <input type="number" value="${trade.lowestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'lowestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最低價格" data-row-index="${trades.indexOf(trade)}" data-field="lowestPrice">
-              </td>
-              <td class="border px-4 py-2 min-w-[100px]">
-                <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="direction">
-                  <option value="多" ${trade.direction === "多" ? "selected" : ""}>多</option>
-                  <option value="空" ${trade.direction === "空" ? "selected" : ""}>空</option>
-                </select>
-              </td>
-              <td class="border px-4 py-2 min-w-[150px]">
-                <input type="text" value="${escapeHtml(trade.assetName)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入標的名稱" data-row-index="${trades.indexOf(trade)}" data-field="assetName">
-              </td>
-              <td class="border px-4 py-2 min-w-[150px]">
-                <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="strategyId">
-                  <option value="">選擇策略</option>
-                  ${strategies.map(strategy => `
-                    <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
-                  `).join('')}
-                </select>
-              </td>
-              <td class="border px-4 py-2 min-w-[150px]">
-                <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
-                  <option value="">選擇大盤多空</option>
-                  ${externalConditions.map(condition => `
-                    <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
-                  `).join('')}
-                </select>
-              </td>
-              <td class="border px-4 py-2 min-w-[200px]">
-                <input type="text" value="${escapeHtml(trade.description)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入文字說明" data-row-index="${trades.indexOf(trade)}" data-field="description">
-              </td>
-              <td class="border px-4 py-2 min-w-[200px]">
-                <input type="text" value="${trade.imageUrl}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入圖片URL" data-row-index="${trades.indexOf(trade)}" data-field="imageUrl">
-                ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
-              </td>
-              <td class="border px-4 py-2 text-center min-w-[80px]">
-                ${trades.length > 1 ? `<button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button"><i data-lucide="trash-2"></i></button>` : ''}
-              </td>
-            </tr>
+            <div class="bg-white rounded shadow p-4">
+              <div class="flex justify-between items-center mb-2">
+                <div class="font-bold">交易 ${transactionNumber}</div>
+                <div>
+                  ${trades.length > 1 ? `<button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button"><i data-lucide="trash-2"></i></button>` : ''}
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm text-gray-700">開倉日</label>
+                  <input type="date" value="${trade.openDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="openDate">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">平倉日</label>
+                  <input type="date" value="${trade.closeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="closeDate">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">持倉天數</label>
+                  <div class="w-full p-1 border rounded ${holdingDaysClass}">${holdingDays}</div>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">交易方向</label>
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="direction">
+                    <option value="多" ${trade.direction === "多" ? "selected" : ""}>多</option>
+                    <option value="空" ${trade.direction === "空" ? "selected" : ""}>空</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">報酬率 (%)</label>
+                  <input type="text" value="${trade.returnRate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)" class="w-full p-1 border rounded trade-input" placeholder="+6.66 或 -2.92" data-row-index="${trades.indexOf(trade)}" data-field="returnRate" data-trade-id="${trade.id}">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">部位金額</label>
+                  <input type="number" value="${trade.position}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${trades.indexOf(trade)}" data-field="position">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">進場價格</label>
+                  <input type="number" value="${trade.entryPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="進場價格" data-row-index="${trades.indexOf(trade)}" data-field="entryPrice">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">出場價格</label>
+                  <input type="number" value="${trade.exitPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'exitPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="出場價格" data-row-index="${trades.indexOf(trade)}" data-field="exitPrice">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">進場當天不利價格</label>
+                  <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${trades.indexOf(trade)}" data-field="entryDayAdversePrice">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">MFE日期</label>
+                  <input type="date" value="${trade.mfeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'mfeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="mfeDate">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">最高價格</label>
+                  <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">最低價格</label>
+                  <input type="number" value="${trade.lowestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'lowestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最低價格" data-row-index="${trades.indexOf(trade)}" data-field="lowestPrice">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">標的名稱</label>
+                  <input type="text" value="${escapeHtml(trade.assetName)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入標的名稱" data-row-index="${trades.indexOf(trade)}" data-field="assetName">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">策略名稱</label>
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="strategyId">
+                    <option value="">選擇策略</option>
+                    ${strategies.map(strategy => `
+                      <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">大盤多空</label>
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
+                    <option value="">選擇大盤多空</option>
+                    ${externalConditions.map(condition => `
+                      <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-sm text-gray-700">文字說明</label>
+                  <input type="text" value="${escapeHtml(trade.description)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入文字說明" data-row-index="${trades.indexOf(trade)}" data-field="description">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-sm text-gray-700">圖片</label>
+                  <div class="flex items-center space-x-2">
+                    <input type="text" value="${trade.imageUrl}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入圖片URL" data-row-index="${trades.indexOf(trade)}" data-field="imageUrl">
+                    ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
           `;
         }).join('');
         lucide.createIcons();
-        const topScrollbarContent = document.getElementById('topScrollbarContent');
-        const bottomScrollbar = document.getElementById('bottomScrollbar');
-        const table = bottomScrollbar.querySelector('table');
-        if (table) {
-          topScrollbarContent.style.width = table.scrollWidth + 'px';
-        }
-        const topScrollbar = document.getElementById('topScrollbar');
-        const bottomScrollDiv = document.getElementById('bottomScrollbar');
-        topScrollbar.removeEventListener('scroll', syncTopToBottom);
-        bottomScrollDiv.removeEventListener('scroll', syncBottomToTop);
-        function syncTopToBottom() {
-          bottomScrollDiv.scrollLeft = topScrollbar.scrollLeft;
-        }
-        function syncBottomToTop() {
-          topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
-        }
-        topScrollbar.addEventListener('scroll', syncTopToBottom);
-        bottomScrollDiv.addEventListener('scroll', syncBottomToTop);
-        topScrollbar.scrollLeft = bottomScrollDiv.scrollLeft;
       }
 
       function getStrategyName(strategyId) {
