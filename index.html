@@ -590,7 +590,7 @@
       </div>
     </div>
 
-    <!-- 交易記錄區塊：改以卡片方式呈現各筆交易紀錄 -->
+    <!-- 交易記錄區塊：以卡片方式呈現各筆交易紀錄，並自動計算顯示 MAE、MFE、EDR -->
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
@@ -608,14 +608,60 @@
       </div>
       <div id="tradesList" class="space-y-4">
         <!-- 交易記錄卡片動態生成 -->
-        <!-- 修改重點：在每筆交易卡片中自動計算並顯示 MAE、MFE、EDR -->
       </div>
     </div>
 
     <script>
+      // 新增：計算 MAE、MFE、EDR 的輔助函式
+      function computeMAE(trade) {
+        if (trade.entryPrice !== '' && trade.entryDayAdversePrice !== '') {
+          let entry = parseFloat(trade.entryPrice);
+          let adverse = parseFloat(trade.entryDayAdversePrice);
+          if (!isNaN(entry) && !isNaN(adverse) && entry !== 0) {
+            if (trade.direction === "多") {
+              return (((entry - adverse) / entry) * 100).toFixed(2) + '%';
+            } else {
+              return (((adverse - entry) / entry) * 100).toFixed(2) + '%';
+            }
+          }
+        }
+        return '-';
+      }
+
+      function computeMFE(trade) {
+        if (trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
+          let entry = parseFloat(trade.entryPrice);
+          let high = parseFloat(trade.highestPrice);
+          let low = parseFloat(trade.lowestPrice);
+          if (!isNaN(entry) && !isNaN(high) && !isNaN(low) && entry !== 0) {
+            if (trade.direction === "多") {
+              return (((high - entry) / entry) * 100).toFixed(2) + '%';
+            } else {
+              return (((entry - low) / entry) * 100).toFixed(2) + '%';
+            }
+          }
+        }
+        return '-';
+      }
+
+      function computeEDR(trade) {
+        if (trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
+          let exit = parseFloat(trade.exitPrice);
+          let high = parseFloat(trade.highestPrice);
+          let low = parseFloat(trade.lowestPrice);
+          if (!isNaN(exit) && !isNaN(high) && !isNaN(low) && high !== 0 && low !== 0) {
+            if (trade.direction === "多") {
+              return (((high - exit) / high) * 100).toFixed(2) + '%';
+            } else {
+              return (((exit - low) / low) * 100).toFixed(2) + '%';
+            }
+          }
+        }
+        return '-';
+      }
+
       // 更新後的 calculateMDD 函式：計算累積權益曲線上的最大回撤百分比
       function calculateMDD(initialCapital, tradesWithPosition) {
-        // 將已平倉交易依平倉日期由舊至新排序
         let sortedTrades = tradesWithPosition.slice().sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
         let equity = initialCapital;
         let peak = initialCapital;
@@ -638,7 +684,7 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 大盤多空列表
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
-      // 交易記錄列表，新增欄位：direction、entryPrice、exitPrice、entryDayAdversePrice、mfeDate、highestPrice、lowestPrice
+      // 交易記錄列表
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
@@ -889,7 +935,7 @@
         `;
       }
 
-      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄，並自動計算 MAE、MFE、EDR
+      // 以卡片方式呈現每筆交易紀錄，並自動計算 MAE、MFE、EDR
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
@@ -947,47 +993,10 @@
             holdingDays = '未平倉';
             holdingDaysClass = 'text-red-500';
           }
-
-          // 計算該筆交易的 MAE、MFE、EDR
-          let computedMAE = '-';
-          let computedMFE = '-';
-          let computedEDR = '-';
-          if (trade.entryPrice !== '' && trade.entryDayAdversePrice !== '') {
-            let entry = parseFloat(trade.entryPrice);
-            let adverse = parseFloat(trade.entryDayAdversePrice);
-            if (!isNaN(entry) && !isNaN(adverse) && entry !== 0) {
-              if (trade.direction === "多") {
-                computedMAE = (((entry - adverse) / entry) * 100).toFixed(2) + '%';
-              } else {
-                computedMAE = (((adverse - entry) / entry) * 100).toFixed(2) + '%';
-              }
-            }
-          }
-          if (trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
-            let entry = parseFloat(trade.entryPrice);
-            let high = parseFloat(trade.highestPrice);
-            let low = parseFloat(trade.lowestPrice);
-            if (!isNaN(entry) && !isNaN(high) && !isNaN(low) && entry !== 0) {
-              if (trade.direction === "多") {
-                computedMFE = (((high - entry) / entry) * 100).toFixed(2) + '%';
-              } else {
-                computedMFE = (((entry - low) / entry) * 100).toFixed(2) + '%';
-              }
-            }
-          }
-          if (trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
-            let exit = parseFloat(trade.exitPrice);
-            let high = parseFloat(trade.highestPrice);
-            let low = parseFloat(trade.lowestPrice);
-            if (!isNaN(exit) && !isNaN(high) && !isNaN(low) && high !== 0 && low !== 0) {
-              if (trade.direction === "多") {
-                computedEDR = (((high - exit) / high) * 100).toFixed(2) + '%';
-              } else {
-                computedEDR = (((exit - low) / low) * 100).toFixed(2) + '%';
-              }
-            }
-          }
-
+          // 使用輔助函式計算 MAE、MFE、EDR
+          const computedMAE = computeMAE(trade);
+          const computedMFE = computeMFE(trade);
+          const computedEDR = computeEDR(trade);
           return `
             <div class="bg-white rounded shadow p-4">
               <div class="flex justify-between items-center mb-2">
@@ -1082,7 +1091,7 @@
                   </div>
                 </div>
               </div>
-              <!-- 新增：顯示單筆交易 MAE、MFE、EDR -->
+              <!-- 新增：顯示單筆交易的 MAE、MFE、EDR -->
               <div class="grid grid-cols-3 gap-4 mt-4">
                 <div>
                   <label class="block text-sm text-gray-700">MAE (%)</label>
@@ -1496,7 +1505,6 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
-          // 平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
@@ -1540,7 +1548,6 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
-          // 持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1560,7 +1567,6 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
-        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1602,7 +1608,6 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
-        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
@@ -1643,7 +1648,6 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
-        // EDR 統計計算（採用樣本標準差公式）
         let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1683,7 +1687,6 @@
         document.getElementById('skewEDR').textContent = formatNumberNoSign(skewEDR, 2);
         document.getElementById('kurtosisEDR').textContent = formatNumberNoSign(kurtosisEDR, 2);
 
-        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1733,18 +1736,15 @@
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
         
-        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
         var profitAchievementRate = 0;
         if(avgMFE !== 0) {
           profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
         }
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
         
-        // 新增：計算最大交易回落 (MDD)
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
 
-        // 新增：計算平均達到MFE天數與平均MFE到出場天數
         let mfedaysArray = [];
         let mfeToExitDaysArray = [];
         closedTrades.forEach(trade => {
@@ -1768,18 +1768,15 @@
         document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
 
-        // 更新未平倉統計
         let unclosedTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
         let unclosedTradeCount = unclosedTrades.length;
         let unclosedPositionTotal = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
 
-        // 計算未平倉自由資金 = 最新資金水位 - 持倉部位
         let unclosedFreeCapital = currentCapital - unclosedPositionTotal;
         document.getElementById('unclosedFreeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
 
-        // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
@@ -1923,6 +1920,7 @@
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
 
+      // 修改匯出函式，增加 MAE、MFE 與 EDR 欄位
       function exportToExcel() {
         if (trades.length === 0) {
           alert('目前沒有交易紀錄可供匯出。');
@@ -1945,6 +1943,9 @@
           "開倉日": trade.openDate,
           "平倉日": trade.closeDate,
           "持倉天數": calculateHoldingDays(trade.openDate, trade.closeDate),
+          "MAE (%)": computeMAE(trade),
+          "MFE (%)": computeMFE(trade),
+          "EDR (%)": computeEDR(trade),
           "文字說明": trade.description,
           "圖片URL": trade.imageUrl
         }));
@@ -2227,7 +2228,6 @@
 
       // ──────────── 新增：生成完整報告功能 ────────────
       function generateReport() {
-        // 收集篩選條件的目前選擇值
         const filters = {
           values: {
             strategyFilter: document.getElementById('strategyFilter').value,
@@ -2259,7 +2259,6 @@
           }
         };
 
-        // 收集統計數據，從 DOM 中取得現有文字
         const statistics = {
           currentCapital: document.getElementById('currentCapitalDisplay').textContent,
           totalTrades: document.getElementById('totalTrades').textContent,
@@ -2306,7 +2305,6 @@
           marketStatusUsage: document.getElementById('marketStatusUsageList') ? document.getElementById('marketStatusUsageList').innerText : ""
         };
 
-        // 組合報告內容，包含完整交易紀錄（不受當前篩選影響）、策略、大盤多空資訊
         const report = {
           timestamp: new Date().toISOString(),
           filters: filters,
@@ -2316,7 +2314,6 @@
           statistics: statistics
         };
 
-        // 將報告轉為格式化 JSON 字串
         const reportJson = JSON.stringify(report, null, 2);
         const blob = new Blob([reportJson], { type: 'application/json' });
         const link = document.createElement('a');
