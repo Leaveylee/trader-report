@@ -592,11 +592,6 @@
 
     <!-- 交易記錄區塊：改以卡片方式呈現各筆交易紀錄 -->
     <div class="mb-6">
-      <!-- 新增：交易清單切換下拉式選單 -->
-      <div class="flex items-center mb-4">
-        <label for="tradeListSelector" class="mr-2 text-lg font-medium text-gray-700">交易清單:</label>
-        <select id="tradeListSelector" class="p-2 border rounded" onchange="switchTradeList(this.value)"></select>
-      </div>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-700">交易紀錄</h2>
         <div class="flex space-x-2">
@@ -617,14 +612,6 @@
     </div>
 
     <script>
-      // ──────────────  全域變數與交易清單相關 ──────────────
-      let tradeLists = {};
-      let currentTradeListName = "清單 1";
-      // 透過 getTrades() 取得目前清單的交易記錄
-      function getTrades() {
-        return tradeLists[currentTradeListName];
-      }
-
       // 更新後的 calculateMDD 函式：計算累積權益曲線上的最大回撤百分比
       function calculateMDD(initialCapital, tradesWithPosition) {
         // 將已平倉交易依平倉日期由舊至新排序
@@ -650,6 +637,8 @@
       let strategies = [{ id: 1, name: '默認策略', description: '這是默認策略' }];
       // 大盤多空列表
       let externalConditions = [{ id: 1, name: '默認大盤多空', description: '這是默認大盤多空' }];
+      // 交易記錄列表，新增欄位：direction、entryPrice、exitPrice、entryDayAdversePrice、mfeDate、highestPrice、lowestPrice
+      let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
       let selectedExternalConditionFilter = null;
@@ -691,12 +680,8 @@
                            : `-$${Math.abs(number).toLocaleString(undefined, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
       }
 
-      function saveTradeLists() {
-        localStorage.setItem('tradeLists', JSON.stringify(tradeLists));
-      }
-
       function saveData() {
-        saveTradeLists();
+        localStorage.setItem('trades', JSON.stringify(trades));
         saveStrategies();
         saveExternalConditions();
         saveCollapseState();
@@ -757,76 +742,157 @@
         }
       }
 
-      // 讀取交易清單資料（分組管理交易紀錄）
-      function loadTradeLists() {
-        const savedTradeLists = JSON.parse(localStorage.getItem('tradeLists'));
-        if (savedTradeLists && typeof savedTradeLists === 'object') {
-          tradeLists = savedTradeLists;
-        } else {
-          tradeLists = {
-            "清單 1": [{
-              id: nextTradeId++,
-              returnRate: '',
-              position: '',
-              entryPrice: '',
-              exitPrice: '',
-              entryDayAdversePrice: '',
-              mfeDate: '',
-              highestPrice: '',
-              lowestPrice: '',
-              assetName: '',
-              strategyId: null,
-              externalConditionId: null,
-              openDate: '',
-              closeDate: '',
-              description: '',
-              imageUrl: '',
-              direction: "多"
-            }],
-            "清單 2": []
-          };
-          saveTradeLists();
-        }
-        if (!tradeLists[currentTradeListName]) {
-          currentTradeListName = Object.keys(tradeLists)[0];
-        }
-        renderTradeListSelector();
-        renderTrades();
-        calculateStats();
-        loadTotalOperatingCapital();
+      function loadData() {
+        const savedTrades = JSON.parse(localStorage.getItem('trades'));
         const strategyManagementCollapsed = localStorage.getItem('strategyManagementCollapsed') === 'true';
         const externalConditionManagementCollapsed = localStorage.getItem('externalConditionManagementCollapsed') === 'true';
+        
+        if (savedTrades && Array.isArray(savedTrades)) {
+          trades = savedTrades.map(trade => {
+            if (!trade.id) {
+              trade.id = nextTradeId++;
+            } else {
+              if (trade.id >= nextTradeId) {
+                nextTradeId = trade.id + 1;
+              }
+            }
+            if (!trade.description) trade.description = '';
+            if (!trade.imageUrl) trade.imageUrl = '';
+            if (typeof trade.position === 'undefined') trade.position = '';
+            if (typeof trade.entryPrice === 'undefined') trade.entryPrice = '';
+            if (typeof trade.exitPrice === 'undefined') trade.exitPrice = '';
+            if (typeof trade.entryDayAdversePrice === 'undefined') trade.entryDayAdversePrice = '';
+            if (typeof trade.mfeDate === 'undefined') trade.mfeDate = '';
+            if (typeof trade.highestPrice === 'undefined') trade.highestPrice = '';
+            if (typeof trade.lowestPrice === 'undefined') trade.lowestPrice = '';
+            if (typeof trade.direction === 'undefined') trade.direction = "多";
+            return trade;
+          });
+        }
+        if (trades.length === 0) {
+          trades.push({ 
+            id: nextTradeId++, 
+            returnRate: '', 
+            position: '', 
+            entryPrice: '',
+            exitPrice: '',
+            entryDayAdversePrice: '',
+            mfeDate: '',
+            highestPrice: '',
+            lowestPrice: '',
+            assetName: '', 
+            strategyId: null, 
+            externalConditionId: null, 
+            openDate: '', 
+            closeDate: '',
+            description: '', 
+            imageUrl: '',
+            direction: "多"
+          });
+        }
+        selectedStrategyFilter = null;
+        selectedExternalConditionFilter = null;
+        selectedStartDateFilter = null;
+        selectedEndDateFilter = null;
+        selectedDirectionFilter = null;
+        selectedCloseStatusFilter = null;
+        selectedProfitLossFilter = null;
+        document.getElementById('strategyFilter').value = '';
+        document.getElementById('externalConditionFilter').value = '';
+        document.getElementById('directionFilter').value = '';
+        document.getElementById('closeStatusFilter').value = '';
+        document.getElementById('profitLossFilter').value = '';
+        document.getElementById('startDateFilter').value = '';
+        document.getElementById('endDateFilter').value = '';
+        renderStrategies();
+        renderExternalConditions();
+        renderTrades();
+        loadTotalOperatingCapital();
+        calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
       }
 
-      // 渲染交易清單切換下拉式選單
-      function renderTradeListSelector() {
-        const selector = document.getElementById('tradeListSelector');
-        if (!selector) return;
-        selector.innerHTML = '';
-        Object.keys(tradeLists).forEach(listName => {
-          const option = document.createElement('option');
-          option.value = listName;
-          option.textContent = listName;
-          if (listName === currentTradeListName) {
-            option.selected = true;
-          }
-          selector.appendChild(option);
-        });
+      function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
+        if (strategyCollapsed) {
+          document.getElementById('strategyManagementContent').classList.add('hidden');
+          document.getElementById('strategyToggleIcon').setAttribute('data-lucide', 'chevron-right');
+          const strategyToggleButton = document.querySelector('#strategyToggleIcon').parentElement;
+          strategyToggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+        }
+        if (externalConditionCollapsed) {
+          document.getElementById('externalConditionManagementContent').classList.add('hidden');
+          document.getElementById('externalConditionToggleIcon').setAttribute('data-lucide', 'chevron-right');
+          const externalConditionToggleButton = document.querySelector('#externalConditionToggleIcon').parentElement;
+          externalConditionToggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+        }
+        lucide.createIcons();
       }
 
-      // 切換目前的交易清單
-      function switchTradeList(listName) {
-        currentTradeListName = listName;
-        renderTrades();
-        calculateStats();
-        saveData();
+      function renderStrategies() {
+        const strategiesList = document.getElementById('strategiesList');
+        strategiesList.innerHTML = strategies.map(strategy => `
+          <tr>
+            <td class="border px-4 py-2 min-w-[150px]">${escapeHtml(strategy.name)}</td>
+            <td class="border px-4 py-2 min-w-[200px]">${escapeHtml(strategy.description)}</td>
+            <td class="border px-4 py-2 text-center">
+              <button onclick="openEditStrategyModal(${strategy.id})" class="mr-2">
+                <i data-lucide="edit"></i>
+              </button>
+              <button onclick="deleteStrategy(${strategy.id})" class="delete-button">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+        renderStrategyFilter();
+        lucide.createIcons();
       }
 
+      function renderStrategyFilter() {
+        const strategyFilter = document.getElementById('strategyFilter');
+        strategyFilter.innerHTML = `
+          <option value="">全部策略</option>
+          ${strategies.map(strategy => `
+            <option value="${strategy.id}">${escapeHtml(strategy.name)}</option>
+          `).join('')}
+        `;
+      }
+
+      function renderExternalConditions() {
+        const externalConditionsList = document.getElementById('externalConditionsList');
+        externalConditionsList.innerHTML = externalConditions.map(condition => `
+          <tr>
+            <td class="border px-4 py-2 min-w-[150px]">${escapeHtml(condition.name)}</td>
+            <td class="border px-4 py-2 min-w-[200px]">${escapeHtml(condition.description)}</td>
+            <td class="border px-4 py-2 text-center">
+              <button onclick="openEditExternalConditionModal(${condition.id})" class="mr-2">
+                <i data-lucide="edit"></i>
+              </button>
+              <button onclick="deleteExternalCondition(${condition.id})" class="delete-button">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+        renderExternalConditionFilter();
+        lucide.createIcons();
+      }
+
+      function renderExternalConditionFilter() {
+        const externalConditionFilter = document.getElementById('externalConditionFilter');
+        externalConditionFilter.innerHTML = `
+          <option value="">全部大盤多空</option>
+          ${externalConditions.map(condition => `
+            <option value="${condition.id}">${escapeHtml(condition.name)}</option>
+          `).join('')}
+        `;
+      }
+
+      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
-        let filteredTrades = getTrades();
+        let filteredTrades = trades;
         if (selectedStrategyFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
@@ -885,17 +951,17 @@
               <div class="flex justify-between items-center mb-2">
                 <div class="font-bold">交易 ${transactionNumber}</div>
                 <div>
-                  ${getTrades().length > 1 ? `<button onclick="removeTrade(${getTrades().indexOf(trade)})" class="delete-button"><i data-lucide="trash-2"></i></button>` : ''}
+                  ${trades.length > 1 ? `<button onclick="removeTrade(${trades.indexOf(trade)})" class="delete-button"><i data-lucide="trash-2"></i></button>` : ''}
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm text-gray-700">開倉日</label>
-                  <input type="date" value="${trade.openDate}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'openDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="openDate">
+                  <input type="date" value="${trade.openDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'openDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="openDate">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">平倉日</label>
-                  <input type="date" value="${trade.closeDate}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'closeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="closeDate">
+                  <input type="date" value="${trade.closeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'closeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="closeDate">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">持倉天數</label>
@@ -903,50 +969,50 @@
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">交易方向</label>
-                  <select onchange="handleTradeChange(${getTrades().indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="direction">
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'direction', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="direction">
                     <option value="多" ${trade.direction === "多" ? "selected" : ""}>多</option>
                     <option value="空" ${trade.direction === "空" ? "selected" : ""}>空</option>
                   </select>
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">報酬率 (%)</label>
-                  <input type="text" value="${trade.returnRate}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'returnRate', this.value)" class="w-full p-1 border rounded trade-input" placeholder="+6.66 或 -2.92" data-row-index="${getTrades().indexOf(trade)}" data-field="returnRate" data-trade-id="${trade.id}">
+                  <input type="text" value="${trade.returnRate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'returnRate', this.value)" class="w-full p-1 border rounded trade-input" placeholder="+6.66 或 -2.92" data-row-index="${trades.indexOf(trade)}" data-field="returnRate" data-trade-id="${trade.id}">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">部位金額</label>
-                  <input type="number" value="${trade.position}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${getTrades().indexOf(trade)}" data-field="position">
+                  <input type="number" value="${trade.position}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'position', this.value)" class="w-full p-1 border rounded trade-input" placeholder="部位金額" data-row-index="${trades.indexOf(trade)}" data-field="position">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">進場價格</label>
-                  <input type="number" value="${trade.entryPrice}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'entryPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="進場價格" data-row-index="${getTrades().indexOf(trade)}" data-field="entryPrice">
+                  <input type="number" value="${trade.entryPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="進場價格" data-row-index="${trades.indexOf(trade)}" data-field="entryPrice">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">出場價格</label>
-                  <input type="number" value="${trade.exitPrice}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'exitPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="出場價格" data-row-index="${getTrades().indexOf(trade)}" data-field="exitPrice">
+                  <input type="number" value="${trade.exitPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'exitPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="出場價格" data-row-index="${trades.indexOf(trade)}" data-field="exitPrice">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">進場當天不利價格</label>
-                  <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${getTrades().indexOf(trade)}" data-field="entryDayAdversePrice">
+                  <input type="number" value="${trade.entryDayAdversePrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'entryDayAdversePrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="做多輸入最低, 做空輸入最高" data-row-index="${trades.indexOf(trade)}" data-field="entryDayAdversePrice">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">MFE日期</label>
-                  <input type="date" value="${trade.mfeDate}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'mfeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="mfeDate">
+                  <input type="date" value="${trade.mfeDate}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'mfeDate', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="mfeDate">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">最高價格</label>
-                  <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${getTrades().indexOf(trade)}" data-field="highestPrice">
+                  <input type="number" value="${trade.highestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'highestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最高價格" data-row-index="${trades.indexOf(trade)}" data-field="highestPrice">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">最低價格</label>
-                  <input type="number" value="${trade.lowestPrice}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'lowestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最低價格" data-row-index="${getTrades().indexOf(trade)}" data-field="lowestPrice">
+                  <input type="number" value="${trade.lowestPrice}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'lowestPrice', this.value)" class="w-full p-1 border rounded trade-input" placeholder="最低價格" data-row-index="${trades.indexOf(trade)}" data-field="lowestPrice">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">標的名稱</label>
-                  <input type="text" value="${escapeHtml(trade.assetName)}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'assetName', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入標的名稱" data-row-index="${getTrades().indexOf(trade)}" data-field="assetName">
+                  <input type="text" value="${escapeHtml(trade.assetName)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'assetName', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入標的名稱" data-row-index="${trades.indexOf(trade)}" data-field="assetName">
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">策略名稱</label>
-                  <select onchange="handleTradeChange(${getTrades().indexOf(trade)}, 'strategyId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="strategyId">
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'strategyId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="strategyId">
                     <option value="">選擇策略</option>
                     ${strategies.map(strategy => `
                       <option value="${strategy.id}" ${trade.strategyId === strategy.id ? 'selected' : ''}>${escapeHtml(strategy.name)}</option>
@@ -955,7 +1021,7 @@
                 </div>
                 <div>
                   <label class="block text-sm text-gray-700">大盤多空</label>
-                  <select onchange="handleTradeChange(${getTrades().indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${getTrades().indexOf(trade)}" data-field="externalConditionId">
+                  <select onchange="handleTradeChange(${trades.indexOf(trade)}, 'externalConditionId', this.value)" class="w-full p-1 border rounded trade-input" data-row-index="${trades.indexOf(trade)}" data-field="externalConditionId">
                     <option value="">選擇大盤多空</option>
                     ${externalConditions.map(condition => `
                       <option value="${condition.id}" ${trade.externalConditionId === condition.id ? 'selected' : ''}>${escapeHtml(condition.name)}</option>
@@ -964,12 +1030,12 @@
                 </div>
                 <div class="md:col-span-2">
                   <label class="block text-sm text-gray-700">文字說明</label>
-                  <input type="text" value="${escapeHtml(trade.description)}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'description', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入文字說明" data-row-index="${getTrades().indexOf(trade)}" data-field="description">
+                  <input type="text" value="${escapeHtml(trade.description)}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'description', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入文字說明" data-row-index="${trades.indexOf(trade)}" data-field="description">
                 </div>
                 <div class="md:col-span-2">
                   <label class="block text-sm text-gray-700">圖片</label>
                   <div class="flex items-center space-x-2">
-                    <input type="text" value="${trade.imageUrl}" oninput="handleTradeChange(${getTrades().indexOf(trade)}, 'imageUrl', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入圖片URL" data-row-index="${getTrades().indexOf(trade)}" data-field="imageUrl">
+                    <input type="text" value="${trade.imageUrl}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入圖片URL" data-row-index="${trades.indexOf(trade)}" data-field="imageUrl">
                     ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                   </div>
                 </div>
@@ -991,52 +1057,51 @@
       }
 
       function handleTradeChange(index, field, value) {
-        let trade = getTrades()[index];
         if (field === 'returnRate') {
           const cleanedValue = value.replace('%', '').trim();
-          trade.returnRate = (cleanedValue === '' || isNaN(cleanedValue)) ? '' : cleanedValue;
+          trades[index].returnRate = (cleanedValue === '' || isNaN(cleanedValue)) ? '' : cleanedValue;
         } else if (field === 'assetName') {
-          trade.assetName = value.trim();
+          trades[index].assetName = value.trim();
         } else if (field === 'strategyId') {
-          trade.strategyId = value === '' ? null : parseInt(value, 10);
+          trades[index].strategyId = value === '' ? null : parseInt(value, 10);
         } else if (field === 'externalConditionId') {
-          trade.externalConditionId = value === '' ? null : parseInt(value, 10);
+          trades[index].externalConditionId = value === '' ? null : parseInt(value, 10);
         } else if (field === 'openDate') {
-          trade.openDate = value;
-          const closeDate = trade.closeDate;
+          trades[index].openDate = value;
+          const closeDate = trades[index].closeDate;
           if (closeDate !== '' && new Date(closeDate) < new Date(value)) {
             alert('平倉日不能早於開倉日。');
-            trade.closeDate = '';
+            trades[index].closeDate = '';
             document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
           }
         } else if (field === 'closeDate') {
-          trade.closeDate = value;
-          const openDate = trade.openDate;
+          trades[index].closeDate = value;
+          const openDate = trades[index].openDate;
           if (openDate !== '' && new Date(value) < new Date(openDate)) {
             alert('平倉日不能早於開倉日。');
-            trade.closeDate = '';
+            trades[index].closeDate = '';
             document.querySelector(`input[data-row-index="${index}"][data-field="closeDate"]`).value = '';
           }
         } else if (field === 'description') {
-          trade.description = value.trim();
+          trades[index].description = value.trim();
         } else if (field === 'imageUrl') {
-          trade.imageUrl = value.trim();
+          trades[index].imageUrl = value.trim();
         } else if (field === 'position') {
-          trade.position = value.trim();
+          trades[index].position = value.trim();
         } else if (field === 'direction') {
-          trade.direction = value;
+          trades[index].direction = value;
         } else if (field === 'entryPrice') {
-          trade.entryPrice = value.trim();
+          trades[index].entryPrice = value.trim();
         } else if (field === 'exitPrice') {
-          trade.exitPrice = value.trim();
+          trades[index].exitPrice = value.trim();
         } else if (field === 'highestPrice') {
-          trade.highestPrice = value.trim();
+          trades[index].highestPrice = value.trim();
         } else if (field === 'lowestPrice') {
-          trade.lowestPrice = value.trim();
+          trades[index].lowestPrice = value.trim();
         } else if (field === 'entryDayAdversePrice') {
-          trade.entryDayAdversePrice = value.trim();
+          trades[index].entryDayAdversePrice = value.trim();
         } else if (field === 'mfeDate') {
-          trade.mfeDate = value;
+          trades[index].mfeDate = value;
         }
         calculateStats();
         saveData();
@@ -1074,7 +1139,7 @@
           imageUrl: '',
           direction: "多"
         };
-        getTrades().unshift(newTrade);
+        trades.unshift(newTrade);
         renderTrades();
         calculateStats();
         saveData();
@@ -1087,10 +1152,9 @@
       }
 
       function removeTrade(index) {
-        let current = getTrades().filter((_, i) => i !== index);
-        tradeLists[currentTradeListName] = current;
-        if (current.length === 0) {
-          tradeLists[currentTradeListName].push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', mfeDate: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
+        trades = trades.filter((_, i) => i !== index);
+        if (trades.length === 0) {
+          trades.push({ id: nextTradeId++, returnRate: '', position: '', entryPrice: '', exitPrice: '', entryDayAdversePrice: '', mfeDate: '', highestPrice: '', lowestPrice: '', assetName: '', strategyId: null, externalConditionId: null, openDate: '', closeDate: '', description: '', imageUrl: '', direction: "多" });
         }
         renderTrades();
         calculateStats();
@@ -1166,7 +1230,7 @@
       }
 
       function deleteStrategy(strategyId) {
-        const tradesUsingStrategy = getTrades().filter(trade => trade.strategyId === strategyId);
+        const tradesUsingStrategy = trades.filter(trade => trade.strategyId === strategyId);
         if (tradesUsingStrategy.length > 0) {
           alert('有交易紀錄正在使用此策略，請先移除或更改相關交易紀錄。');
           return;
@@ -1250,7 +1314,7 @@
       }
 
       function deleteExternalCondition(conditionId) {
-        const tradesUsingCondition = getTrades().filter(trade => trade.externalConditionId === conditionId);
+        const tradesUsingCondition = trades.filter(trade => trade.externalConditionId === conditionId);
         if (tradesUsingCondition.length > 0) {
           alert('有交易紀錄正在使用此大盤多空，請先移除或更改相關交易紀錄。');
           return;
@@ -1311,7 +1375,7 @@
       // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
-        let closedTrades = getTrades().filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
+        let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
         if (selectedStrategyFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
@@ -1375,6 +1439,7 @@
           const maxWinRate = wins.length > 0 ? Math.max(...wins) : 0;
           const maxLossRate = losses.length > 0 ? Math.min(...losses) : 0;
 
+          // 平均交易部位（不乘以報酬率）
           const winsWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) > 0);
           const lossesWithPosition = closedTradesWithPosition.filter(trade => parseFloat(trade.returnRate) < 0);
           const avgWinningPosition = winsWithPosition.length > 0 
@@ -1418,6 +1483,7 @@
           var riskRewardRatio = avgLossAmount !== 0 ? (avgWinAmount / Math.abs(avgLossAmount)) : 0;
           document.getElementById('riskRewardRatio').textContent = formatNumberNoSign(riskRewardRatio, 2);
           
+          // 持倉天數：從開倉日到平倉日
           let closedTradesWithDays = closedTrades.filter(trade => trade.openDate !== '' && trade.closeDate !== '');
           let winHoldingDays = [];
           let lossHoldingDays = [];
@@ -1437,6 +1503,7 @@
           document.getElementById('avgLossHoldingDays').textContent = formatNumberNoSign(avgLossHoldingDays, 2);
         }
 
+        // MFE 統計（保持原有邏輯，但使用樣本標準差公式）
         let tradesForMFE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1478,6 +1545,7 @@
         document.getElementById('skewMFE').textContent = formatNumberNoSign(skewMFE, 2);
         document.getElementById('kurtosisMFE').textContent = formatNumberNoSign(kurtosisMFE, 2);
 
+        // MAE 統計（使用進場當天不利價格新公式，並採用樣本標準差公式）
         let tradesForNewMAE = closedTrades.filter(trade => 
           trade.entryPrice !== '' && trade.entryDayAdversePrice !== ''
         );
@@ -1518,6 +1586,7 @@
         document.getElementById('skewMAE').textContent = formatNumberNoSign(skewMAE, 2);
         document.getElementById('kurtosisMAE').textContent = formatNumberNoSign(kurtosisMAE, 2);
 
+        // EDR 統計計算（採用樣本標準差公式）
         let tradesForEDR = closedTrades.filter(trade => 
           trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== ''
         );
@@ -1557,6 +1626,7 @@
         document.getElementById('skewEDR').textContent = formatNumberNoSign(skewEDR, 2);
         document.getElementById('kurtosisEDR').textContent = formatNumberNoSign(kurtosisEDR, 2);
 
+        // 損益百分比統計
         let winPercentValues = [];
         let lossPercentValues = [];
         closedTradesWithPosition.forEach(trade => {
@@ -1606,15 +1676,18 @@
         document.getElementById('skewLossPercent').textContent = formatNumberNoSign(lossPercentSkewness, 2);
         document.getElementById('kurtosisLossPercent').textContent = formatNumberNoSign(lossPercentKurtosis, 2);
         
+        // 計算獲利達成率：公式 = (平均獲利百分比 / 平均 MFE) × 100%
         var profitAchievementRate = 0;
         if(avgMFE !== 0) {
           profitAchievementRate = (avgWinPercentValue / avgMFE) * 100;
         }
         document.getElementById('profitAchievementRate').textContent = formatNumberNoSign(profitAchievementRate, 2) + "%";
         
+        // 新增：計算最大交易回落 (MDD)
         let mdd = calculateMDD(initialCapital, closedTradesWithPosition);
         document.getElementById('maxDrawdown').textContent = formatNumberNoSign(mdd * 100, 2) + "%";
 
+        // 新增：計算平均達到MFE天數與平均MFE到出場天數
         let mfedaysArray = [];
         let mfeToExitDaysArray = [];
         closedTrades.forEach(trade => {
@@ -1638,22 +1711,25 @@
         document.getElementById('avgMFEDays').textContent = formatNumberNoSign(avgMFEDays, 2);
         document.getElementById('avgMFEToExitDays').textContent = formatNumberNoSign(avgMFEToExitDays, 2);
 
-        let unclosedTrades = getTrades().filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
+        // 更新未平倉統計
+        let unclosedTrades = trades.filter(trade => !trade.closeDate || trade.closeDate.trim() === '');
         let unclosedTradeCount = unclosedTrades.length;
         let unclosedPositionTotal = unclosedTrades.reduce((sum, trade) => sum + (parseFloat(trade.position) || 0), 0);
         document.getElementById('unclosedTradeCount').textContent = unclosedTradeCount;
         document.getElementById('unclosedPositionTotal').textContent = formatMoney(unclosedPositionTotal, 0);
 
+        // 計算未平倉自由資金 = 最新資金水位 - 持倉部位
         let unclosedFreeCapital = currentCapital - unclosedPositionTotal;
         document.getElementById('unclosedFreeCapital').textContent = formatMoney(unclosedFreeCapital, 0);
 
+        // 更新「各種策略的使用次數」與「大盤多空天數」
         updateStrategyUsage();
         updateMarketStatusUsage();
       }
 
       function updateStrategyUsage() {
         let usage = {};
-        let filteredTrades = getTrades();
+        let filteredTrades = trades;
         if (selectedExternalConditionFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
         }
@@ -1693,7 +1769,7 @@
 
       function updateMarketStatusUsage() {
         let usage = {};
-        let filteredTrades = getTrades();
+        let filteredTrades = trades;
         if (selectedStartDateFilter) {
           filteredTrades = filteredTrades.filter(trade => trade.openDate && new Date(trade.openDate) >= new Date(selectedStartDateFilter));
         }
@@ -1726,6 +1802,44 @@
         }
       }
 
+      loadStrategies();
+      loadExternalConditions();
+      loadData();
+
+      function toggleStrategyManagement() {
+        const content = document.getElementById('strategyManagementContent');
+        const toggleIcon = document.getElementById('strategyToggleIcon');
+        const toggleButton = toggleIcon.parentElement;
+        if (content.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-down');
+          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+        } else {
+          content.classList.add('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-right');
+          toggleButton.innerHTML = `<i id="strategyToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+        }
+        lucide.createIcons();
+        saveCollapseState();
+      }
+
+      function toggleExternalConditionManagement() {
+        const content = document.getElementById('externalConditionManagementContent');
+        const toggleIcon = document.getElementById('externalConditionToggleIcon');
+        const toggleButton = toggleIcon.parentElement;
+        if (content.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-down');
+          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-down" class="inline-block mr-2"></i>收合`;
+        } else {
+          content.classList.add('hidden');
+          toggleIcon.setAttribute('data-lucide', 'chevron-right');
+          toggleButton.innerHTML = `<i id="externalConditionToggleIcon" data-lucide="chevron-right" class="inline-block mr-2"></i>展開`;
+        }
+        lucide.createIcons();
+        saveCollapseState();
+      }
+
       function openModal(modalId) {
         document.getElementById(modalId).classList.remove('hidden');
       }
@@ -1753,11 +1867,11 @@
       }
 
       function exportToExcel() {
-        if (getTrades().length === 0) {
+        if (trades.length === 0) {
           alert('目前沒有交易紀錄可供匯出。');
           return;
         }
-        const exportData = getTrades().map(trade => ({
+        const exportData = trades.map(trade => ({
           "交易ID": trade.id,
           "報酬率 (%)": trade.returnRate,
           "部位金額": trade.position,
@@ -1869,7 +1983,7 @@
             alert('沒有有效的交易紀錄被匯入。');
             return;
           }
-          tradeLists[currentTradeListName] = getTrades().concat(importedTrades);
+          trades = trades.concat(importedTrades);
           renderTrades();
           calculateStats();
           saveData();
@@ -2054,8 +2168,9 @@
         reader.readAsBinaryString(file);
       }
 
-      // ──────────── 生成完整報告功能 ────────────
+      // ──────────── 新增：生成完整報告功能 ────────────
       function generateReport() {
+        // 收集篩選條件的目前選擇值
         const filters = {
           values: {
             strategyFilter: document.getElementById('strategyFilter').value,
@@ -2087,6 +2202,7 @@
           }
         };
 
+        // 收集統計數據，從 DOM 中取得現有文字
         const statistics = {
           currentCapital: document.getElementById('currentCapitalDisplay').textContent,
           totalTrades: document.getElementById('totalTrades').textContent,
@@ -2133,16 +2249,17 @@
           marketStatusUsage: document.getElementById('marketStatusUsageList') ? document.getElementById('marketStatusUsageList').innerText : ""
         };
 
+        // 組合報告內容，包含完整交易紀錄（不受當前篩選影響）、策略、大盤多空資訊
         const report = {
           timestamp: new Date().toISOString(),
-          tradeListName: currentTradeListName,
           filters: filters,
-          trades: getTrades(),
+          trades: trades,
           strategies: strategies,
           externalConditions: externalConditions,
           statistics: statistics
         };
 
+        // 將報告轉為格式化 JSON 字串
         const reportJson = JSON.stringify(report, null, 2);
         const blob = new Blob([reportJson], { type: 'application/json' });
         const link = document.createElement('a');
@@ -2154,10 +2271,6 @@
         document.body.removeChild(link);
       }
       // ──────────── 生成報告功能結束 ────────────
-
-      loadStrategies();
-      loadExternalConditions();
-      loadTradeLists();
     </script>
   </div>
 </body>
