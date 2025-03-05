@@ -608,6 +608,7 @@
       </div>
       <div id="tradesList" class="space-y-4">
         <!-- 交易記錄卡片動態生成 -->
+        <!-- 修改重點：在每筆交易卡片中自動計算並顯示 MAE、MFE、EDR -->
       </div>
     </div>
 
@@ -888,7 +889,7 @@
         `;
       }
 
-      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
+      // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄，並自動計算 MAE、MFE、EDR
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
@@ -946,6 +947,47 @@
             holdingDays = '未平倉';
             holdingDaysClass = 'text-red-500';
           }
+
+          // 計算該筆交易的 MAE、MFE、EDR
+          let computedMAE = '-';
+          let computedMFE = '-';
+          let computedEDR = '-';
+          if (trade.entryPrice !== '' && trade.entryDayAdversePrice !== '') {
+            let entry = parseFloat(trade.entryPrice);
+            let adverse = parseFloat(trade.entryDayAdversePrice);
+            if (!isNaN(entry) && !isNaN(adverse) && entry !== 0) {
+              if (trade.direction === "多") {
+                computedMAE = (((entry - adverse) / entry) * 100).toFixed(2) + '%';
+              } else {
+                computedMAE = (((adverse - entry) / entry) * 100).toFixed(2) + '%';
+              }
+            }
+          }
+          if (trade.entryPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
+            let entry = parseFloat(trade.entryPrice);
+            let high = parseFloat(trade.highestPrice);
+            let low = parseFloat(trade.lowestPrice);
+            if (!isNaN(entry) && !isNaN(high) && !isNaN(low) && entry !== 0) {
+              if (trade.direction === "多") {
+                computedMFE = (((high - entry) / entry) * 100).toFixed(2) + '%';
+              } else {
+                computedMFE = (((entry - low) / entry) * 100).toFixed(2) + '%';
+              }
+            }
+          }
+          if (trade.exitPrice !== '' && trade.highestPrice !== '' && trade.lowestPrice !== '') {
+            let exit = parseFloat(trade.exitPrice);
+            let high = parseFloat(trade.highestPrice);
+            let low = parseFloat(trade.lowestPrice);
+            if (!isNaN(exit) && !isNaN(high) && !isNaN(low) && high !== 0 && low !== 0) {
+              if (trade.direction === "多") {
+                computedEDR = (((high - exit) / high) * 100).toFixed(2) + '%';
+              } else {
+                computedEDR = (((exit - low) / low) * 100).toFixed(2) + '%';
+              }
+            }
+          }
+
           return `
             <div class="bg-white rounded shadow p-4">
               <div class="flex justify-between items-center mb-2">
@@ -1038,6 +1080,21 @@
                     <input type="text" value="${trade.imageUrl}" oninput="handleTradeChange(${trades.indexOf(trade)}, 'imageUrl', this.value)" class="w-full p-1 border rounded trade-input" placeholder="輸入圖片URL" data-row-index="${trades.indexOf(trade)}" data-field="imageUrl">
                     ${trade.imageUrl ? `<button onclick="openImageLink('${encodeURIComponent(trade.imageUrl)}')" class="mt-2 button text-sm">查看圖片</button>` : ''}
                   </div>
+                </div>
+              </div>
+              <!-- 新增：顯示單筆交易 MAE、MFE、EDR -->
+              <div class="grid grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label class="block text-sm text-gray-700">MAE (%)</label>
+                  <div class="w-full p-1 border rounded">${computedMAE}</div>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">MFE (%)</label>
+                  <div class="w-full p-1 border rounded">${computedMFE}</div>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-700">EDR (%)</label>
+                  <div class="w-full p-1 border rounded">${computedEDR}</div>
                 </div>
               </div>
             </div>
