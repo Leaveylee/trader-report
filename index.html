@@ -133,7 +133,7 @@
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">篩選條件</label>
       <div class="flex space-x-4 flex-wrap">
-        <!-- 修改後的篩選策略區塊：使用 multi select 並增加反向篩選核取方塊 -->
+        <!-- 修改後的篩選策略區塊：使用 multi select 並增加反向篩選核取方塊與已選策略顯示 -->
         <div class="flex-1 min-w-[200px]">
           <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選策略</label>
           <select id="strategyFilter" class="w-full p-2 border rounded" multiple onchange="applyFilters()">
@@ -143,6 +143,7 @@
             <input type="checkbox" id="strategyFilterExclude" onchange="applyFilters()">
             <label for="strategyFilterExclude" class="text-sm text-gray-700">排除選取的策略</label>
           </div>
+          <div id="selectedStrategyDisplay" class="mt-2 text-sm text-gray-700">未選擇策略</div>
         </div>
         <div class="flex-1 min-w-[200px]">
           <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
@@ -804,7 +805,7 @@
         selectedDirectionFilter = null;
         selectedCloseStatusFilter = null;
         selectedProfitLossFilter = null;
-        // 將其他篩選條件初始化
+        // 初始化其他篩選條件
         document.getElementById('externalConditionFilter').value = '';
         document.getElementById('directionFilter').value = '';
         document.getElementById('closeStatusFilter').value = '';
@@ -820,6 +821,7 @@
         loadTotalOperatingCapital();
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
+        updateSelectedStrategyDisplay();
       }
 
       function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
@@ -896,6 +898,19 @@
             <option value="${condition.id}">${escapeHtml(condition.name)}</option>
           `).join('')}
         `;
+      }
+
+      // 新增：更新顯示已選策略的圖示與文字
+      function updateSelectedStrategyDisplay() {
+        const strategySelect = document.getElementById('strategyFilter');
+        const selectedOptions = Array.from(strategySelect.selectedOptions).map(opt => opt.text);
+        const display = document.getElementById('selectedStrategyDisplay');
+        if (selectedOptions.length > 0) {
+          display.innerHTML = '已選擇策略: ' + selectedOptions.map(option => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1"><i data-lucide="check-circle" class="mr-1"></i>${option}</span>`).join('');
+        } else {
+          display.innerHTML = '未選擇策略';
+        }
+        lucide.createIcons();
       }
 
       // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
@@ -1344,7 +1359,7 @@
         calculateStats();
       }
 
-      // 修改後的 applyFilters：讀取多選策略與排除狀態
+      // 修改後的 applyFilters：讀取多選策略與排除狀態，並更新已選策略顯示
       function applyFilters() {
         const strategySelect = document.getElementById('strategyFilter');
         const selectedOptions = Array.from(strategySelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
@@ -1364,6 +1379,7 @@
         selectedEndDateFilter = endDate === '' ? null : endDate;
         calculateStats();
         renderTrades();
+        updateSelectedStrategyDisplay();
       }
 
       // calculateStats() 更新統計數據
