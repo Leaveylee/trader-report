@@ -133,17 +133,11 @@
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">篩選條件</label>
       <div class="flex space-x-4 flex-wrap">
-        <!-- 修改後的篩選策略區塊：使用 multi select 並增加反向篩選核取方塊與已選策略顯示 -->
         <div class="flex-1 min-w-[200px]">
           <label for="strategyFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選策略</label>
-          <select id="strategyFilter" class="w-full p-2 border rounded" multiple onchange="applyFilters()">
-            <!-- 選項由 renderStrategyFilter() 動態產生 -->
+          <select id="strategyFilter" class="w-full p-2 border rounded" onchange="applyFilters()">
+            <option value="">全部策略</option>
           </select>
-          <div class="mt-1">
-            <input type="checkbox" id="strategyFilterExclude" onchange="applyFilters()">
-            <label for="strategyFilterExclude" class="text-sm text-gray-700">排除選取的策略</label>
-          </div>
-          <div id="selectedStrategyDisplay" class="mt-2 text-sm text-gray-700">未選擇策略</div>
         </div>
         <div class="flex-1 min-w-[200px]">
           <label for="externalConditionFilter" class="block text-sm font-medium text-gray-700 mb-1">篩選大盤多空</label>
@@ -647,7 +641,6 @@
       let trades = [];
       // 當前篩選條件
       let selectedStrategyFilter = null;
-      let selectedStrategyFilterExclude = false;
       let selectedExternalConditionFilter = null;
       let selectedStartDateFilter = null;
       let selectedEndDateFilter = null;
@@ -798,30 +791,25 @@
           });
         }
         selectedStrategyFilter = null;
-        selectedStrategyFilterExclude = false;
         selectedExternalConditionFilter = null;
         selectedStartDateFilter = null;
         selectedEndDateFilter = null;
         selectedDirectionFilter = null;
         selectedCloseStatusFilter = null;
         selectedProfitLossFilter = null;
-        // 初始化其他篩選條件
+        document.getElementById('strategyFilter').value = '';
         document.getElementById('externalConditionFilter').value = '';
         document.getElementById('directionFilter').value = '';
         document.getElementById('closeStatusFilter').value = '';
         document.getElementById('profitLossFilter').value = '';
         document.getElementById('startDateFilter').value = '';
         document.getElementById('endDateFilter').value = '';
-        // 將策略的 multi-select 與核取方塊初始化
-        document.getElementById('strategyFilter').selectedIndex = -1;
-        document.getElementById('strategyFilterExclude').checked = false;
         renderStrategies();
         renderExternalConditions();
         renderTrades();
         loadTotalOperatingCapital();
         calculateStats();
         applySavedCollapseState(strategyManagementCollapsed, externalConditionManagementCollapsed);
-        updateSelectedStrategyDisplay();
       }
 
       function applySavedCollapseState(strategyCollapsed, externalConditionCollapsed) {
@@ -860,10 +848,10 @@
         lucide.createIcons();
       }
 
-      // 修改後：策略篩選選項不再包含「全部策略」，若無選取則視為全部策略
       function renderStrategyFilter() {
         const strategyFilter = document.getElementById('strategyFilter');
         strategyFilter.innerHTML = `
+          <option value="">全部策略</option>
           ${strategies.map(strategy => `
             <option value="${strategy.id}">${escapeHtml(strategy.name)}</option>
           `).join('')}
@@ -900,31 +888,13 @@
         `;
       }
 
-      // 新增：更新顯示已選策略的圖示與文字
-      function updateSelectedStrategyDisplay() {
-        const strategySelect = document.getElementById('strategyFilter');
-        const selectedOptions = Array.from(strategySelect.selectedOptions).map(opt => opt.text);
-        const display = document.getElementById('selectedStrategyDisplay');
-        if (selectedOptions.length > 0) {
-          display.innerHTML = '已選擇策略: ' + selectedOptions.map(option => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1"><i data-lucide="check-circle" class="mr-1"></i>${option}</span>`).join('');
-        } else {
-          display.innerHTML = '未選擇策略';
-        }
-        lucide.createIcons();
-      }
-
       // 重新改版 renderTrades()：以卡片方式呈現每筆交易紀錄
       function renderTrades() {
         const tradesList = document.getElementById('tradesList');
         tradesList.innerHTML = '';
         let filteredTrades = trades;
-        // 策略篩選：若有選取策略，依照是否為排除模式進行過濾
         if (selectedStrategyFilter !== null) {
-          if(selectedStrategyFilterExclude) {
-            filteredTrades = filteredTrades.filter(trade => !selectedStrategyFilter.includes(trade.strategyId));
-          } else {
-            filteredTrades = filteredTrades.filter(trade => selectedStrategyFilter.includes(trade.strategyId));
-          }
+          filteredTrades = filteredTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
         if (selectedExternalConditionFilter !== null) {
           filteredTrades = filteredTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
@@ -1359,18 +1329,15 @@
         calculateStats();
       }
 
-      // 修改後的 applyFilters：讀取多選策略與排除狀態，並更新已選策略顯示
       function applyFilters() {
-        const strategySelect = document.getElementById('strategyFilter');
-        const selectedOptions = Array.from(strategySelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
-        selectedStrategyFilter = selectedOptions.length > 0 ? selectedOptions.map(val => parseInt(val, 10)) : null;
-        selectedStrategyFilterExclude = document.getElementById('strategyFilterExclude').checked;
+        const strategyId = document.getElementById('strategyFilter').value;
         const externalConditionId = document.getElementById('externalConditionFilter').value;
         const direction = document.getElementById('directionFilter').value;
         const closeStatus = document.getElementById('closeStatusFilter').value;
         const profitLoss = document.getElementById('profitLossFilter').value;
         const startDate = document.getElementById('startDateFilter').value;
         const endDate = document.getElementById('endDateFilter').value;
+        selectedStrategyFilter = strategyId === '' ? null : parseInt(strategyId, 10);
         selectedExternalConditionFilter = externalConditionId === '' ? null : parseInt(externalConditionId, 10);
         selectedDirectionFilter = direction === '' ? null : direction;
         selectedCloseStatusFilter = closeStatus === '' ? null : closeStatus;
@@ -1379,20 +1346,38 @@
         selectedEndDateFilter = endDate === '' ? null : endDate;
         calculateStats();
         renderTrades();
-        updateSelectedStrategyDisplay();
+      }
+
+      function clearDateFilters() {
+        document.getElementById('startDateFilter').value = '';
+        document.getElementById('endDateFilter').value = '';
+        selectedStartDateFilter = null;
+        selectedEndDateFilter = null;
+        applyFilters();
+      }
+
+      function shiftEndDate(days) {
+        const endDateInput = document.getElementById('endDateFilter');
+        let endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+        if (endDate) {
+          endDate.setDate(endDate.getDate() + days);
+          endDateInput.value = formatDate(endDate);
+        } else {
+          alert('請先設定結束日期，再進行調整。');
+        }
+        applyFilters();
+      }
+
+      function formatDate(date) {
+        return date.toISOString().split('T')[0];
       }
 
       // calculateStats() 更新統計數據
       function calculateStats() {
         const initialCapital = parseFloat(document.getElementById('totalOperatingCapital').value) || 0;
         let closedTrades = trades.filter(trade => trade.returnRate !== '' && !isNaN(parseFloat(trade.returnRate)));
-        // 修改：依策略篩選（多選與反向模式）
         if (selectedStrategyFilter !== null) {
-          if(selectedStrategyFilterExclude) {
-            closedTrades = closedTrades.filter(trade => !selectedStrategyFilter.includes(trade.strategyId));
-          } else {
-            closedTrades = closedTrades.filter(trade => selectedStrategyFilter.includes(trade.strategyId));
-          }
+          closedTrades = closedTrades.filter(trade => trade.strategyId === selectedStrategyFilter);
         }
         if (selectedExternalConditionFilter !== null) {
           closedTrades = closedTrades.filter(trade => trade.externalConditionId === selectedExternalConditionFilter);
@@ -2188,8 +2173,7 @@
         // 收集篩選條件的目前選擇值
         const filters = {
           values: {
-            strategyFilter: Array.from(document.getElementById('strategyFilter').selectedOptions).map(opt => opt.value),
-            strategyFilterExclude: document.getElementById('strategyFilterExclude').checked,
+            strategyFilter: document.getElementById('strategyFilter').value,
             externalConditionFilter: document.getElementById('externalConditionFilter').value,
             directionFilter: document.getElementById('directionFilter').value,
             closeStatusFilter: document.getElementById('closeStatusFilter').value,
